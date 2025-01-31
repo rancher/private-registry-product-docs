@@ -17,7 +17,7 @@ ifdef::env-github[]
 endif::[]
 
 // Introduction
-include::./introduction.adoc[leveloffset=+1]
+include::adoc/introduction.adoc[leveloffset=+1]
 
 // Deployment
 include::deployment.adoc[leveloffset=+1]
