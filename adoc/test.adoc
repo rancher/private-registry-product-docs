@@ -1,0 +1,9 @@
+Sets the initial password for {harbor} administrator.
+|`expose.nodePort.name` |Sets NodePort service name. |`harbor`
+`keep` prevents removal of PVCs during a Helm delete operation.
+Append specific parameters to the `--set` flags on the `helm install` command line.
+
+|===
+|`harbor.external.existingSecret` |The existing secret to connect to {harbor}. The key must be REDIS_PASSWORD. |`""`
+|`redis.podAnnotations` |The annotations to add to the Redis pod. |`{}`
+|===

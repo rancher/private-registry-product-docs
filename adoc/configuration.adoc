@@ -1,0 +1,9 @@
+:doctype: book
+include::attributes.adoc[]
+
+[#spr-configuration]
+= Configuration
+
+You can configure the {productname} ({productnameshort}) via the Web user interface, command-line interface, or by editing the configuration files.
+
+

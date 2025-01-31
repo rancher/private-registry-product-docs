@@ -1,0 +1,26 @@
+:doctype: book
+:experimental:
+:docinfo:
+:toc: left
+
+include::attributes.adoc[]
+
+= {productname} Documentation
+
+ifdef::env-github[]
+:imagesdir: ../images/
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+// Introduction
+include::introduction.adoc[leveloffset=+1]
+
+// Deployment
+include::deployment.adoc[leveloffset=+1]
+
+
+// TODO tbazant: replace all occurrences of Hrabor with the name of the project

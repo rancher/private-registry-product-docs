@@ -1,0 +1,12 @@
+:suse: SUSE
+:productname: {SUSE} Private Registry
+:productnameshort: SPR
+:kube: Kubernetes
+:docker: Docker
+:harbor: Harbor
+:helm: Helm
+:rke2: RKE2
+:podman: Podman
+:scc: {suse} Customer Center
+:scca: SCC
+:sregistry: {suse} Registry

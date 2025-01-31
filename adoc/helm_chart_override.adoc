@@ -1,0 +1,418 @@
+:doctype: book
+include::attributes.adoc[]
+
+[#spr-helm-chart-override]
+= Overriding the {productname} {helm} chart
+
+The {productname} ({productnameshort}) {helm} chart is delivered with default values.
+You can adjust the {helm} chart installation by one of the following ways:
+
+* Append specific parameters to the `--set` flags on the `helm install` command line, for example:
+[source]
+  $ helm install `RELEASE_NAME` oci://registry.suse.com/private-registry/harbor \
+  --set harborAdminPassword=<MY_PASSWORD> \
+  --set externalURL=https://my-harbor.domain
+* Create a custom `values.yaml` file and pass it to the `--values` flag, for example:
+[source]
+  $ helm install `RELEASE_NAME` oci://registry.suse.com/private-registry/harbor \
+  --values values.yaml
+
+[#spr-helm-chart-override-parameters]
+== Overriding {helm} chart parameters and values
+
+The following tables list all parameters with descriptions that you can use to override the default installation values.
+
+.Global parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`global.imageRegistry` |Sets a global override for the container image registry used for all images. |`""`
+|`global.imagePullSecrets` |Sets global pull secrets for accessing the container image registry. |`[]`
+|===
+
+.Common parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`externalURL` |Specifies the external URL for `harbor-core` service. |`https://core.harbor.domain`
+|`existingSecretAdminPasswordKey` |Sets the key name in the secret containing {harbor} administrator password. |`HARBOR_ADMIN_PASSWORD`
+|`harborAdminPassword` |Sets the initial password for {harbor} administrator. Change it from portal after deployment. |`Harbor12345`
+|`imagePullSecrets` |Sets the `imagePullSecrets` names for all deployments. |
+|`updateStrategy.type` |Sets the update strategy for deployments with persistent volumes. Accepts `RollingUpdate` or `Recreate`. Use `Recreate` when RWM for volumes is not supported. |`RollingUpdate`
+|`logLevel` |Sets the log level for {harbor} services. Accepts `fatal`, `error`, `warn`, `info`, `debug` or `trace`. |`debug`
+|`enableMigratehelmHook` |Runs database migration job via {helm} hook. When `true`, separates migration job from `harbor-core`. |`false`
+|`caSecretName` |Specifies the secret name containing the `ca.crt` key. |
+|===
+
+.Proxy parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`proxy.httpProxy` |Specifies the HTTP proxy server URL. |`""`
+|`proxy.httpsProxy` |Specifies the HTTPS proxy server URL. |`""`
+|`proxy.noProxy` |Sets URLs that bypass the proxy configuration. |`127.0.0.1,localhost,.local,.internal`
+|`proxy.components` |Sets components that use the proxy configuration. |`["core","jobservice","trivy"]`
+|===
+
+.Expose parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`expose.type` |Specifies service exposure type: `ingress`, `clusterIP`, `nodePort` or `loadBalancer`. |`ingress`
+|`expose.tls.enabled` |Enables TLS. |`true`
+|`expose.tls.certSource` |Sets TLS certificate source as `auto`, `secret` or `none`. |`auto`
+|`expose.tls.auto.commonName` |Sets certificate common name when type is not `ingress`. |
+|`expose.tls.secret.secretName` |Specifies name of secret containing `tls.crt` (certificate) and `tls.key` (private key). |
+|`expose.ingress.hosts.core` |Sets {harbor} core service host in ingress rule. |`core.harbor.domain`
+|`expose.ingress.controller` |Sets ingress controller type. Supports `default`, `gce`, `alb`, `f5-bigip` and `ncp`. |`default`
+|`expose.ingress.kubeVersionOverride` |Overrides Kubernetes version for ingress templating. |
+|`expose.ingress.annotations` |Sets ingress annotations. |
+|`expose.ingress.labels` |Sets ingress-specific labels. |`{}`
+|`expose.clusterIP.name` |Sets ClusterIP service name. |`harbor`
+|`expose.clusterIP.annotations` |Sets ClusterIP service annotations. |`{}`
+|`expose.clusterIP.ports.httpPort` |Sets HTTP service port. |`80`
+|`expose.clusterIP.ports.httpsPort` |Sets HTTPS service port. |`443`
+|`expose.clusterIP.annotations` |Sets ClusterIP annotations. |
+|`expose.clusterIP.labels` |Sets ClusterIP-specific labels. |`{}`
+|`expose.nodePort.name` |Sets NodePort service name. |`harbor`
+|`expose.nodePort.ports.http.port` |Sets HTTP service port. |`80`
+|`expose.nodePort.ports.http.nodePort` |Sets HTTP node port. |`30002`
+|`expose.nodePort.ports.https.port` |Sets HTTPS service port. |`443`
+|`expose.nodePort.ports.https.nodePort` |Sets HTTPS node port. |`30003`
+|`expose.nodePort.annotations` |Sets NodePort annotations. |
+|`expose.nodePort.labels` |Sets NodePort-specific labels. |`{}`
+|`expose.loadBalancer.name` |Sets service name. |`harbor`
+|`expose.loadBalancer.IP` |Sets loadBalancer IP when IP assignment is supported. |`""`
+|`expose.loadBalancer.ports.httpPort` |Sets HTTP service port. |`80`
+|`expose.loadBalancer.ports.httpsPort` |Sets HTTPS service port. |`30002`
+|`expose.loadBalancer.annotations` |Sets loadBalancer service annotations. |`{}`
+|`expose.loadBalancer.labels` |Sets loadBalancer-specific labels. |`{}`
+|`expose.loadBalancer.sourceRanges` |Specifies IP address ranges for loadBalancerSourceRanges. |`[]`
+|===
+
+[options="header"]
+|===
+|Name |Description |Value
+|`persistence.enabled` |Enables or disables data persistence. |`true`
+|`persistence.resourcePolicy` |`keep` prevents removal of PVCs during a {helm} delete operation. Empty value deletes PVCs after chart deletion. |`keep`
+|`persistence.persistentVolumeClaim.registry.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.registry.storageClass` |The `storageClass` that provisions the volume. |
+|`persistence.persistentVolumeClaim.registry.subPath` |The sub path in the volume. |
+|`persistence.persistentVolumeClaim.registry.accessMode` |The access mode of the volume. |`ReadWriteOnce`
+|`persistence.persistentVolumeClaim.registry.size` |The size of the volume. |`5Gi`
+|`persistence.persistentVolumeClaim.registry.annotations` |The annotations of the volume. |
+|`persistence.persistentVolumeClaim.jobservice.jobLog.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.jobservice.jobLog.storageClass` |The `storageClass` that provisions the volume. |
+|`persistence.persistentVolumeClaim.jobservice.jobLog.subPath` |The sub path in the volume. |
+|`persistence.persistentVolumeClaim.jobservice.jobLog.accessMode` |The access mode of the volume. |`ReadWriteOnce`
+|`persistence.persistentVolumeClaim.jobservice.jobLog.size` |The size of the volume. |`1Gi`
+|`persistence.persistentVolumeClaim.jobservice.jobLog.annotations` |The annotations of the volume. |
+|`persistence.persistentVolumeClaim.database.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.database.storageClass` |The `storageClass` that provisions the volume. |
+|`persistence.persistentVolumeClaim.database.subPath` |The sub path in the volume. Ignored when external database is used. |
+|`persistence.persistentVolumeClaim.database.accessMode` |The access mode of the volume. Ignored when external database is used. |`ReadWriteOnce`
+|`persistence.persistentVolumeClaim.database.size` |The size of the volume. Ignored when external database is used. |`1Gi`
+|`persistence.persistentVolumeClaim.database.annotations` |The annotations of the volume. |
+|`persistence.persistentVolumeClaim.redis.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.redis.storageClass` |The `storageClass` that provisions the volume. Uses default StorageClass if not specified. |
+|`persistence.persistentVolumeClaim.redis.subPath` |The sub path in the volume. Ignored when external Redis is used. |
+|`persistence.persistentVolumeClaim.redis.accessMode` |The access mode of the volume. Ignored when external Redis is used. |`ReadWriteOnce`
+|`persistence.persistentVolumeClaim.redis.size` |The size of the volume. Ignored when external Redis is used. |`1Gi`
+|`persistence.persistentVolumeClaim.redis.annotations` |The annotations of the volume. |
+|`persistence.persistentVolumeClaim.trivy.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.trivy.storageClass` |The `storageClass` that provisions the volume. Uses default StorageClass if not specified. |
+|`persistence.persistentVolumeClaim.trivy.subPath` |The sub path in the volume. |
+|`persistence.persistentVolumeClaim.trivy.accessMode` |The access mode of the volume. |`ReadWriteOnce`
+|`persistence.persistentVolumeClaim.trivy.size` |The size of the volume. |`1Gi`
+|`persistence.persistentVolumeClaim.trivy.annotations` |The annotations of the volume. |
+|`persistence.imageChartStorage.disableredirect` |Controls redirect management from content backends. Set to true to disable redirects for unsupported backends. |`false`
+|`persistence.imageChartStorage.caBundleSecretName` |The name of secret containing CA bundle for self-signed storage service certificates. |
+|`persistence.imageChartStorage.type` |The storage type for images and charts: `filesystem`, `azure`, `gcs`, `s3`, `swift`, or `oss`. |`filesystem`
+|`persistence.imageChartStorage.gcs.existingSecret` |The name of existing secret containing the GCS service account JSON key. The key must be `gcs-key.json`. |`""`
+|`persistence.imageChartStorage.gcs.useWorkloadIdentity` |Enables workload identity usage in a GKE cluster. |`false`
+|===
+
+.Nginx parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`nginx.image.repository` |The image repository for `nginx`.|`private-registry/harbor-nginx`
+|`nginx.image.tag` |The image tag for `nginx`.|`2.11`
+|`nginx.replicas` |The number of replicas to run.|`1`
+|`nginx.revisionHistoryLimit` |The maximum number of old `ReplicaSet` revisions to retain.|`10`
+|`nginx.resources` |The compute resources allocated for the container.|`undefined`
+|`nginx.automountServiceAccountToken` |Controls automatic mounting of the service account token.|`false`
+|`nginx.nodeSelector` |The node labels used for pod assignment.|`{}`
+|`nginx.tolerations` |The pod assignment tolerations.|`[]`
+|`nginx.affinity` |The node or pod affinity rules.|`{}`
+|`nginx.topologySpreadConstraints` |The rules for spreading pods across failure-domains such as regions or availability zones.|`[]`
+|`nginx.podAnnotations` |The annotations added to the `nginx` pod.|`{}`
+|===
+
+.Portal parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`portal.image.repository` |Repository location for the portal image. |`private-registry/harbor-portal`
+|`portal.image.tag` |Tag for the portal image. |`3.11`
+|`portal.replicas` |Number of replicas to create. |`1`
+|`portal.revisionHistoryLimit` |Maximum number of old `ReplicaSet` revisions to retain. |`10`
+|`portal.resources` |Resources allocated to the container. |`undefined`
+|`portal.automountServiceAccountToken` |Controls automatic mounting of the service account token. |`false`
+|`portal.nodeSelector` |Node labels used for pod assignment. |`{}`
+|`portal.tolerations` |Tolerations used for pod assignment. |`[]`
+|`portal.affinity` |Node and pod affinity settings. |`{}`
+|`portal.topologySpreadConstraints` |Defines pod distribution across failure-domains such as regions or availability zones. |`[]`
+|`portal.podAnnotations` |Annotations added to the portal pod. |`{}`
+|`portal.serviceAnnotations` |Annotations added to the portal service. |`{}`
+|`portal.priorityClassName` |Priority class name for pod execution. |
+|`portal.initContainers` |Init containers to be run before the controller container starts. |`[]`
+|===
+
+.Core parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`core.image.repository` |The repository for the {harbor} core image. |`private-registry/harbor-core`
+|`core.image.tag` |The tag for the {harbor} core image. |`2.11`
+|`core.replicas` |The number of replicas. |`1`
+|`core.revisionHistoryLimit` |The revision history limit. |`10`
+|`core.startupProbe.initialDelaySeconds` |The initial delay in seconds for the startup probe. |`10`
+|`core.resources` |The resources to allocate for the container. |`undefined`
+|`core.automountServiceAccountToken` |Mounts the service account token. |`false`
+|`core.nodeSelector` |The node labels for pod assignment. |`{}`
+|`core.tolerations` |The tolerations for pod assignment. |`[]`
+|`core.affinity` |The node or pod affinities. |`{}`
+|`core.topologySpreadConstraints` |The constraints that define how pods are spread across failure-domains like regions or availability zones. |`[]`
+|`core.podAnnotations` |The annotations to add to the core pod. |`{}`
+|`core.serviceAnnotations` |The annotations to add to the core service. |`{}`
+|`core.configureUserSettings` |A JSON string in the environment variable CONFIG_OVERWRITE_JSON to configure user settings. |
+|`core.quotaUpdateProvider` |The provider for updating project quota usage, options are `redis` or `db`. |`db`
+|`core.secret` |Used when core server communicates with other components. |
+|`core.secretName` |The name of a Kubernetes secret to use your own TLS certificate and private key for token encryption or decryption. |
+|`core.tokenKey` |The PEM-formatted RSA private key used to sign service tokens. |
+|`core.tokenCert` |The PEM-formatted certificate signed by `core.tokenKey` used to validate service tokens. |
+|`core.xsrfKey` |The XSRF key, automatically generated if not specified. |
+|`core.priorityClassName` |The priority class to run the pod as. |
+|`core.artifactPullAsyncFlushDuration` |The time duration for asynchronously updating artifact pull time and repository pull count. |
+|`core.gdpr.deleteUser` |Enables GDPR compliant user deletion. |`false`
+|`core.gdpr.auditLogsCompliant` |Enables GDPR compliance for audit logs by changing username to its CRC32 value if that user was deleted from the system. |`false`
+|`core.initContainers` |The init containers to run before the controller's container starts. |`[]`
+|===
+
+.Jobservice parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`jobservice.image.repository` |The repository for the jobservice image. |`private-registry/harbor-jobservice`
+|`jobservice.image.tag` |The tag for the jobservice image. |`2.11`
+|`jobservice.replicas` |The number of replicas. |`1`
+|`jobservice.revisionHistoryLimit` |The revision history limit. |`10`
+|`jobservice.maxJobWorkers` |The maximum number of job workers. |`10`
+|`jobservice.jobLoggers` |The loggers for jobs: `file`, `database` or `stdout`. |`[file]`
+|`jobservice.loggerSweeperDuration` |The duration in days to keep job logs (ignored if `jobLoggers` is set to `stdout`). |`14`
+|`jobservice.notification.webhook_job_max_retry` |The maximum number of retries for webhook notification sending. |`3`
+|`jobservice.notification.webhook_job_http_client_timeout` |The HTTP client timeout in seconds for webhook notification sending. |`3`
+|`jobservice.reaper.max_update_hours` |The maximum time in hours to wait for a task to finish. If the task is not finished after the specified hours, it is marked as an error but continues to run. |`24`
+|`jobservice.reaper.max_dangling_hours` |The maximum time in hours for execution in running state without a new task created. |`168`
+|`jobservice.resources` |The [resources] to allocate for container. |`undefined`
+|`jobservice.automountServiceAccountToken` |Mounts the service account token. |`false`
+|`jobservice.nodeSelector` |The node labels for pod assignment. |`{}`
+|`jobservice.tolerations` |The tolerations for pod assignment. |`[]`
+|`jobservice.affinity` |The node or pod affinities. |`{}`
+|`jobservice.topologySpreadConstraints` |The constraints that define how pods are spread across failure-domains like regions or availability zones. |`[]`
+|`jobservice.podAnnotations` |The annotations to add to the jobservice pod. |`{}`
+|`jobservice.priorityClassName` |The priority class to run the pod as. |
+|`jobservice.secret` |The secret used when job service communicates with other components. If a secret key is not specified, {helm} generates it. Must be a string of 16 characters. |
+|`jobservice.initContainers` |The init containers to run before the controller's container starts. |`[]`
+|===
+
+.Registry parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`registry.registry.image.repository` |The repository location for the registry image. |`private-registry/harbor-registry`
+|`registry.registry.image.tag` |The tag for the registry image. |`2.11`
+|`registry.registry.resources` |The [resources] to allocate for container |`undefined`
+|`registry.controller.image.repository` |The repository location for the registry controller image. |`private-registry/harbor-registryctl`
+|`registry.controller.image.tag` |The tag for the registry controller image. |`2.11`
+|`registry.controller.resources` |The [resources] to allocate for container |`undefined`
+|`registry.replicas` |The number of replica instances. |`1`
+|`registry.revisionHistoryLimit` |The maximum number of revisions to maintain in history. |`10`
+|`registry.nodeSelector` |The node labels for pod assignment. |`{}`
+|`registry.automountServiceAccountToken` |Controls whether to mount the service account token. |`false`
+|`registry.tolerations` |The tolerations for pod assignment. |`[]`
+|`registry.affinity` |The node or pod affinities. |`{}`
+|`registry.topologySpreadConstraints` |The constraints that define pod distribution across failure-domains such as regions or availability zones. |`[]`
+|`registry.middleware` |Middleware support for a CDN between back-end storage and docker pull recipient. |
+|`registry.podAnnotations` |The annotations to add to the registry pod. |`{}`
+|`registry.priorityClassName` |The priority class for pod execution. |
+|`registry.secret` |The secret that secures the upload state between client and registry storage back-end. |
+|`registry.credentials.username` |The username for {harbor} core's internal registry access. |`harbor_registry_user`
+|`registry.credentials.password` |The password for {harbor} core's internal registry access. |`harbor_registry_password`
+|`registry.credentials.existingSecret` |An existing secret containing the password for registry instance access in htpasswd auth mode. |`""`
+|`registry.credentials.htpasswdString` |The login and password in htpasswd string format. Excludes `registry.credentials.username` and `registry.credentials.password`. |`undefined`
+|`registry.relativeurls` |Returns relative URLs in Location headers when true. Required if {harbor} is behind a reverse proxy. |`false`
+|`registry.upload_purging.enabled` |Enables purging of _upload directories. |`true`
+|`registry.upload_purging.age` |The time period after which files in _upload directories are removed, default is one week. |`168h`
+|`registry.upload_purging.interval` |The time interval between purge operations. |`24h`
+|`registry.upload_purging.dryrun` |Enables dryrun mode for _upload purging. |`false`
+|`registry.initContainers` |The init containers that run before the controller's container starts. |`[]`
+|===
+
+.Trivy parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`trivy.enabled` |The flag to enable Trivy scanner |`true`
+|`trivy.image.repository` |Repository for Trivy adapter image |`private-registry/harbor-trivy-adapter`
+|`trivy.image.tag` |Tag for Trivy adapter image |`2.11`
+|`trivy.resources` |The resources to allocate for Trivy adapter container |
+|`trivy.automountServiceAccountToken` |Whether to mounts the service account token. |`false`
+|`trivy.replicas` |The number of Pod replicas |`1`
+|`trivy.debugMode` |The flag to enable Trivy debug mode |`false`
+|`trivy.vulnType` |Comma-separated list of vulnerability types (`os` and `library`). |`os,library`
+|`trivy.severity` |Comma-separated list of severities to check. |`UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`
+|`trivy.ignoreUnfixed` |Displays only fixed vulnerabilities. |`false`
+|`trivy.insecure` |Skips registry certificate verification. |`false`
+|`trivy.skipUpdate` |Disables Trivy database downloads from GitHub. |`false`
+|`trivy.skipJavaDBUpdate` |Requires manual download of the trivy-java.db file when enabled. |`false`
+|`trivy.offlineScan` |Prevents Trivy from sending API requests to identify dependencies. |`false`
+|`trivy.securityCheck` |Comma-separated list of security issues to detect. |`vuln`
+|`trivy.timeout` |The duration to wait for scan completion |`5m0s`
+|`trivy.gitHubToken` |The GitHub access token to download |
+|`trivy.priorityClassName` |The priority class to run the pod as |
+|`trivy.topologySpreadConstraints` |The priority class to run the pod as |
+|`trivy.initContainers` |Init containers to be run before the controller's container starts. |`[]`
+|===
+
+.Database parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`database.type` |The database type. Set to external when using an external database. |`internal`
+|`database.internal.image.repository` |The repository for the database image. |`private-registry/harbor-db`
+|`database.internal.image.tag` |The tag for the database image. |`2.11`
+|`database.internal.password` |The password for the database. |`changeit`
+|`database.internal.shmSizeLimit` |The size limit of shared memory for internal PostgreSQL, typically 50% of the container memory limit. |`512Mi`
+|`database.internal.resources` |The [resources] to allocate for the container. |`undefined`
+|`database.internal.automountServiceAccountToken` |Controls service account token mounting. |`false`
+|`database.internal.initContainer.migrator.resources` |The [resources] to allocate for the database migrator initContainer. |`undefined`
+|`database.internal.initContainer.permissions.resources` |The [resources] to allocate for the database permissions initContainer. |`undefined`
+|`database.internal.nodeSelector` |The node labels for pod assignment. |`{}`
+|`database.internal.tolerations` |The tolerations for pod assignment. |`[]`
+|`database.internal.affinity` |The node or pod affinities. |`{}`
+|`database.internal.priorityClassName` |The priority class for running the pod. |
+|`database.internal.livenessProbe.timeoutSeconds` |The timeout in seconds for the liveness probe, ranging from 1 to 5 seconds. |`1`
+|`database.internal.readinessProbe.timeoutSeconds` |The timeout in seconds for the readiness probe, ranging from 1 to 5 seconds. |`1`
+|`database.internal.extrInitContainers` |Additional init containers that run before the database container starts. |`[]`
+|`database.external.host` |The host name of the external database. |`192.168.0.1`
+|`database.external.port` |The port number of the external database. |`5432`
+|`database.external.username` |The username for the external database. |`user`
+|`database.external.password` |The password for the external database. |`password`
+|`database.external.coreDatabase` |The database name used by the core service. |`registry`
+|`database.external.existingSecret` |An existing secret containing the database password. The key must be password. |`""`
+|`database.external.sslmode` |The connection method for the external database (require, verify-full, verify-ca, disable). |`disable`
+|`database.maxIdleConns` |The maximum number of connections in the idle connection pool. No idle connections are retained if set to 0 or less. |`50`
+|`database.maxOpenConns` |The maximum number of open connections to the database. No limit if set to 0 or less. |`100`
+|`database.podAnnotations` |The annotations to add to the database pod. |`{}`
+|===
+
+.Redis parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`redis.type` |The Redis deployment type, set to external for external Redis. |`internal`
+|`redis.internal.image.repository` |The repository for Redis image. |`private-registry/harbor-redis`
+|`redis.internal.image.tag` |The tag for Redis image. |`7.2`
+|`redis.internal.resources` |The resources to allocate for the container. |`undefined`
+|`redis.internal.automountServiceAccountToken` |Mounts the service account token. |`false`
+|`redis.internal.nodeSelector` |The node labels for pod assignment. |`{}`
+|`redis.internal.tolerations` |The tolerations for pod assignment. |`[]`
+|`redis.internal.affinity` |The node or pod affinities. |`{}`
+|`redis.internal.priorityClassName` |The priority class to run the pod as |
+|`redis.internal.jobserviceDatabaseIndex` |The database index for jobservice. |`1`
+|`redis.internal.registryDatabaseIndex` |The database index for registry. |`2`
+|`redis.internal.trivyAdapterIndex` |The database index for trivy adapter. |`5`
+|`redis.internal.harborDatabaseIndex` |The database index for {harbor} miscellaneous business logic. |`0`
+|`redis.internal.cacheLayerDatabaseIndex` |The database index for {harbor} cache layer. |`0`
+|`redis.internal.initContainers` |The init containers that run before the Redis container starts. |`[]`
+|`redis.external.addr` |The address of external Redis. |`192.168.0.2:6379`
+|`redis.external.sentinelMasterSet` |The name of the set of Redis instances to monitor. |
+|`redis.external.coreDatabaseIndex` |The database index for core. |`0`
+|`redis.external.jobserviceDatabaseIndex` |The database index for jobservice. |`1`
+|`redis.external.registryDatabaseIndex` |The database index for registry. |`2`
+|`redis.external.trivyAdapterIndex` |The database index for trivy adapter. |`5`
+|`redis.external.harborDatabaseIndex` |The database index for {harbor} miscellaneous business logic. |`0`
+|`redis.external.cacheLayerDatabaseIndex` |The database index for {harbor} cache layer. |`0`
+|`redis.external.username` |The username of external Redis. |
+|`redis.external.password` |The password of external Redis. |
+|`redis.external.existingSecret` |The existing secret to connect to Redis. The key must be REDIS_PASSWORD. |`""`
+|`redis.podAnnotations` |The annotations to add to the Redis pod. |`{}`
+|===
+
+.Exporter parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`exporter.replicas` |The number of replicas to run. |`1`
+|`exporter.revisionHistoryLimit` |The revision history limit. |`10`
+|`exporter.podAnnotations` |Annotations to add to the exporter pod. |`{}`
+|`exporter.image.repository` |The repository for the redis image. |`private-registry/harbor-exporter`
+|`exporter.image.tag` |The tag for the exporter image. |`2.11`
+|`exporter.nodeSelector` |Node labels for pod assignment. |`{}`
+|`exporter.tolerations` |Tolerations for pod assignment. |`[]`
+|`exporter.affinity` |Node or Pod affinities. |`{}`
+|`exporter.topologySpreadConstraints` |The constraints that define how Pods spread across failure-domains like regions or availability zones. |`[]`
+|`exporter.automountServiceAccountToken` |Controls whether to mount the serviceAccountToken. |`false`
+|`exporter.cacheDuration` |The cache duration for information that the exporter collects from {harbor}. |`30`
+|`exporter.cacheCleanInterval` |The cache clean interval for information that the exporter collects from {harbor}. |`14400`
+|`exporter.priorityClassName` |The priority class to run the pod as. |
+|===
+
+.Metrics parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`metrics.enabled` |Enables {harbor} metrics. |`false`
+|`metrics.core.path` |The URL path for core metrics. |`/metrics`
+|`metrics.core.port` |The port for core metrics. |`8001`
+|`metrics.registry.path` |The URL path for registry metrics. |`/metrics`
+|`metrics.registry.port` |The port for registry metrics. |`8001`
+|`metrics.exporter.path` |The URL path for exporter metrics. |`/metrics`
+|`metrics.exporter.port` |The port for exporter metrics. |`8001`
+|`metrics.serviceMonitor.enabled` |Creates Prometheus serviceMonitor. Requires Prometheus CRDs. |`false`
+|`metrics.serviceMonitor.additionalLabels` |Additional labels to upsert to the manifest. |`""`
+|`metrics.serviceMonitor.interval` |The scrape period for {harbor} metrics. |`""`
+|`metrics.serviceMonitor.metricRelabelings` |The metrics relabeling rules to add, modify or delete before ingestion. |`[]`
+|`metrics.serviceMonitor.relabelings` |The relabeling rules to add, modify or delete before scraping. |`[]`
+|===
+
+.Trace parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`trace.enabled` |Enables tracing functionality. |`false`
+|`trace.provider` |The tracing provider: `jaeger` or `otel`. jaeger version should be 1.26+. |`jaeger`
+|`trace.sample_rate` |The sampling rate for trace data. 1 samples 100% of traces, 0.5 samples 50% of traces. |`1`
+|`trace.namespace` |The namespace used to differentiate different {harbor} services. |
+|`trace.attributes` |A key-value dictionary containing user-defined attributes for trace provider initialization. |
+|`trace.jaeger.endpoint` |The endpoint of jaeger. |`http://hostname:14268/api/traces`
+|`trace.jaeger.username` |The username for jaeger authentication. |
+|`trace.jaeger.password` |The password for jaeger authentication. |
+|`trace.jaeger.agent_host` |The agent host of jaeger. |
+|`trace.jaeger.agent_port` |The agent port of jaeger. |`6831`
+|`trace.otel.endpoint` |The endpoint of OpenTelemetry. |`hostname:4318`
+|`trace.otel.url_path` |The URL path of OpenTelemetry. |`/v1/traces`
+|`trace.otel.compression` |Enables compression for OpenTelemetry. |`false`
+|`trace.otel.insecure` |Establishes an insecure connection for OpenTelemetry. |`true`
+|`trace.otel.timeout` |The timeout in seconds for OpenTelemetry. |`10`
+|===
+
+.Cache parameters
+[options="header"]
+|===
+|Name |Description |Value
+|`cache.enabled` |Enables the cache layer. |`false`
+|`cache.expireHours` |The expiration time in hours for the cache layer. |`24`
+|===
