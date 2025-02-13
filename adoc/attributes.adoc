@@ -1,6 +1,6 @@
 :suse: SUSE
 :productname: {SUSE} Private Registry
-:productnameshort: SPR
+:productnameshort: Private Registry
 :kube: Kubernetes
 :docker: Docker
 :harbor: Harbor
