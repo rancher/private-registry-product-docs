@@ -17,10 +17,19 @@ ifdef::env-github[]
 endif::[]
 
 // Introduction
-include::introduction.adoc[leveloffset=+1]
+include::introduction.adoc[]
 
 // Deployment
-include::deployment.adoc[leveloffset=+1]
+include::deployment.adoc[]
 
+// Deployment HA
+include::deployment_ha.adoc[]
+
+// Appendix
+[appendix]
+include::helm_chart_override.adoc[]
+
+[appendix]
+include::ha_helm_chart_example.adoc[]
 
 // TODO tbazant: replace all occurrences of Hrabor with the name of the project

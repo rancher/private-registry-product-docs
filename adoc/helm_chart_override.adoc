@@ -1,8 +1,7 @@
-:doctype: book
 include::attributes.adoc[]
 
-[#spr-helm-chart-override]
-= Overriding the {productname} {helm} chart
+[#pr-helm-chart-override]
+== Overriding the {productname} {helm} chart
 
 The {productname} ({productnameshort}) {helm} chart is delivered with default values.
 You can adjust the {helm} chart installation by one of the following ways:
@@ -17,8 +16,8 @@ You can adjust the {helm} chart installation by one of the following ways:
   $ helm install `RELEASE_NAME` oci://registry.suse.com/private-registry/harbor \
   --values values.yaml
 
-[#spr-helm-chart-override-parameters]
-== Overriding {helm} chart parameters and values
+[#pr-helm-chart-override-parameters]
+=== Overriding {helm} chart parameters and values
 
 The following tables list all parameters with descriptions that you can use to override the default installation values.
 

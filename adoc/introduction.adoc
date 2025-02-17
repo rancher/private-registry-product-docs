@@ -1,16 +1,15 @@
-:doctype: book
 include::attributes.adoc[]
 
-[#spr-introduction]
-= Introduction
+[#pr-introduction]
+== Introduction
 
-[#spr-what-is-spr]
-== What is {productname}?
+[#pr-what-is-spr]
+=== What is {productname}?
 {productname} ({productnameshort}) is an on-premises container registry.
 {productnameshort} is designed for {suse} customers who need a container registry that works well with other {suse} services and products.
 
-[#spr-what-are-spr-benefits]
-== What are {productname} benefits?
+[#pr-what-are-pr-benefits]
+=== What are {productname} benefits?
 {productnameshort} is based on the {harbor} project and includes all its core features as well as added benefits, for example:
 
 * *On-premises container registry.* {productnameshort} is a locally hosted container registry with access to online {suse} registry services.
@@ -21,8 +20,8 @@ You can also deploy {productnameshort} with High Availability setup.
 * *User management.* {productnameshort} provides authentication and authorization mechanism with role-based access control (RBAC).
 * *User interface.* Besides a command-line interface, you can administer {productnameshort} via Web user interface.
 
-[#spr-how-does-spr-work]
-== How does {productname} work?
+[#pr-how-does-pr-work]
+=== How does {productname} work?
 {productnameshort} is delivered as _Open Container Initiative_ (OCI) containers and it is expected to be deployed on a {kube} cluster.
 {productnameshort} consists of the following containers:
 
@@ -44,8 +43,8 @@ After successful authentication and authorization, you can configure multiple as
 * Apply resource *quotas* to projects.
 * Set up the *replication* of images between {productnameshort} instances.
 
-[#spr-for-more-information]
-== For more information
+[#pr-for-more-information]
+=== For more information
 Refer to the following sources to obtain more details:
 
 * The {harbor} project https://goharbor.io/[home page].

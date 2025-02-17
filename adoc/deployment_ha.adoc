@@ -1,0 +1,41 @@
+include::attributes.adoc[]
+
+[#pr-deployment-ha]
+== Deployment with High Availibility
+
+You can use {helm} to deploy highly available (HA) {productnameshort} on a {kube} cluster.
+HA setup ensure that users do not experience interruptions of service if one of the nodes on which {productnameshort} is running becomes unavailable.
+
+[#pr-deployment-ha-architecture]
+=== Architecture of the HA setup 
+
+Most of {productnameshort} components are now stateless.
+Therefore, we can scale them by increasing pod replicas, ensuring they run on multiple worker nodes.
+{kube} services ensure connectivity between pods.
+
+For storage, users should provide an HA {postgresql} and {redis} cluster for application data, along with PVCs or object storage for storing images and charts.
+
+image::ha-setup.png[{productnameshort} HA setup, width=75%]
+
+[#pr-deployment-ha-prerequisites]
+=== Prerequisites
+* A {kube} cluster version 1.20 or higher
+* {helm} version 3.2.0 or higher
+* HA {ingress} controller ({productnameshort} does not manage the external endpoint)
+* HA {postgresql} 9.6+ ({productnameshort} does not handle the deployment of HA database)
+* HA {redis} ({productnameshort} does not handle the deployment of HA {redis})
+* Persistent Volume Claim (PVC) that can be shared across nodes or external object storage
+* An active subscription for {productname}
+
+[#pr-deployment-ha-procedure]
+=== Deploying {productnameshort} with HA
+
+. Add {productnameshort} {helm} repository.
+[source]
+  helm repo add harbor https://helm.goharbor.io
+. Download the {productnameshort} {helm} chart.
+[source]
+  helm fetch harbor/harbor --untar
+. Update the deployment patameters to match your requirements.
+Refer to <<pr-ha-helm-chart-example>> for an example {helm} chart for {productnameshort} HA setup.
+Refer to <<pr-helm-chart-override>> for a complete list of values to specify or override.

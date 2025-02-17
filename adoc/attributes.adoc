@@ -10,3 +10,6 @@
 :scc: {suse} Customer Center
 :scca: SCC
 :sregistry: {suse} Registry
+:ingress: Ingress
+:postgresql: PostgreSQL
+:redis: Redis
