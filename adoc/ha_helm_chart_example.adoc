@@ -2,7 +2,7 @@ include::attributes.adoc[]
 [#pr-ha-helm-chart-example]
 == Example of {productnameshort} HA setup {helm} chart
 
-The following example `values.yaml` file illustrates values that are required for the {productnameshort} HA setup.
+The following example values file illustrates parameters that are required for the {productnameshort} HA setup.
 
 [source,yaml]
 ----
