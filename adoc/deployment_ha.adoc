@@ -30,12 +30,13 @@ image::ha-setup.png[{productnameshort} HA setup, width=75%]
 [#pr-deployment-ha-procedure]
 === Deploying {productnameshort} with HA
 
-. Add {productnameshort} {helm} repository.
-[source]
-  helm repo add harbor https://helm.goharbor.io
 . Download the {productnameshort} {helm} chart.
 [source]
-  helm fetch harbor/harbor --untar
+  $ helm pull oci://registry.suse.com/private-registry/private-registry-helm --untar
 . Update the deployment patameters to match your requirements.
 Refer to <<pr-ha-helm-chart-example>> for an example {helm} chart for {productnameshort} HA setup.
 Refer to <<pr-helm-chart-override>> for a complete list of values to specify or override.
+. Install the {produ<ctnameshort} {helm} chart.
+Replace `<RELEASE_NAME>` with your custom relase name for the {helm} chart deployment.
+[source]
+  $ helm install <RELEASE_NAME> harbor/

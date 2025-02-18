@@ -17,13 +17,13 @@ portal:
   replicas: 2 //<3>
 
 core:
-  replicas: 2
+  replicas: 2 //<3>
 
 jobservice:
-  replicas: 2
+  replicas: 2 //<3>
 
 registry:
-  replicas: 2
+  replicas: 2 //<3>
 
 database:
   type: external

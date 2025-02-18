@@ -30,7 +30,8 @@ To obtain the credentials from {scca}, follow these steps:
 
 [#pr-deployment-installing-and-running]
 === Installing and running {productnameshort} using {helm}
-To install {productnameshort} using {helm}, run the following these steps:
+The following procedure escribes how to install {productnameshort} using {helm}.
+Replace `<RELEASE_NAME>` with your custom relase name for the {helm} chart deployment.
 
 . Log in to {sregistry} using the obtained {scca} mirroring credentials.
 [source]
@@ -39,7 +40,7 @@ To install {productnameshort} using {helm}, run the following these steps:
 . Install the latest version of the {productnameshort} {helm} chart.
   To change the default installation values, refer to <<pr-helm-chart-override>>.
 [source]
-  $ helm install `RELEASE_NAME` oci://registry.suse.com/private-registry/private-registry-helm
+  $ helm install <RELEASE_NAME> oci://registry.suse.com/private-registry/private-registry-helm
 . The above `helm  install ...` command starts deploying several related contaniers.
   The deployment may take several minutes to complete.
   It also prints a message with the URL to the SPR Web portal and commands to obtain the administraor credentials.
@@ -48,5 +49,5 @@ To install {productnameshort} using {helm}, run the following these steps:
 === Upgrading {productnameshort}
 To upgrade the release of the {helm} chart to a specific newer version, run the following command:
 [source]
-$ helm upgrade `RELEASE_NAME` oci://registry.suse.com/private-registry/private-registry-helm \
+$ helm upgrade <RELEASE_NAME> oci://registry.suse.com/private-registry/private-registry-helm \
 --version 1.0.0
