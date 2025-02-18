@@ -30,8 +30,8 @@ To obtain the credentials from {scca}, follow these steps:
 
 [#pr-deployment-installing-and-running]
 === Installing and running {productnameshort} using {helm}
-The following procedure escribes how to install {productnameshort} using {helm}.
-Replace `<RELEASE_NAME>` with your custom relase name for the {helm} chart deployment.
+The following procedure describes how to install {productnameshort} using {helm}.
+Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
 
 . Log in to {sregistry} using the obtained {scca} mirroring credentials.
 [source]
@@ -43,7 +43,7 @@ Replace `<RELEASE_NAME>` with your custom relase name for the {helm} chart deplo
   $ helm install <RELEASE_NAME> oci://registry.suse.com/private-registry/private-registry-helm
 . The above `helm  install ...` command starts deploying several related contaniers.
   The deployment may take several minutes to complete.
-  It also prints a message with the URL to the SPR Web portal and commands to obtain the administraor credentials.
+  It also prints a message with the URL to the {productnameshort} Web portal and commands to obtain the administrator credentials.
 
 [#pr-deployment-upgrading]
 === Upgrading {productnameshort}

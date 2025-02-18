@@ -33,10 +33,10 @@ image::ha-setup.png[{productnameshort} HA setup, width=75%]
 . Download the {productnameshort} {helm} chart.
 [source]
   $ helm pull oci://registry.suse.com/private-registry/private-registry-helm --untar
-. Update the deployment patameters to match your requirements.
+. Update the deployment parameters to match your requirements.
 Refer to <<pr-ha-helm-chart-example>> for an example {helm} chart for {productnameshort} HA setup.
 Refer to <<pr-helm-chart-override>> for a complete list of values to specify or override.
-. Install the {produ<ctnameshort} {helm} chart.
-Replace `<RELEASE_NAME>` with your custom relase name for the {helm} chart deployment.
+. Install the {productnameshort} {helm} chart.
+Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
 [source]
   $ helm install <RELEASE_NAME> harbor/
