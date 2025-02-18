@@ -136,7 +136,7 @@ The following tables list all parameters with descriptions that you can use to o
 |===
 |Name |Description |Value
 |`nginx.image.repository` |The image repository for `nginx`.|`private-registry/harbor-nginx`
-|`nginx.image.tag` |The image tag for `nginx`.|`2.11`
+|`nginx.image.tag` |The image tag for `nginx`.|
 |`nginx.replicas` |The number of replicas to run.|`1`
 |`nginx.revisionHistoryLimit` |The maximum number of old `ReplicaSet` revisions to retain.|`10`
 |`nginx.resources` |The compute resources allocated for the container.|`undefined`
