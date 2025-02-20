@@ -10,7 +10,7 @@ include::attributes.adoc[]
 
 [#pr-what-are-pr-benefits]
 === What are {productname} benefits?
-{productnameshort} is based on the {harbor} project and includes all its core features as well as added benefits, for example:
+{productnameshort} is based on the {harbor} project and includes all its core features as well as added benefits. For example:
 
 * *On-premises container registry.* {productnameshort} is a locally hosted container registry with access to online {suse} registry services.
 * *Security.* {productnameshort} offers security considerations for containerized environments.
@@ -22,11 +22,11 @@ You can also deploy {productnameshort} with High Availability setup.
 
 [#pr-how-does-pr-work]
 === How does {productname} work?
-{productnameshort} is delivered as _Open Container Initiative_ (OCI) containers and it is expected to be deployed on a {kube} cluster.
+{productnameshort} is delivered as _Open Container Initiative_ (OCI) containers and is expected to be deployed on a {kube} cluster.
 {productnameshort} consists of the following containers:
 
-* **harbor-core.** The main component of the {harbor} registry, responsible for handling core functionalities such as managing projects, repositories, and user interactions.
-* **harbor-db.** The database container that stores all metadata related to images, users, and configurations for the {harbor} registry.
+* **harbor-core.** The main component of the {harbor} registry, responsible for handling core functionalities such as managing projects, repositories and user interactions.
+* **harbor-db.** The database container that stores all metadata related to images, users and configurations for the {harbor} registry.
 * **harbor-jobservice.** A service that manages background jobs, such as image replication and scheduled tasks, ensuring efficient processing of operations within the registry.
 * **harbor-nginx.** The reverse proxy and load balancer that routes incoming requests to the appropriate {harbor} services, providing a single entry point for users.
 * **harbor-portal.** The Web-based user interface that allows users to interact with the {harbor} registry, manage images, and configure settings through a graphical interface.

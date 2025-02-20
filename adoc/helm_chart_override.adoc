@@ -4,7 +4,7 @@ include::attributes.adoc[]
 == Overriding the {productname} {helm} chart
 
 The {productname} ({productnameshort}) {helm} chart is delivered with default values.
-You can adjust the {helm} chart installation by one of the following ways:
+You can adjust the {helm} chart installation in one of the following ways:
 
 * Append specific parameters to the `--set` flags on the `helm install` command line, for example:
 [source]
@@ -94,37 +94,37 @@ The following tables list all parameters with descriptions that you can use to o
 |Name |Description |Value
 |`persistence.enabled` |Enables or disables data persistence. |`true`
 |`persistence.resourcePolicy` |`keep` prevents removal of PVCs during a {helm} delete operation. Empty value deletes PVCs after chart deletion. |`keep`
-|`persistence.persistentVolumeClaim.registry.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.registry.existingClaim` |The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components. |
 |`persistence.persistentVolumeClaim.registry.storageClass` |The `storageClass` that provisions the volume. |
-|`persistence.persistentVolumeClaim.registry.subPath` |The sub path in the volume. |
+|`persistence.persistentVolumeClaim.registry.subPath` |The subpath in the volume. |
 |`persistence.persistentVolumeClaim.registry.accessMode` |The access mode of the volume. |`ReadWriteOnce`
 |`persistence.persistentVolumeClaim.registry.size` |The size of the volume. |`5Gi`
 |`persistence.persistentVolumeClaim.registry.annotations` |The annotations of the volume. |
-|`persistence.persistentVolumeClaim.jobservice.jobLog.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.jobservice.jobLog.existingClaim` |The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components. |
 |`persistence.persistentVolumeClaim.jobservice.jobLog.storageClass` |The `storageClass` that provisions the volume. |
-|`persistence.persistentVolumeClaim.jobservice.jobLog.subPath` |The sub path in the volume. |
+|`persistence.persistentVolumeClaim.jobservice.jobLog.subPath` |The subpath in the volume. |
 |`persistence.persistentVolumeClaim.jobservice.jobLog.accessMode` |The access mode of the volume. |`ReadWriteOnce`
 |`persistence.persistentVolumeClaim.jobservice.jobLog.size` |The size of the volume. |`1Gi`
 |`persistence.persistentVolumeClaim.jobservice.jobLog.annotations` |The annotations of the volume. |
-|`persistence.persistentVolumeClaim.database.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.database.existingClaim` |The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components. |
 |`persistence.persistentVolumeClaim.database.storageClass` |The `storageClass` that provisions the volume. |
-|`persistence.persistentVolumeClaim.database.subPath` |The sub path in the volume. Ignored when external database is used. |
-|`persistence.persistentVolumeClaim.database.accessMode` |The access mode of the volume. Ignored when external database is used. |`ReadWriteOnce`
-|`persistence.persistentVolumeClaim.database.size` |The size of the volume. Ignored when external database is used. |`1Gi`
+|`persistence.persistentVolumeClaim.database.subPath` |The subpath in the volume. Ignored when an external database is used. |
+|`persistence.persistentVolumeClaim.database.accessMode` |The access mode of the volume. Ignored when an external database is used. |`ReadWriteOnce`
+|`persistence.persistentVolumeClaim.database.size` |The size of the volume. Ignored when an external database is used. |`1Gi`
 |`persistence.persistentVolumeClaim.database.annotations` |The annotations of the volume. |
-|`persistence.persistentVolumeClaim.redis.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.redis.existingClaim` |The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components. |
 |`persistence.persistentVolumeClaim.redis.storageClass` |The `storageClass` that provisions the volume. Uses default StorageClass if not specified. |
-|`persistence.persistentVolumeClaim.redis.subPath` |The sub path in the volume. Ignored when external Redis is used. |
-|`persistence.persistentVolumeClaim.redis.accessMode` |The access mode of the volume. Ignored when external Redis is used. |`ReadWriteOnce`
-|`persistence.persistentVolumeClaim.redis.size` |The size of the volume. Ignored when external Redis is used. |`1Gi`
+|`persistence.persistentVolumeClaim.redis.subPath` |The subpath in the volume. Ignored when an external Redis is used. |
+|`persistence.persistentVolumeClaim.redis.accessMode` |The access mode of the volume. Ignored when an external Redis is used. |`ReadWriteOnce`
+|`persistence.persistentVolumeClaim.redis.size` |The size of the volume. Ignored when an external Redis is used. |`1Gi`
 |`persistence.persistentVolumeClaim.redis.annotations` |The annotations of the volume. |
-|`persistence.persistentVolumeClaim.trivy.existingClaim` |The existing PVC that must be created manually before binding. Requires subPath specification if the PVC is shared with other components. |
+|`persistence.persistentVolumeClaim.trivy.existingClaim` |The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components. |
 |`persistence.persistentVolumeClaim.trivy.storageClass` |The `storageClass` that provisions the volume. Uses default StorageClass if not specified. |
-|`persistence.persistentVolumeClaim.trivy.subPath` |The sub path in the volume. |
+|`persistence.persistentVolumeClaim.trivy.subPath` |The subpath in the volume. |
 |`persistence.persistentVolumeClaim.trivy.accessMode` |The access mode of the volume. |`ReadWriteOnce`
 |`persistence.persistentVolumeClaim.trivy.size` |The size of the volume. |`1Gi`
 |`persistence.persistentVolumeClaim.trivy.annotations` |The annotations of the volume. |
-|`persistence.imageChartStorage.disableredirect` |Controls redirect management from content backends. Set to true to disable redirects for unsupported backends. |`false`
+|`persistence.imageChartStorage.disableredirect` |Controls redirect management from content back-ends. Set to true to disable redirects for unsupported back-ends. |`false`
 |`persistence.imageChartStorage.caBundleSecretName` |The name of secret containing CA bundle for self-signed storage service certificates. |
 |`persistence.imageChartStorage.type` |The storage type for images and charts: `filesystem`, `azure`, `gcs`, `s3`, `swift`, or `oss`. |`filesystem`
 |`persistence.imageChartStorage.gcs.existingSecret` |The name of existing secret containing the GCS service account JSON key. The key must be `gcs-key.json`. |`""`
@@ -332,7 +332,7 @@ The following tables list all parameters with descriptions that you can use to o
 |`redis.internal.priorityClassName` |The priority class to run the pod as |
 |`redis.internal.jobserviceDatabaseIndex` |The database index for jobservice. |`1`
 |`redis.internal.registryDatabaseIndex` |The database index for registry. |`2`
-|`redis.internal.trivyAdapterIndex` |The database index for trivy adapter. |`5`
+|`redis.internal.trivyAdapterIndex` |The database index for Trivy adapter. |`5`
 |`redis.internal.harborDatabaseIndex` |The database index for {harbor} miscellaneous business logic. |`0`
 |`redis.internal.cacheLayerDatabaseIndex` |The database index for {harbor} cache layer. |`0`
 |`redis.internal.initContainers` |The init containers that run before the Redis container starts. |`[]`
@@ -341,7 +341,7 @@ The following tables list all parameters with descriptions that you can use to o
 |`redis.external.coreDatabaseIndex` |The database index for core. |`0`
 |`redis.external.jobserviceDatabaseIndex` |The database index for jobservice. |`1`
 |`redis.external.registryDatabaseIndex` |The database index for registry. |`2`
-|`redis.external.trivyAdapterIndex` |The database index for trivy adapter. |`5`
+|`redis.external.trivyAdapterIndex` |The database index for Trivy adapter. |`5`
 |`redis.external.harborDatabaseIndex` |The database index for {harbor} miscellaneous business logic. |`0`
 |`redis.external.cacheLayerDatabaseIndex` |The database index for {harbor} cache layer. |`0`
 |`redis.external.username` |The username of external Redis. |
@@ -380,7 +380,7 @@ The following tables list all parameters with descriptions that you can use to o
 |`metrics.registry.port` |The port for registry metrics. |`8001`
 |`metrics.exporter.path` |The URL path for exporter metrics. |`/metrics`
 |`metrics.exporter.port` |The port for exporter metrics. |`8001`
-|`metrics.serviceMonitor.enabled` |Creates Prometheus serviceMonitor. Requires Prometheus CRDs. |`false`
+|`metrics.serviceMonitor.enabled` |Creates Prometheus ServiceMonitor. Requires Prometheus CRDs. |`false`
 |`metrics.serviceMonitor.additionalLabels` |Additional labels to upsert to the manifest. |`""`
 |`metrics.serviceMonitor.interval` |The scrape period for {harbor} metrics. |`""`
 |`metrics.serviceMonitor.metricRelabelings` |The metrics relabeling rules to add, modify or delete before ingestion. |`[]`

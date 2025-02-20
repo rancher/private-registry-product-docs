@@ -14,7 +14,7 @@ The following procedures describe how to deploy {productname} ({productnameshort
 
 [#pr-deployment-kube-secrets]
 === Obtaining {kube} secrets from the {scc}
-To download and install the {productnameshort} images from {sregistry}, you need a {kube} secrets with {scc} ({scca}) mirroring credentials.
+To download and install the {productnameshort} images from {sregistry}, you need a {kube} secret with {scc} ({scca}) mirroring credentials.
 To obtain the credentials from {scca}, follow these steps:
 
 . Visit {scc} at https://scc.suse.com and log in.
@@ -41,7 +41,7 @@ Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart depl
   To change the default installation values, refer to <<pr-helm-chart-override>>.
 [source]
   $ helm install <RELEASE_NAME> oci://registry.suse.com/private-registry/private-registry-helm
-. The above `helm  install ...` command starts deploying several related contaniers.
+. The above `helm  install ...` command starts deploying several related containers.
   The deployment may take several minutes to complete.
   It also prints a message with the URL to the {productnameshort} Web portal and commands to obtain the administrator credentials.
 

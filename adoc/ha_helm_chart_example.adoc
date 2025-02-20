@@ -1,6 +1,6 @@
 include::attributes.adoc[]
 [#pr-ha-helm-chart-example]
-== Example of {productnameshort} HA setup {helm} chart
+== Example of a {productnameshort} HA setup {helm} chart
 
 The following example values file illustrates parameters that are required for the minimal {productnameshort} HA setup.
 
@@ -54,10 +54,10 @@ redis:
 [callouts]
 <1> Core service host name in {ingress} rule.
 <2> The external URL for the harbor-core service.
-<3> Number of replicas to create, specify 2 or more.
+<3> Number of replicas to create. Specify two or more.
 <4> Fill the database connection details in the `external` section.
 <5> If using an existing secret, the value must be `password`.
-<6> Accepts one of the folowing values:
+<6> Accepts one of the following values:
   disable:: Do not use SSL.
   require:: Always use SSL and skip verification.
   verify-ca:: Always use SSL. Verify that the certificate presented by the server was signed by a trusted CA.

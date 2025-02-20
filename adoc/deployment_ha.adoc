@@ -1,15 +1,15 @@
 include::attributes.adoc[]
 
 [#pr-deployment-ha]
-== Deployment with High Availibility
+== Deployment with High Availability
 
 You can use {helm} to deploy highly available (HA) {productnameshort} on a {kube} cluster.
-HA setup ensure that users do not experience interruptions of service if one of the nodes on which {productnameshort} is running becomes unavailable.
+The HA setup ensures that users do not experience interruptions of service if one of the nodes on which {productnameshort} is running becomes unavailable.
 
 [#pr-deployment-ha-architecture]
 === Architecture of the HA setup 
 
-Most of {productnameshort} components are now stateless.
+Most of the {productnameshort} components are now stateless.
 Therefore, we can scale them by increasing pod replicas, ensuring they run on multiple worker nodes.
 {kube} services ensure connectivity between pods.
 
