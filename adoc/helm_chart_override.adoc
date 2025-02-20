@@ -24,9 +24,9 @@ The following tables list all parameters with descriptions that you can use to o
 .Global parameters
 [options="header"]
 |===
-|Name |Description |Value
-|`global.imageRegistry` |Sets a global override for the container image registry used for all images. |`""`
-|`global.imagePullSecrets` |Sets global pull secrets for accessing the container image registry. |`[]`
+|Name |Description 
+|`global.imageRegistry` |Sets a global override for the container image registry used for all images. |
+|`global.imagePullSecrets` |Sets global pull secrets for accessing the container image registry. |
 |===
 
 .Common parameters
