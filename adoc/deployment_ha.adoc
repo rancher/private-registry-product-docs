@@ -17,9 +17,7 @@ For storage, users should provide an HA {postgresql} and {redis} cluster for app
 
 image::private-registry-ha.png[{productnameshort} HA setup, width=75%]
 .{productnameshort} HA setup
-The chart shows an n-node Kubernetes cluster running {productnameshort} and related services, such as the Trivy scanner or Web portal.
-Its nodes utilizes persistent volume (PV) as storage.
-The cluster utilizes highly available (HA) {ingress} controller, HA {postgresql} database, and HA {redis} storage.
+{kube} cluster with {ingress} in HA setup using HA {postgresql} and HA {redis}.
 
 
 [#pr-deployment-ha-prerequisites]
