@@ -3,7 +3,7 @@
 :docinfo:
 :toc: left
 
-include::attributes.adoc[]
+include::generic-attributes.adoc[]
 
 = {productname} Documentation
 

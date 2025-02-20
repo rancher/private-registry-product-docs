@@ -1,4 +1,4 @@
-include::attributes.adoc[]
+include::generic-attributes.adoc[]
 
 [#pr-deployment]
 == Deployment
