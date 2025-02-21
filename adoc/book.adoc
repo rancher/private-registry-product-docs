@@ -32,5 +32,9 @@ include::helm_chart_override.adoc[]
 [appendix]
 include::ha_helm_chart_example.adoc[]
 
+include::source-code.adoc[]
+
+include::legal.adoc[]
+
 // TODO tbazant: replace all occurrences of Hrabor with the name of the project
 // TODO tbazant: replace product names in helm chaarts with entities
