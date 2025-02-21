@@ -47,4 +47,5 @@ After successful authentication and authorization, you can configure multiple as
 === For more information
 Refer to the following sources to obtain more details:
 
-* The {harbor} project https://goharbor.io/[home page].
+* The {harbor} project homepage is at https://goharbor.io/.
+* {harbor} usage is detailed in https://goharbor.io/docs.

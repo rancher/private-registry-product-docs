@@ -22,7 +22,7 @@ To obtain the credentials from {scca}, follow these steps:
 . Select `Proxies` in the top menu. The credentials are displayed in the top right corner.
 . To see the password, click the 'eye' icon.
 . Create a `password.txt` file containing the obtained password.
-. Retrieve the {kube} secrets from {scca} by running the following command:
+. Store the mirroring credentials retrieved from {scca} as {kube} secrets by running the following command:
 [source]
   $ kubectl create secret docker-registry suse-registry \
   --docker-server=registry.suse.com --docker-username=<SUSE_REGISTRY_USERNAME> \

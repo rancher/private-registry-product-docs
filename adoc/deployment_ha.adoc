@@ -42,4 +42,4 @@ Refer to <<pr-helm-chart-override>> for a complete list of values to specify or 
 . Install the {productnameshort} {helm} chart.
 Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
 [source]
-  $ helm install <RELEASE_NAME> harbor/
+  $ helm install <RELEASE_NAME> private-registry-helm/
