@@ -8,13 +8,15 @@ You can adjust the {helm} chart installation in one of the following ways:
 
 * Append specific parameters to the `--set` flags on the `helm install` command line, for example:
 [source]
-  $ helm install `RELEASE_NAME` oci://registry.suse.com/private-registry/private-registry-helm \
-  --set harborAdminPassword=<MY_PASSWORD> \
-  --set externalURL=https://my-harbor.domain
+$ helm install `RELEASE_NAME` \
+oci://registry.suse.com/private-registry/private-registry-helm \
+--set harborAdminPassword=<MY_PASSWORD> \
+--set externalURL=https://my-harbor.domain
 * Create a custom `my-values.yaml` file and pass it to the `--values` flag, for example:
 [source]
-  $ helm install `RELEASE_NAME` oci://registry.suse.com/private-registry/private-registry-helm \
-  --values my-values.yaml
+$ helm install `RELEASE_NAME` \
+oci://registry.suse.com/private-registry/private-registry-helm \
+--values my-values.yaml
 
 [#pr-helm-chart-override-parameters]
 === Overriding {helm} chart parameters and values

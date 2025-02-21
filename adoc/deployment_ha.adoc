@@ -15,7 +15,7 @@ Therefore, we can scale them by increasing pod replicas, ensuring they run on mu
 
 For storage, users should provide an HA {postgresql} and {redis} cluster for application data, along with PVCs or object storage for storing images and charts.
 
-image::private-registry-ha.png[{productnameshort} HA setup, width=75%]
+image::private-registry-ha.png[{productnameshort} HA setup, width=100%]
 .{productnameshort} HA setup
 {kube} cluster with {ingress} in HA setup using HA {postgresql} and HA {redis}.
 

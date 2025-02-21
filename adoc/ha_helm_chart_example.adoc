@@ -66,7 +66,7 @@ redis:
 <7> Fill the connection information in the `external` section.
 <8> Supports redis and redis+sentinel. +
   Address for redis is `<redis_host>:<redis_port>`. +
-  Address for redis+sentinel is `<sentinel1_host>:<sentinel1_port>``,`<sentinel2_host>:<sentinel2_port>`,`<sentinel3_host>:<sentinel3_port>`
+  Address for redis+sentinel is `<sentinel1_host>:<sentinel1_port>`,`<sentinel2_host>:<sentinel2_port>`...
 <9> The name of the set of {redis} instances to monitor. It must be set to support redis+sentinel.
 <10> Must be `0` as the library that Harbor uses does not support configurations.
 <11> Optional. Defaults to `0` but can be configured to `6`.
