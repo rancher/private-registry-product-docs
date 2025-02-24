@@ -33,4 +33,3 @@ include::helm_chart_override.adoc[]
 include::ha_helm_chart_example.adoc[]
 
 // TODO tbazant: replace all occurrences of Hrabor with the name of the project
-// TODO tbazant: replace product names in helm chaarts with entities

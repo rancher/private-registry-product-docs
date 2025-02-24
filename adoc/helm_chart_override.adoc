@@ -51,7 +51,7 @@ The following tables list all parameters with descriptions that you can use to o
 `expose.tls.secret.secretName`:: Specifies name of secret containing `tls.crt` (certificate) and `tls.key` (private key).  
 `expose.ingress.hosts.core`:: Sets {harbor} core service host in ingress rule. Default is `core.harbor.domain`.  
 `expose.ingress.controller`:: Sets ingress controller type. Supports `default`, `gce`, `alb`, `f5-bigip` and `ncp`. Default is `default`.  
-`expose.ingress.kubeVersionOverride`:: Overrides Kubernetes version for ingress templating.  
+`expose.ingress.kubeVersionOverride`:: Overrides {kube} version for {ingress} templating.  
 `expose.ingress.annotations`:: Sets ingress annotations.  
 `expose.ingress.labels`:: Sets ingress-specific labels. Default is `{}`.  
 `expose.clusterIP.name`:: Sets ClusterIP service name. Default is `harbor`.  
@@ -97,9 +97,9 @@ The following tables list all parameters with descriptions that you can use to o
 `persistence.persistentVolumeClaim.database.annotations`:: The annotations of the volume.  
 `persistence.persistentVolumeClaim.redis.existingClaim`:: The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components.  
 `persistence.persistentVolumeClaim.redis.storageClass`:: The `storageClass` that provisions the volume. Uses default StorageClass if not specified.  
-`persistence.persistentVolumeClaim.redis.subPath`:: The subpath in the volume. Ignored when an external Redis is used.  
-`persistence.persistentVolumeClaim.redis.accessMode`:: The access mode of the volume. Ignored when an external Redis is used. Default is `ReadWriteOnce`.  
-`persistence.persistentVolumeClaim.redis.size`:: The size of the volume. Ignored when an external Redis is used. Default is `1Gi`.  
+`persistence.persistentVolumeClaim.redis.subPath`:: The subpath in the volume. Ignored when an external {redis} is used.  
+`persistence.persistentVolumeClaim.redis.accessMode`:: The access mode of the volume. Ignored when an external {redis} is used. Default is `ReadWriteOnce`.  
+`persistence.persistentVolumeClaim.redis.size`:: The size of the volume. Ignored when an external {redis} is used. Default is `1Gi`.  
 `persistence.persistentVolumeClaim.redis.annotations`:: The annotations of the volume.  
 `persistence.persistentVolumeClaim.trivy.existingClaim`:: The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components.  
 `persistence.persistentVolumeClaim.trivy.storageClass`:: The `storageClass` that provisions the volume. Uses default StorageClass if not specified.  
@@ -115,8 +115,8 @@ The following tables list all parameters with descriptions that you can use to o
 
 .Nginx parameters
 [options="header"]
-`nginx.image.repository`:: The image repository for `nginx`. Default is `private-registry/harbor-nginx`.
-`nginx.image.tag`:: The image tag for `nginx`.
+`nginx.image.repository`:: The image repository for {nginx}. Default is `private-registry/harbor-nginx`.
+`nginx.image.tag`:: The image tag for {nginx}.
 `nginx.replicas`:: The number of replicas to run. Default is `1`.
 `nginx.revisionHistoryLimit`:: The maximum number of old `ReplicaSet` revisions to retain. Default is `10`.
 `nginx.resources`:: The compute resources allocated for the container. Default is `undefined`.
@@ -125,7 +125,7 @@ The following tables list all parameters with descriptions that you can use to o
 `nginx.tolerations`:: The pod assignment tolerations. Default is `[]`.
 `nginx.affinity`:: The node or pod affinity rules. Default is `{}`.
 `nginx.topologySpreadConstraints`:: The rules for spreading pods across failure-domains such as regions or availability zones. Default is `[]`.
-`nginx.podAnnotations`:: The annotations added to the `nginx` pod. Default is `{}`.
+`nginx.podAnnotations`:: The annotations added to the {nginx} pod. Default is `{}`.
 
 
 .Portal parameters
@@ -162,7 +162,7 @@ The following tables list all parameters with descriptions that you can use to o
 `core.configureUserSettings`:: A JSON string in the environment variable CONFIG_OVERWRITE_JSON to configure user settings.
 `core.quotaUpdateProvider`:: The provider for updating project quota usage, options are `redis` or `db`. Default is `db`.
 `core.secret`:: Used when core server communicates with other components.
-`core.secretName`:: The name of a Kubernetes secret to use your own TLS certificate and private key for token encryption or decryption.
+`core.secretName`:: The name of a {kube}} secret to use your own TLS certificate and private key for token encryption or decryption.
 `core.tokenKey`:: The PEM-formatted RSA private key used to sign service tokens.
 `core.tokenCert`:: The PEM-formatted certificate signed by `core.tokenKey` used to validate service tokens.
 `core.xsrfKey`:: The XSRF key, automatically generated if not specified.
@@ -227,21 +227,21 @@ The following tables list all parameters with descriptions that you can use to o
 `registry.initContainers`:: The init containers that run before the controller's container starts. Default is `[]`.
 
 
-.Trivy parameters
-`trivy.enabled`:: Enables or disables the Trivy scanner. Default is `true`.  
-`trivy.image.repository`:: The repository for the Trivy adapter image. Default is `private-registry/harbor-trivy-adapter`.  
-`trivy.image.tag`:: The tag for the Trivy adapter image. Default is `2.11`.  
-`trivy.resources`:: The resources to allocate for the Trivy adapter container. Default is `undefined`.  
+.{trivy} parameters
+`trivy.enabled`:: Enables or disables the {trivy} scanner. Default is `true`.  
+`trivy.image.repository`:: The repository for the {trivy} adapter image. Default is `private-registry/harbor-trivy-adapter`.  
+`trivy.image.tag`:: The tag for the {trivy} adapter image. Default is `2.11`.  
+`trivy.resources`:: The resources to allocate for the {trivy} adapter container. Default is `undefined`.  
 `trivy.automountServiceAccountToken`:: Whether to mount the service account token. Default is `false`.  
 `trivy.replicas`:: The number of Pod replicas. Default is `1`.  
-`trivy.debugMode`:: Enables Trivy debug mode for troubleshooting. Default is `false`.  
+`trivy.debugMode`:: Enables {trivy} debug mode for troubleshooting. Default is `false`.  
 `trivy.vulnType`:: Comma-separated list of vulnerability types (`os` and `library`). Default is `os,library`.  
 `trivy.severity`:: Comma-separated list of vulnerability severities to check. Default is `UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL`.  
 `trivy.ignoreUnfixed`:: Displays only fixed vulnerabilities. Default is `false`.  
 `trivy.insecure`:: Skips registry certificate verification. Default is `false`.  
-`trivy.skipUpdate`:: Disables Trivy database downloads from GitHub. Default is `false`.  
+`trivy.skipUpdate`:: Disables {trivy} database downloads from GitHub. Default is `false`.  
 `trivy.skipJavaDBUpdate`:: Requires manual download of the `trivy-java.db` file when enabled. Default is `false`.  
-`trivy.offlineScan`:: Prevents Trivy from sending API requests to identify dependencies. Default is `false`.  
+`trivy.offlineScan`:: Prevents {trivy} from sending API requests to identify dependencies. Default is `false`.  
 `trivy.securityCheck`:: Comma-separated list of security issues to detect. Default is `vuln`.  
 `trivy.timeout`:: The duration to wait for scan completion. Default is `5m0s`.  
 `trivy.gitHubToken`:: The GitHub access token required for database downloads. Default is `undefined`.  
@@ -278,34 +278,34 @@ The following tables list all parameters with descriptions that you can use to o
 `database.podAnnotations`:: The annotations to add to the database pod. Default is `{}`.  
 
 
-.Redis parameters
-`redis.type`:: The Redis deployment type. Set to `external` for external Redis. Default is `internal`.  
-`redis.internal.image.repository`:: The repository for the Redis image. Default is `private-registry/harbor-redis`.  
-`redis.internal.image.tag`:: The tag for the Redis image. Default is `7.2`.  
-`redis.internal.resources`:: The resources allocated for the Redis container. Default is `undefined`.  
+.{redis} parameters
+`redis.type`:: The {redis} deployment type. Set to `external` for external {redis}. Default is `internal`.  
+`redis.internal.image.repository`:: The repository for the {redis} image. Default is `private-registry/harbor-redis`.  
+`redis.internal.image.tag`:: The tag for the {redis} image. Default is `7.2`.  
+`redis.internal.resources`:: The resources allocated for the {redis} container. Default is `undefined`.  
 `redis.internal.automountServiceAccountToken`:: Controls whether the service account token is mounted. Default is `false`.  
 `redis.internal.nodeSelector`:: The node labels for pod assignment. Default is `{}`.  
 `redis.internal.tolerations`:: The tolerations for pod assignment. Default is `[]`.  
 `redis.internal.affinity`:: The node or pod affinity settings. Default is `{}`.  
-`redis.internal.priorityClassName`:: The priority class for running the Redis pod. Default is `undefined`.  
+`redis.internal.priorityClassName`:: The priority class for running the {redis} pod. Default is `undefined`.  
 `redis.internal.jobserviceDatabaseIndex`:: The database index for jobservice. Default is `1`.  
 `redis.internal.registryDatabaseIndex`:: The database index for registry. Default is `2`.  
-`redis.internal.trivyAdapterIndex`:: The database index for Trivy adapter. Default is `5`.  
+`redis.internal.trivyAdapterIndex`:: The database index for {trivy} adapter. Default is `5`.  
 `redis.internal.harborDatabaseIndex`:: The database index for miscellaneous Harbor business logic. Default is `0`.  
 `redis.internal.cacheLayerDatabaseIndex`:: The database index for Harbor's cache layer. Default is `0`.  
-`redis.internal.initContainers`:: The init containers that run before the Redis container starts. Default is `[]`.  
-`redis.external.addr`:: The address of the external Redis instance. Default is `192.168.0.2:6379`.  
-`redis.external.sentinelMasterSet`:: The name of the Redis Sentinel master set (if applicable). Default is `undefined`.  
+`redis.internal.initContainers`:: The init containers that run before the {redis} container starts. Default is `[]`.  
+`redis.external.addr`:: The address of the external {redis} instance. Default is `192.168.0.2:6379`.  
+`redis.external.sentinelMasterSet`:: The name of the {redis} Sentinel master set (if applicable). Default is `undefined`.  
 `redis.external.coreDatabaseIndex`:: The database index for core. Default is `0`.  
 `redis.external.jobserviceDatabaseIndex`:: The database index for jobservice. Default is `1`.  
 `redis.external.registryDatabaseIndex`:: The database index for registry. Default is `2`.  
-`redis.external.trivyAdapterIndex`:: The database index for Trivy adapter. Default is `5`.  
+`redis.external.trivyAdapterIndex`:: The database index for {trivy} adapter. Default is `5`.  
 `redis.external.harborDatabaseIndex`:: The database index for miscellaneous Harbor business logic. Default is `0`.  
 `redis.external.cacheLayerDatabaseIndex`:: The database index for Harbor's cache layer. Default is `0`.  
-`redis.external.username`:: The username for external Redis authentication. Default is `undefined`.  
-`redis.external.password`:: The password for external Redis authentication. Default is `undefined`.  
-`redis.external.existingSecret`:: The existing secret containing the Redis password. The key must be `REDIS_PASSWORD`. Default is `""`.  
-`redis.podAnnotations`:: The annotations to add to the Redis pod. Default is `{}`.  
+`redis.external.username`:: The username for external {redis} authentication. Default is `undefined`.  
+`redis.external.password`:: The password for external {redis} authentication. Default is `undefined`.  
+`redis.external.existingSecret`:: The existing secret containing the {redis} password. The key must be `REDIS_PASSWORD`. Default is `""`.  
+`redis.podAnnotations`:: The annotations to add to the {redis} pod. Default is `{}`.  
 
 .Exporter parameters
 `exporter.replicas`:: The number of replicas to run. Default is `1`.  
