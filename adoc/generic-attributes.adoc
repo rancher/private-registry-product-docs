@@ -5,6 +5,15 @@
 // Doctype should always be article
 :doctype:     article
 
+// URLS
+// use stand-alone only, not as part of URLs, see Style Guide
+:dsc:                        https://documentation.suse.com
+:beta-www:                   https://susedoc.github.io
+:doo:                        https://doc.opensuse.org
+:sc-rn:                      https://www.suse.com/releasenotes
+:sccurl:                     https://scc.suse.com/
+:ndash:                      &#x02013;
+
 // PRODUCT-SPECIFIC ENTITIES
 include::product-attributes.adoc[]
 
