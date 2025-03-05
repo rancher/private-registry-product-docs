@@ -32,7 +32,7 @@ You can also deploy {productnameshort} with High Availability setup.
 * **harbor-portal.** The Web-based user interface that allows users to interact with the {harbor} registry, manage images, and configure settings through a graphical interface.
 * **harbor-registry.** The container that serves as the actual image storage back-end, handling the storage and retrieval of container images.
 * **harbor-registryctl.** A command-line tool for managing the {harbor} registry, allowing users to perform administrative tasks and configurations directly from the terminal.
-* **harbor-trivy-adapter.** A container that integrates the Trivy vulnerability scanner with {harbor}, enabling automated security scanning of container images for vulnerabilities.
+* **harbor-trivy-adapter.** A container that integrates the {trivy} vulnerability scanner with {harbor}, enabling automated security scanning of container images for vulnerabilities.
 
 After deployment, you can log in via Web user interface.
 After successful authentication and authorization, you can configure multiple aspects of the product, for example:

@@ -13,11 +13,11 @@ Most of the {productnameshort} components are now stateless.
 Therefore, we can scale them by increasing pod replicas, ensuring they run on multiple worker nodes.
 {kube} services ensure connectivity between pods.
 
-For storage, users should provide an HA {postgresql} and {redis} cluster for application data, along with PVCs or object storage for storing images and charts.
+For storage, users should provide an HA {postgresql} and {valkey} or {redis} cluster for application data, along with PVCs or object storage for storing images and charts.
 
 image::private-registry-ha.png[{productnameshort} HA setup, width=100%]
 .{productnameshort} HA setup
-{kube} cluster with {ingress} in HA setup using HA {postgresql} and HA {redis}.
+{kube} cluster with {ingress} in HA setup using HA {postgresql} and HA {valkey}.
 
 
 [#pr-deployment-ha-prerequisites]
@@ -26,7 +26,7 @@ image::private-registry-ha.png[{productnameshort} HA setup, width=100%]
 * {helm} version 3.2.0 or higher
 * HA {ingress} controller ({productnameshort} does not manage the external endpoint)
 * HA {postgresql} 9.6+ ({productnameshort} does not handle the deployment of HA database)
-* HA {redis} ({productnameshort} does not handle the deployment of HA {redis})
+* HA {valkey} or {redis} ({productnameshort} does not handle the deployment of HA {valkey} or {redis})
 * Persistent Volume Claim (PVC) that can be shared across nodes or external object storage
 * An active subscription for {productname}
 

@@ -97,9 +97,9 @@ The following tables list all parameters with descriptions that you can use to o
 `persistence.persistentVolumeClaim.database.annotations`:: The annotations of the volume.  
 `persistence.persistentVolumeClaim.redis.existingClaim`:: The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components.  
 `persistence.persistentVolumeClaim.redis.storageClass`:: The `storageClass` that provisions the volume. Uses default StorageClass if not specified.  
-`persistence.persistentVolumeClaim.redis.subPath`:: The subpath in the volume. Ignored when an external {redis} is used.  
-`persistence.persistentVolumeClaim.redis.accessMode`:: The access mode of the volume. Ignored when an external {redis} is used. Default is `ReadWriteOnce`.  
-`persistence.persistentVolumeClaim.redis.size`:: The size of the volume. Ignored when an external {redis} is used. Default is `1Gi`.  
+`persistence.persistentVolumeClaim.redis.subPath`:: The subpath in the volume. Ignored when an external {valkey} is used.  
+`persistence.persistentVolumeClaim.redis.accessMode`:: The access mode of the volume. Ignored when an external {valkey} is used. Default is `ReadWriteOnce`.  
+`persistence.persistentVolumeClaim.redis.size`:: The size of the volume. Ignored when an external {valkey} is used. Default is `1Gi`.  
 `persistence.persistentVolumeClaim.redis.annotations`:: The annotations of the volume.  
 `persistence.persistentVolumeClaim.trivy.existingClaim`:: The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components.  
 `persistence.persistentVolumeClaim.trivy.storageClass`:: The `storageClass` that provisions the volume. Uses default StorageClass if not specified.  
@@ -162,7 +162,7 @@ The following tables list all parameters with descriptions that you can use to o
 `core.configureUserSettings`:: A JSON string in the environment variable CONFIG_OVERWRITE_JSON to configure user settings.
 `core.quotaUpdateProvider`:: The provider for updating project quota usage, options are `redis` or `db`. Default is `db`.
 `core.secret`:: Used when core server communicates with other components.
-`core.secretName`:: The name of a {kube}} secret to use your own TLS certificate and private key for token encryption or decryption.
+`core.secretName`:: The name of a {kube} secret to use your own TLS certificate and private key for token encryption or decryption.
 `core.tokenKey`:: The PEM-formatted RSA private key used to sign service tokens.
 `core.tokenCert`:: The PEM-formatted certificate signed by `core.tokenKey` used to validate service tokens.
 `core.xsrfKey`:: The XSRF key, automatically generated if not specified.
@@ -220,10 +220,10 @@ The following tables list all parameters with descriptions that you can use to o
 `registry.credentials.existingSecret`:: An existing secret containing the password for registry instance access in htpasswd auth mode. Default is `""`.  
 `registry.credentials.htpasswdString`:: The login and password in htpasswd string format. Excludes `registry.credentials.username` and `registry.credentials.password`. Default is `undefined`.  
 `registry.relativeurls`:: Returns relative URLs in Location headers when true. Required if {harbor} is behind a reverse proxy. Default is `false`.  
-`registry.upload_purging.enabled`:: Enables purging of _upload directories. Default is `true`.  
-`registry.upload_purging.age`:: The time period after which files in _upload directories are removed, default is one week. Default is `168h`.  
+`registry.upload_purging.enabled`:: Enables purging of upload directories. Default is `true`.  
+`registry.upload_purging.age`:: The time period after which files in upload directories are removed, default is one week. Default is `168h`.  
 `registry.upload_purging.interval`:: The time interval between purge operations. Default is `24h`.  
-`registry.upload_purging.dryrun`:: Enables dryrun mode for _upload purging. Default is `false`.  
+`registry.upload_purging.dryrun`:: Enables dryrun mode for upload purging. Default is `false`.  
 `registry.initContainers`:: The init containers that run before the controller's container starts. Default is `[]`.
 
 
@@ -278,7 +278,7 @@ The following tables list all parameters with descriptions that you can use to o
 `database.podAnnotations`:: The annotations to add to the database pod. Default is `{}`.  
 
 
-.{redis} parameters
+.{valkey} / {redis} parameters
 `redis.type`:: The {redis} deployment type. Set to `external` for external {redis}. Default is `internal`.  
 `redis.internal.image.repository`:: The repository for the {redis} image. Default is `private-registry/harbor-redis`.  
 `redis.internal.image.tag`:: The tag for the {redis} image. Default is `7.2`.  
