@@ -25,14 +25,16 @@ You can also deploy {productnameshort} with High Availability setup.
 {productnameshort} is delivered as _Open Container Initiative_ (OCI) containers and is expected to be deployed on a {kube} cluster.
 {productnameshort} consists of the following containers:
 
-* **harbor-core.** The main component of the {harbor} registry, responsible for handling core functionalities such as managing projects, repositories and user interactions.
-* **harbor-db.** The database container that stores all metadata related to images, users and configurations for the {harbor} registry.
-* **harbor-jobservice.** A service that manages background jobs, such as image replication and scheduled tasks, ensuring efficient processing of operations within the registry.
-* **harbor-nginx.** The reverse proxy and load balancer that routes incoming requests to the appropriate {harbor} services, providing a single entry point for users.
-* **harbor-portal.** The Web-based user interface that allows users to interact with the {harbor} registry, manage images, and configure settings through a graphical interface.
-* **harbor-registry.** The container that serves as the actual image storage back-end, handling the storage and retrieval of container images.
-* **harbor-registryctl.** A command-line tool for managing the {harbor} registry, allowing users to perform administrative tasks and configurations directly from the terminal.
-* **harbor-trivy-adapter.** A container that integrates the {trivy} vulnerability scanner with {harbor}, enabling automated security scanning of container images for vulnerabilities.
+* **harbor-core:** the main component of the {harbor} registry, responsible for handling core functionalities such as managing projects, repositories and user interactions.
+* **harbor-db:** the database container that stores all metadata related to images, users and configurations for the {harbor} registry.
+* **harbor-jobservice:** a service that manages background jobs, such as image replication and scheduled tasks, ensuring efficient processing of operations within the registry.
+* **harbor-nginx:** the reverse proxy and load balancer that routes incoming requests to the appropriate {harbor} services, providing a single entry point for users.
+* **harbor-portal:** the Web-based user interface that allows users to interact with the {harbor} registry, manage images, and configure settings through a graphical interface.
+* **harbor-registry:** the container that serves as the actual image storage back-end, handling the storage and retrieval of container images.
+* **harbor-registryctl:** a command-line tool for managing the {harbor} registry, allowing users to perform administrative tasks and configurations directly from the terminal.
+* **harbor-trivy-adapter:** a container that integrates the {trivy} vulnerability scanner with {harbor}, enabling automated security scanning of container images for vulnerabilities.
+* **harbor-exporter:** the container that exports {harbor} metrics in a format that can be collected by {prometheus} for monitoring and observability.
+* **harbor-valkey:** an in-memory key-value store.
 
 After deployment, you can log in via Web user interface.
 After successful authentication and authorization, you can configure multiple aspects of the product, for example:
