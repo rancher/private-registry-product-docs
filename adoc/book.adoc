@@ -7,6 +7,7 @@ include::generic-attributes.adoc[]
 
 = {productname} Documentation
 
+// Copyright
 include::common_copyright_gfdl.adoc[]
 
 ifdef::env-github[]
