@@ -28,7 +28,7 @@ The following tables list all parameters with descriptions that you can use to o
 `global.imagePullSecrets`:: Sets global pull secrets for accessing the container image registry.
 
 .Common parameters
-`externalURL`:: Specifies the external URL for `harbor-core` service. Default is `https&#8203;://core.harbor.domain`.
+`externalURL`:: Specifies the external URL for `harbor-core` service. Default is `\https://core.harbor.domain`.
 `existingSecretAdminPasswordKey`:: Sets the key name in the secret containing {harbor} administrator password. Default is `HARBOR_ADMIN_PASSWORD`.
 `harborAdminPassword`:: Sets the initial password for {harbor} administrator. Change it from portal after deployment. Default is `Harbor12345`.
 `imagePullSecrets`:: Sets the `imagePullSecrets` names for all deployments.
@@ -342,7 +342,7 @@ The following tables list all parameters with descriptions that you can use to o
 `trace.sample_rate`:: The sampling rate for trace data. `1` samples 100%, `0.5` samples 50%. Default is `1`.  
 `trace.namespace`:: The namespace to differentiate different Harbor services.  
 `trace.attributes`:: A key-value dictionary for user-defined attributes in trace provider initialization.  
-`trace.jaeger.endpoint`:: The endpoint for Jaeger tracing. Default is `http&#8203;://hostname:14268/api/traces`.
+`trace.jaeger.endpoint`:: The endpoint for Jaeger tracing. Default is `\http://hostname:14268/api/traces`.
 `trace.jaeger.username`:: The username for Jaeger authentication.  
 `trace.jaeger.password`:: The password for Jaeger authentication.  
 `trace.jaeger.agent_host`:: The agent host for Jaeger.  
