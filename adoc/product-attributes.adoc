@@ -1,6 +1,9 @@
 // This file originates from the project https://github.com/openSUSE/doc-kit
 // This file can be edited downstream
 
+:revdate: 2025-07-31
+:page-revdate: {revdate}
+
 // PRODUCT NAME AND VERSIONS
 :productname:       SUSE Private Registry
 :productnameshort:  Private Registry
