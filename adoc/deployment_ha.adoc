@@ -2,6 +2,8 @@ include::generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == Deployment with High Availability
+:revdate: 2025-03-05
+:page-revdate: {revdate}
 
 You can use {helm} to deploy highly available (HA) {productnameshort} on a {kube} cluster.
 The HA setup ensures that users do not experience interruptions of service if one of the nodes on which {productnameshort} is running becomes unavailable.
