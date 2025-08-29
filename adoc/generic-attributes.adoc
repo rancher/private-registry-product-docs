@@ -330,8 +330,9 @@ include::product-attributes.adoc[]
 :clustermd:                  Cluster MD
 :clustermd.long:             Cluster multi-device
 :corosync:                   Corosync
+:cce:                        {corosync} Cluster Engine
 :crmsh:                      crmsh
-:crmshell:                   crm shell
+:crmshell:                   CRM Shell
 :csync:                      Csync2
 :dlm:                        DLM
 :dlm.long:                   Distributed Lock Manager
@@ -352,8 +353,8 @@ include::product-attributes.adoc[]
 :rear:                       ReaR
 :rear.long:                  Relax-and-Recover
 :sbd:                        SBD
-:sbd.long:                   {stonith} Block Device
 :stonith:                    STONITH
+:sbd.long:                   {stonith} Block Device
 :ingress:                    Ingress
 :keepalived:                 Keepalived
 

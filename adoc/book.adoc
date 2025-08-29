@@ -39,4 +39,7 @@ include::helm_chart_override.adoc[]
 include::ha_helm_chart_example.adoc[]
 
 [appendix]
+include::release_notes.adoc[]
+
+[appendix]
 include::common_license_gfdl1.2.adoc[]
