@@ -6,6 +6,8 @@
 include::generic-attributes.adoc[]
 
 = {productname} Documentation
+:revdate: 2025-03-19
+:page-revdate: {revdate}
 
 // Copyright
 [preface]
@@ -35,6 +37,9 @@ include::helm_chart_override.adoc[]
 
 [appendix]
 include::ha_helm_chart_example.adoc[]
+
+[appendix]
+include::release_notes.adoc[]
 
 [appendix]
 include::common_license_gfdl1.2.adoc[]

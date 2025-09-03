@@ -2,6 +2,8 @@ include::generic-attributes.adoc[]
 
 [#pr-introduction]
 == Introduction
+:revdate: 2025-03-06
+:page-revdate: {revdate}
 
 [#pr-what-is-spr]
 === What is {productname}?

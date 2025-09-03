@@ -61,10 +61,12 @@ include::product-attributes.adoc[]
 :ssecurity:                  {suse} Security
 :sstorage:                   {suse} Storage
 :svirtualization:            {suse} Virtualization
+:sappco:                     {suse} Application Collection
 :rancherprime:               {suse} Rancher Prime
 :rancher:                    {rancherprime}
 :ranchelemental:             {rancherprime}: OS Manager
 :ailibrary:                  AI Library
+:saideployer:                {suse} Deployer
 :suseaisuite:                {suse} AI Suite
 :suseai:                     {suse} AI
 :kube:                       Kubernetes
@@ -91,7 +93,7 @@ include::product-attributes.adoc[]
 :sles:                       {sle} Server
 :sls:                        {sles}
 :sap:                        SAP
-:sles4sap:                   {sls} for {sap} Applications
+:sles4sap:                   {sls} for {sap} applications
 :s4s:                        {sles4sap}
 :slem:                       {sle} Micro
 :slea:                       SLE
@@ -109,12 +111,11 @@ include::product-attributes.adoc[]
 :sleha:                      {sle} {ha}
 :hageo:                      Geo Clustering for {sleha}
 
-// SUSE Manager
-:susemgr:                    {suse} Manager
-:suma:                       {susemgr}
-:susemgrdb:                  {suse} Manager with Database
-:susemgrproxy:               {susemgr} Proxy
-:smr:                        {susemgr} for Retail
+// SUSE Multi-Linux Manager
+:smlm:                    {suse} Multi-Linux Manager
+:smlm-db:                 {smlm} with Database
+:smlm-proxy:              {smlm} Proxy
+:smlm-retail:             {smlm} for Retail
 
 // SUSE PRODUCT ACRONYMS
 :sleda:                      SLED
@@ -134,8 +135,6 @@ include::product-attributes.adoc[]
 :capa:                       SUSE{nbsp}CAP
 :caaspa:                     SUSE{nbsp}CaaSP
 :caspa:                      {caaspa}
-:sumaa:                      SUMA
-:smra:                       SUMA{nbsp}for{nbsp}Retail
 :suseaia:                    {suse} AI
 
 // PRODUCT NAMES WITH (R) SIGN
@@ -145,7 +144,7 @@ include::product-attributes.adoc[]
 :slehpcreg:                  {slereg} High Performance Computing
 :slertreg:                   {slereg} Real Time
 :slsreg:                     {slereg} Server
-:sles4sapreg:                {slsreg} for SAP Applications
+:sles4sapreg:                {slsreg} for SAP applications
 :slemreg:                    {slereg} Micro
 :susemgrreg:                 {susereg} Manager
 
@@ -180,8 +179,10 @@ include::product-attributes.adoc[]
 :nvidiareg:                  {nvidia}(R)
 :rh:                         Red Hat
 :redhat:                     {rh}
+:ubuntu:                     Ubuntu
 :vmware:                     VMware
 :hana:                       {sap} HANA
+:s4h:                        {sap} S/4HANA
 :macos:                      macOS
 :mswin:                      {ms} Windows
 :netware:                    NetWare
@@ -195,6 +196,8 @@ include::product-attributes.adoc[]
 :centos:                     CentOS
 :stackstate:                 StackState
 :ollama:                     Ollama
+:huggingface:                Hugging Face
+:openai:                     OpenAI
 :owui:                       Open WebUI
 :milvus:                     Milvus
 :chromadb:                   ChromaDB
@@ -203,6 +206,7 @@ include::product-attributes.adoc[]
 :containerd:                 containerd
 :langchain:                  LangChain
 :apulsar:                    Apache Pulsar
+:akafka:                     Apache Kafka
 :etcd:                       etcd
 :minio:                      MinIO
 :okta:                       Okta
@@ -214,6 +218,10 @@ include::product-attributes.adoc[]
 :trivy:                      Trivy
 :valkey:                     Valkey
 :certmanager:                cert-manager
+:otelemetry:                 OpenTelemetry
+:openlit:                    OpenLIT
+:mlflow:                     MLflow
+:pytorch:                    PyTorch
 
 // NVIDIA products
 :cuda:                       CUDA
@@ -318,19 +326,35 @@ include::product-attributes.adoc[]
 
 // HA
 :ais:                        OpenAIS
+:clvm:                       Cluster LVM
+:clustermd:                  Cluster MD
+:clustermd.long:             Cluster multi-device
 :corosync:                   Corosync
+:cce:                        {corosync} Cluster Engine
+:crmsh:                      crmsh
+:crmshell:                   CRM Shell
 :csync:                      Csync2
+:dlm:                        DLM
+:dlm.long:                   Distributed Lock Manager
+:drbd:                       DRBD
+:gfs:                        GFS2
 :ha:                         High Availability
 :haproxy:                    HAProxy
 :hasetup:                    HA setup
-:haweb:                      HA Web Console
+:haweb:                      HA Web Konsole
 :hawk:                       Hawk
+:hawk2:                      Hawk2
 :hb:                         Heartbeat
 :hbvs:                       Heartbeat 2
 :lvs:                        Linux Virtual Server
 :pace:                       Pacemaker
+:qdevice:                    QDevice
+:qnet:                       QNetd
 :rear:                       ReaR
+:rear.long:                  Relax-and-Recover
+:sbd:                        SBD
 :stonith:                    STONITH
+:sbd.long:                   {stonith} Block Device
 :ingress:                    Ingress
 :keepalived:                 Keepalived
 
