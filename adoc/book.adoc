@@ -9,6 +9,10 @@ include::generic-attributes.adoc[]
 :revdate: 2025-03-19
 :page-revdate: {revdate}
 
+// Release Notes
+[preface]
+include::release_notes.adoc[]
+
 // Copyright
 [preface]
 include::common_copyright_gfdl.adoc[]
@@ -37,9 +41,6 @@ include::helm_chart_override.adoc[]
 
 [appendix]
 include::ha_helm_chart_example.adoc[]
-
-[appendix]
-include::release_notes.adoc[]
 
 [appendix]
 include::common_license_gfdl1.2.adoc[]
