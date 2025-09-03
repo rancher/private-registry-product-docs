@@ -8,7 +8,7 @@ include::generic-attributes.adoc[]
 {productname} is an on-premises container registry.
 It is designed for {suse} customers who need a container registry that works well with other {suse} services and products.
 
-This document provides a high-level overview of features, capabilities and limitations of {productname} and highlights important product updates.
+This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
 [#pr-relnotes-10]
 === Release 1.0
@@ -18,7 +18,7 @@ Key features:
 * {productname} is based on {harbor} 2.13.2
   - Integration with link:https://github.com/goharbor/community/blob/main/proposals/new/AI-model-processor.md[Model Spec] for first-class handling of AI models
   - Enhanced audit logging
-* link:https://www.suse.com/support/kb/doc/?id=000021405[Predictable release cycle] aligned to {rancherprime}. {productname} will be updated every 4 months
+* link:https://www.suse.com/support/kb/doc/?id=000021405[Predictable release cycle] aligned with {rancherprime}. {productname} will be updated every 4 months
 * Each release is supported by {suse} for 18 months from the date of release
   - 6 months of security and bug fix maintenance, followed by
   - 12 months of security-only maintenance
