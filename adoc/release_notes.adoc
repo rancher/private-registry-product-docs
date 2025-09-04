@@ -2,7 +2,7 @@ include::generic-attributes.adoc[]
 
 [#pr-relnotes]
 == Release notes
-:revdate: 2025-03-05
+:revdate: 2025-09-04
 :page-revdate: {revdate}
 
 {productname} is an on-premises container registry.
