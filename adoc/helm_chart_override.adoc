@@ -13,7 +13,8 @@ You can adjust the {helm} chart installation in one of the following ways:
 $ helm install <RELEASE_NAME> \
 oci://registry.suse.com/private-registry/private-registry-helm \
 --set harborAdminPassword=<MY_PASSWORD> \
---set externalURL=https://my-harbor.domain
+--set externalURL=https://<MY_PRIVATE_REGISTRY_FQDN> \
+--set expose.ingress.hosts.core=<MY_PRIVATE_REGISTRY_FQDN>
 * Create a custom `my-values.yaml` file and pass it to the `--values` flag, for example:
 [source]
 $ helm install <RELEASE_NAME> \
