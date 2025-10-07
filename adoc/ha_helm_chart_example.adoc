@@ -2,7 +2,7 @@ include::generic-attributes.adoc[]
 
 [#pr-ha-helm-chart-example]
 == Example of a {productnameshort} HA setup {helm} chart
-:revdate: 2025-03-05
+:revdate: 2025-09-01
 :page-revdate: {revdate}
 
 The following example values file illustrates parameters that are required for the minimal {productnameshort} HA setup.

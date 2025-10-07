@@ -2,7 +2,7 @@ include::generic-attributes.adoc[]
 
 [#pr-introduction]
 == Introduction
-:revdate: 2025-03-06
+:revdate: 2025-09-01
 :page-revdate: {revdate}
 
 [#pr-what-is-spr]
