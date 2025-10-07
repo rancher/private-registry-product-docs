@@ -26,21 +26,21 @@ To obtain the credentials from {scca}, follow these steps:
 . Create a `password.txt` file containing the obtained password.
 [source]
   $ head -1 ./password.txt | helm registry login registry.suse.com \
-  --username <SUSE_REGISTRY_USERNAME> --password-stdin
+  --username <PRIVATE_REGISTRY_USERNAME> --password-stdin
 . Create a namespace for {sregistry}.
 [source]
-$ kubectl create namespace <SUSE_REGISTRY_NAMESPACE>
+$ kubectl create namespace <PRIVATE_REGISTRY_NAMESPACE>
 . Store the mirroring credentials retrieved from {scca} as {kube} secrets by running the following command:
 [source]
   $ kubectl create secret docker-registry suse-registry \
-  --namespace <SUSE_REGISTRY_NAMESPACE> \
+  --namespace <PRIVATE_REGISTRY_NAMESPACE> \
   --docker-server=registry.suse.com \
-  --docker-username=<SUSE_REGISTRY_USERNAME> \
+  --docker-username=<PRIVATE_REGISTRY_USERNAME> \
   --docker-password=$(head -1 ./password.txt)
 . Optionally, to use TLS encrypted communication, create a TLS secret from your private key and certificate files.
 [source]
   $ kubectl create secret tls suse-registry-tls \
-  --namespace <SUSE_REGISTRY_NAMESPACE> \
+  --namespace <PRIVATE_REGISTRY_NAMESPACE> \
   --cert=<CERTIFICATE>.pem \
   --key=<PRIVATE_KEY>.pem
 
@@ -55,7 +55,7 @@ Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart depl
 [source]
   $ helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm \
-  --namespace <SUSE_REGISTRY_NAMESPACE>
+  --namespace <PRIVATE_REGISTRY_NAMESPACE>
 
   The command starts deploying several related containers and may take several minutes to complete.
   It also prints a message with the URL to the {productnameshort} Web portal and commands to obtain the administrator credentials.
@@ -66,4 +66,4 @@ To upgrade the release of the {helm} chart to a specific newer version, run the 
 [source]
 $ helm upgrade <RELEASE_NAME> \
 oci://registry.suse.com/private-registry/private-registry-helm --version <NEW_VERSION_OF_HELM_CHART>>
--namespace <SUSE_REGISTRY_NAMESPACE>
+-namespace <PRIVATE_REGISTRY_NAMESPACE>

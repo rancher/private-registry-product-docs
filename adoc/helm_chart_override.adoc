@@ -12,7 +12,7 @@ You can adjust the {helm} chart installation in one of the following ways:
 [source]
 $ helm install <RELEASE_NAME> \
 oci://registry.suse.com/private-registry/private-registry-helm \
---namespace <SUSE_REGISTRY_NAMESPACE> \
+--namespace <PRIVATE_REGISTRY_NAMESPACE> \
 --set harborAdminPassword=<MY_PASSWORD> \
 --set externalURL=https://<PRIVATE_REGISTRY_FQDN> \
 --set expose.ingress.hosts.core=<PRIVATE_REGISTRY_FQDN>
@@ -20,7 +20,7 @@ oci://registry.suse.com/private-registry/private-registry-helm \
 [source]
   $ helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm \
-  --namespace <SUSE_REGISTRY_NAMESPACE>
+  --namespace <PRIVATE_REGISTRY_NAMESPACE>
   -f suse_registry_override.yaml
 
 [#pr-helm-chart-override-examples]
