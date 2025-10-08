@@ -2,7 +2,7 @@ include::generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
 == Overriding the {productname} {helm} chart
-:revdate: 2025-09-01
+:revdate: 2025-10-06
 :page-revdate: {revdate}
 
 The {productname} ({productnameshort}) {helm} chart is delivered with default values.
@@ -12,14 +12,81 @@ You can adjust the {helm} chart installation in one of the following ways:
 [source]
 $ helm install <RELEASE_NAME> \
 oci://registry.suse.com/private-registry/private-registry-helm \
+--namespace <PRIVATE_REGISTRY_NAMESPACE> \
 --set harborAdminPassword=<MY_PASSWORD> \
---set externalURL=https://<MY_PRIVATE_REGISTRY_FQDN> \
---set expose.ingress.hosts.core=<MY_PRIVATE_REGISTRY_FQDN>
-* Create a custom `my-values.yaml` file and pass it to the `--values` flag, for example:
+--set externalURL=https://<PRIVATE_REGISTRY_FQDN> \
+--set expose.ingress.hosts.core=<PRIVATE_REGISTRY_FQDN>
+* Create a {suse} custom `suse_registry_override.yaml` file and pass it to the `--f` flag, for example:
 [source]
-$ helm install <RELEASE_NAME> \
-oci://registry.suse.com/private-registry/private-registry-helm \
---values my-values.yaml
+  $ helm install <RELEASE_NAME> \
+  oci://registry.suse.com/private-registry/private-registry-helm \
+  --namespace <PRIVATE_REGISTRY_NAMESPACE>
+  -f suse_registry_override.yaml
+
+[#pr-helm-chart-override-examples]
+=== Examples of {sregistry} {helm} override files
+.Minimal deployment with {ingress}
+[example]
+----
+expose:   
+  type: ingress //<1>
+  ingress:     
+    hosts:
+      core: <PRIVATE_REGISTRY_FQDN> //<2>
+
+externalURL: https://<PRIVATE_REGISTRY_FQDN> //<3>
+
+harborAdminPassword: "<MY_PASSWORD>" //<4>
+
+database:   
+  internal:     
+    password: "<MY_PASSWORD_POSTGRESQL>"
+
+redis:   
+  internal:     
+   password: "<MY_PASSWORD_REDIS>"
+----
+[callouts]
+<1> How {sregistry} is exposed. Can be `ingress`, `loadBalancer`, `nodePort` or `clusterIPhis`. Default is `ingress`.
+<2> Host name for the {kube} internal networking configuration.
+<3> URL where the {sregistry} application runs. It is used to generate links in the user interface, redirects and also for API responses.
+<4> The administrator password to the application.
+
+.Typical deployment with `loadBalancer`
+[example]
+----
+expose:   
+  type: loadBalancer //<1>
+  tls:
+    enabled: true
+    certSource: secret //<2>
+    secret:  
+      secretName: <SECRET_NAME>
+  
+    auto:
+      commonName: <PRIVATE_REGISTRY_FQDN> //<3>
+
+externalURL: https://<PRIVATE_REGISTRY_FQDN> //<4>
+
+harborAdminPassword: "<MY_PASSWORD>" //<5>
+
+database:   
+  internal:     
+    password: "<MY_PASSWORD_POSTGRESQL>"
+
+redis:   
+  internal:     
+   password: "<MY_PASSWORD_REDIS>"
+
+persistence: enabled //<6>
+----
+[callouts]
+<1> How {sregistry} is exposed. Can be `ingress`, `loadBalancer`, `nodePort` or `clusterIP`. Default is `ingress`.
+<2> Can be `auto`, `secret` or `none`. Depending on the option, you may have to include additional values.
+<3> To use a TLS encryption, update the field to match `externalURL`.
+<4> URL where the {sregistry} application runs. It is used to generate links in the user interface, redirects and also for API responses.
+<5> The administrator password to the application.
+<6>  To store all the images, metadata and scans, ensure this that the `persistence`-related settings are properly configured.
 
 [#pr-helm-chart-override-parameters]
 === Overriding {helm} chart parameters and values
@@ -31,9 +98,9 @@ The following tables list all parameters with descriptions that you can use to o
 `global.imagePullSecrets`:: Sets global pull secrets for accessing the container image registry.
 
 .Common parameters
+`harborAdminPassword`:: Sets the initial password for {harbor} administrator. Change it from portal after deployment. Default is `Harbor12345`.
 `externalURL`:: Specifies the external URL for `harbor-core` service. Default is `\https://core.harbor.domain`.
 `existingSecretAdminPasswordKey`:: Sets the key name in the secret containing {harbor} administrator password. Default is `HARBOR_ADMIN_PASSWORD`.
-`harborAdminPassword`:: Sets the initial password for {harbor} administrator. Change it from portal after deployment. Default is `Harbor12345`.
 `imagePullSecrets`:: Sets the `imagePullSecrets` names for all deployments.
 `updateStrategy.type`:: Sets the update strategy for deployments with persistent volumes. Accepts `RollingUpdate` or `Recreate`. Use `Recreate` when RWM for volumes is not supported. Default is `RollingUpdate`.
 `logLevel`:: Sets the log level for {harbor} services. Accepts `fatal`, `error`, `warn`, `info`, `debug` or `trace`. Default is `debug`.
@@ -52,11 +119,11 @@ The following tables list all parameters with descriptions that you can use to o
 `expose.tls.certSource`:: Sets TLS certificate source as `auto`, `secret` or `none`. Default is `auto`.  
 `expose.tls.auto.commonName`:: Sets certificate common name when type is not `ingress`.  
 `expose.tls.secret.secretName`:: Specifies name of secret containing `tls.crt` (certificate) and `tls.key` (private key).  
-`expose.ingress.hosts.core`:: Sets {harbor} core service host in ingress rule. Default is `core.harbor.domain`.  
-`expose.ingress.controller`:: Sets ingress controller type. Supports `default`, `gce`, `alb`, `f5-bigip` and `ncp`. Default is `default`.  
+`expose.ingress.hosts.core`:: Sets {harbor} core service host in {ingress} rule. Default is `core.harbor.domain`.  
+`expose.ingress.controller`:: Sets {ingress} controller type. Supports `default`, `gce`, `alb`, `f5-bigip` and `ncp`. Default is `default`.  
 `expose.ingress.kubeVersionOverride`:: Overrides {kube} version for {ingress} templating.  
-`expose.ingress.annotations`:: Sets ingress annotations.  
-`expose.ingress.labels`:: Sets ingress-specific labels. Default is `{}`.  
+`expose.ingress.annotations`:: Sets {ingress} annotations.  
+`expose.ingress.labels`:: Sets {ingress}-specific labels. Default is `{}`.  
 `expose.clusterIP.name`:: Sets ClusterIP service name. Default is `harbor`.  
 `expose.clusterIP.annotations`:: Sets ClusterIP service annotations. Default is `{}`.  
 `expose.clusterIP.ports.httpPort`:: Sets HTTP service port. Default is `80`.  
@@ -116,7 +183,7 @@ The following tables list all parameters with descriptions that you can use to o
 `persistence.imageChartStorage.gcs.existingSecret`:: The name of existing secret containing the GCS service account JSON key. The key must be `gcs-key.json`. Default is `""`.  
 `persistence.imageChartStorage.gcs.useWorkloadIdentity`:: Enables workload identity usage in a GKE cluster. Default is `false`.
 
-.Nginx parameters
+.{nginx} parameters
 [options="header"]
 `nginx.image.repository`:: The image repository for {nginx}. Default is `private-registry/harbor-nginx`.
 `nginx.image.tag`:: The image tag for {nginx}.
@@ -214,7 +281,7 @@ The following tables list all parameters with descriptions that you can use to o
 `registry.tolerations`:: The tolerations for pod assignment. Default is `[]`.  
 `registry.affinity`:: The node or pod affinities. Default is `{}`.  
 `registry.topologySpreadConstraints`:: The constraints that define pod distribution across failure-domains such as regions or availability zones. Default is `[]`.  
-`registry.middleware`:: Middleware support for a CDN between back-end storage and docker pull recipient.  
+`registry.middleware`:: Middleware support for a CDN between back-end storage and {docker} pull recipient.  
 `registry.podAnnotations`:: The annotations to add to the registry pod. Default is `{}`.  
 `registry.priorityClassName`:: The priority class for pod execution.  
 `registry.secret`:: The secret that secures the upload state between client and registry storage back-end.  
@@ -257,7 +324,7 @@ The following tables list all parameters with descriptions that you can use to o
 `database.internal.image.repository`:: The repository for the database image. Default is `private-registry/harbor-db`.  
 `database.internal.image.tag`:: The tag for the database image. Default is `2.11`.  
 `database.internal.password`:: The password for the internal database. Default is `changeit`.  
-`database.internal.shmSizeLimit`:: The shared memory size limit for PostgreSQL (typically 50% of the container memory limit). Default is `512Mi`.  
+`database.internal.shmSizeLimit`:: The shared memory size limit for {postgresql} (typically 50% of the container memory limit). Default is `512Mi`.  
 `database.internal.resources`:: The resources allocated for the database container. Default is `undefined`.  
 `database.internal.automountServiceAccountToken`:: Controls whether the service account token is mounted. Default is `false`.  
 `database.internal.initContainer.migrator.resources`:: The resources allocated for the database migrator init container. Default is `undefined`.  
@@ -294,8 +361,8 @@ The following tables list all parameters with descriptions that you can use to o
 `redis.internal.jobserviceDatabaseIndex`:: The database index for jobservice. Default is `1`.  
 `redis.internal.registryDatabaseIndex`:: The database index for registry. Default is `2`.  
 `redis.internal.trivyAdapterIndex`:: The database index for {trivy} adapter. Default is `5`.  
-`redis.internal.harborDatabaseIndex`:: The database index for miscellaneous Harbor business logic. Default is `0`.  
-`redis.internal.cacheLayerDatabaseIndex`:: The database index for Harbor's cache layer. Default is `0`.  
+`redis.internal.harborDatabaseIndex`:: The database index for miscellaneous {harbor} business logic. Default is `0`.  
+`redis.internal.cacheLayerDatabaseIndex`:: The database index for {harbor}'s cache layer. Default is `0`.  
 `redis.internal.initContainers`:: The init containers that run before the {redis} container starts. Default is `[]`.  
 `redis.external.addr`:: The address of the external {redis} instance. Default is `192.168.0.2:6379`.  
 `redis.external.sentinelMasterSet`:: The name of the {redis} Sentinel master set (if applicable). Default is `undefined`.  
@@ -303,8 +370,8 @@ The following tables list all parameters with descriptions that you can use to o
 `redis.external.jobserviceDatabaseIndex`:: The database index for jobservice. Default is `1`.  
 `redis.external.registryDatabaseIndex`:: The database index for registry. Default is `2`.  
 `redis.external.trivyAdapterIndex`:: The database index for {trivy} adapter. Default is `5`.  
-`redis.external.harborDatabaseIndex`:: The database index for miscellaneous Harbor business logic. Default is `0`.  
-`redis.external.cacheLayerDatabaseIndex`:: The database index for Harbor's cache layer. Default is `0`.  
+`redis.external.harborDatabaseIndex`:: The database index for miscellaneous {harbor} business logic. Default is `0`.  
+`redis.external.cacheLayerDatabaseIndex`:: The database index for {harbor}'s cache layer. Default is `0`.  
 `redis.external.username`:: The username for external {redis} authentication. Default is `undefined`.  
 `redis.external.password`:: The password for external {redis} authentication. Default is `undefined`.  
 `redis.external.existingSecret`:: The existing secret containing the {redis} password. The key must be `REDIS_PASSWORD`. Default is `""`.  
@@ -326,16 +393,16 @@ The following tables list all parameters with descriptions that you can use to o
 `exporter.priorityClassName`:: The priority class to run the pod as. Default is `undefined`.  
 
 .Metrics parameters
-`metrics.enabled`:: Enables Harbor metrics. Default is `false`.  
+`metrics.enabled`:: Enables {harbor} metrics. Default is `false`.  
 `metrics.core.path`:: The URL path for core metrics. Default is `/metrics`.  
 `metrics.core.port`:: The port for core metrics. Default is `8001`.  
 `metrics.registry.path`:: The URL path for registry metrics. Default is `/metrics`.  
 `metrics.registry.port`:: The port for registry metrics. Default is `8001`.  
 `metrics.exporter.path`:: The URL path for exporter metrics. Default is `/metrics`.  
 `metrics.exporter.port`:: The port for exporter metrics. Default is `8001`.  
-`metrics.serviceMonitor.enabled`:: Enables creation of a Prometheus ServiceMonitor (requires Prometheus CRDs). Default is `false`.  
+`metrics.serviceMonitor.enabled`:: Enables creation of a {prometheus} ServiceMonitor (require{prometheus}us CRDs). Default is `false`.  
 `metrics.serviceMonitor.additionalLabels`:: Additional labels to apply to the ServiceMonitor manifest. Default is `""`.  
-`metrics.serviceMonitor.interval`:: The scrape interval for Harbor metrics. Default is `""`.  
+`metrics.serviceMonitor.interval`:: The scrape interval for {harbor} metrics. Default is `""`.  
 `metrics.serviceMonitor.metricRelabelings`:: The relabeling rules for metrics before ingestion. Default is `[]`.  
 `metrics.serviceMonitor.relabelings`:: The relabeling rules for metrics before scraping. Default is `[]`.  
 
@@ -343,18 +410,18 @@ The following tables list all parameters with descriptions that you can use to o
 `trace.enabled`:: Enables tracing functionality. Default is `false`.  
 `trace.provider`:: The tracing provider (`jaeger` or `otel`). Jaeger version should be 1.26+. Default is `jaeger`.  
 `trace.sample_rate`:: The sampling rate for trace data. `1` samples 100%, `0.5` samples 50%. Default is `1`.  
-`trace.namespace`:: The namespace to differentiate different Harbor services.  
+`trace.namespace`:: The namespace to differentiate different {harbor} services.  
 `trace.attributes`:: A key-value dictionary for user-defined attributes in trace provider initialization.  
 `trace.jaeger.endpoint`:: The endpoint for Jaeger tracing. Default is `\http://hostname:14268/api/traces`.
 `trace.jaeger.username`:: The username for Jaeger authentication.  
 `trace.jaeger.password`:: The password for Jaeger authentication.  
 `trace.jaeger.agent_host`:: The agent host for Jaeger.  
 `trace.jaeger.agent_port`:: The agent port for Jaeger. Default is `6831`.  
-`trace.otel.endpoint`:: The endpoint for OpenTelemetry tracing. Default is `hostname:4318`.  
-`trace.otel.url_path`:: The URL path for OpenTelemetry. Default is `/v1/traces`.  
-`trace.otel.compression`:: Enables compression for OpenTelemetry. Default is `false`.  
-`trace.otel.insecure`:: Establishes an insecure connection for OpenTelemetry. Default is `true`.  
-`trace.otel.timeout`:: The timeout in seconds for OpenTelemetry. Default is `10`.
+`trace.otel.endpoint`:: The endpoint for {otelemetry} tracing. Default is `hostname:4318`.  
+`trace.otel.url_path`:: The URL path for {otelemetry}. Default is `/v1/traces`.  
+`trace.otel.compression`:: Enables compression for {otelemetry}. Default is `false`.  
+`trace.otel.insecure`:: Establishes an insecure connection for {otelemetry}. Default is `true`.  
+`trace.otel.timeout`:: The timeout in seconds for {otelemetry}. Default is `10`.
 
 .Cache parameters
 `cache.enabled`:: Enables the cache layer. Default is `false`.
