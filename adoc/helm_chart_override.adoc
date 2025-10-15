@@ -77,8 +77,6 @@ database:
 redis:   
   internal:     
    password: "<MY_PASSWORD_REDIS>"
-
-persistence: enabled //<6>
 ----
 [callouts]
 <1> How {sregistry} is exposed. Can be `ingress`, `loadBalancer`, `nodePort` or `clusterIP`. Default is `ingress`.
@@ -86,7 +84,6 @@ persistence: enabled //<6>
 <3> To use a TLS encryption, update the field to match `externalURL`.
 <4> URL where the {sregistry} application runs. It is used to generate links in the user interface, redirects and also for API responses.
 <5> The administrator password to the application.
-<6>  To store all the images, metadata and scans, ensure this that the `persistence`-related settings are properly configured.
 
 [#pr-helm-chart-override-parameters]
 === Overriding {helm} chart parameters and values

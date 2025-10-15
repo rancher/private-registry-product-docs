@@ -74,4 +74,4 @@ redis:
 <11> Optional. Defaults to `0` but can be configured to `6`.
 <12> Optional. Defaults to `0` but can be configured to `7`.
 <13> If empty, it is authenticated against the default user.
-<14> If used, the key must be <REDIS_PASSWORD>. 
+<14> If used, the key must be <REDIS_PASSWORD>.
