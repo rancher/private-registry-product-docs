@@ -2,7 +2,7 @@ include::generic-attributes.adoc[]
 
 [#pr-deployment]
 == Deployment
-:revdate: 2025-02-21
+:revdate: 2025-10-15
 :page-revdate: {revdate}
 
 The following procedures describe how to deploy {productname} ({productnameshort}) on a {kube} cluster.
@@ -54,11 +54,12 @@ Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart depl
   $ head -1 ./password.txt | helm registry login registry.suse.com \
   --username <SUSE_REGISTRY_USERNAME> --password-stdin
 . Install the latest version of the {productnameshort} {helm} chart.
-  To override the default installation with custom values from the `suse_registry_override.yaml` file`, refer to <<pr-helm-chart-override>>.
 [source]
   $ helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
+
+To override the default installation with custom values from the `suse_registry_override.yaml` file`, refer to <<pr-helm-chart-override>>.
 
 The command starts deploying several related containers and may take several minutes to complete.
 It also prints a message with the URL to the {productnameshort} Web portal and commands to obtain the administrator credentials.
