@@ -81,7 +81,7 @@ redis:
 [callouts]
 <1> How {sregistry} is exposed. Can be `ingress`, `loadBalancer`, `nodePort` or `clusterIP`. Default is `ingress`.
 <2> Can be `auto`, `secret` or `none`. Depending on the option, you may have to include additional values.
-<3> When using a TLS encryption, this field must match the `externalURL` value.
+<3> When using TLS encryption, this field must match the `externalURL` value.
 <4> URL where the {sregistry} application runs. It is used to generate links in the user interface, redirects and also for API responses.
 <5> The administrator password to the application.
 
