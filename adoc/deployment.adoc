@@ -50,7 +50,7 @@ The following procedure describes how to install {productnameshort} using {helm}
 Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
 
 . Log in to {sregistry} using the obtained {scca} mirroring credentials.
-[source]
+[source, bash]
   $ head -1 ./password.txt | helm registry login registry.suse.com \
   --username <SUSE_REGISTRY_USERNAME> --password-stdin
 . Install the latest version of the {productnameshort} {helm} chart.
