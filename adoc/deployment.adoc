@@ -54,7 +54,7 @@ Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart depl
   $ head -1 ./password.txt | helm registry login registry.suse.com \
   --username <SUSE_REGISTRY_USERNAME> --password-stdin
 . Install the latest version of the {productnameshort} {helm} chart.
-[source]
+[source, bash]
   $ helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
