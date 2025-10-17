@@ -2,7 +2,7 @@ include::generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
 == Overriding the {productname} {helm} chart
-:revdate: 2025-10-06
+:revdate: 2025-10-15
 :page-revdate: {revdate}
 
 The {productname} ({productnameshort}) {helm} chart is delivered with default values.
@@ -77,16 +77,13 @@ database:
 redis:   
   internal:     
    password: "<MY_PASSWORD_REDIS>"
-
-persistence: enabled //<6>
 ----
 [callouts]
 <1> How {sregistry} is exposed. Can be `ingress`, `loadBalancer`, `nodePort` or `clusterIP`. Default is `ingress`.
 <2> Can be `auto`, `secret` or `none`. Depending on the option, you may have to include additional values.
-<3> To use a TLS encryption, update the field to match `externalURL`.
+<3> When using TLS encryption, this field must match the `externalURL` value.
 <4> URL where the {sregistry} application runs. It is used to generate links in the user interface, redirects and also for API responses.
 <5> The administrator password to the application.
-<6>  To store all the images, metadata and scans, ensure this that the `persistence`-related settings are properly configured.
 
 [#pr-helm-chart-override-parameters]
 === Overriding {helm} chart parameters and values
@@ -144,7 +141,8 @@ The following tables list all parameters with descriptions that you can use to o
 `expose.loadBalancer.labels`:: Sets loadBalancer-specific labels. Default is `{}`.  
 `expose.loadBalancer.sourceRanges`:: Specifies IP address ranges for loadBalancerSourceRanges. Default is `[]`.
 
-.Expose parameters
+[#helm-persistence-parameters]
+.Persistence parameters
 `persistence.enabled`:: Enables or disables data persistence. Default is `true`.  
 `persistence.resourcePolicy`:: `keep` prevents removal of PVCs during a {helm} delete operation. Empty value deletes PVCs after chart deletion. Default is `keep`.  
 `persistence.persistentVolumeClaim.registry.existingClaim`:: The existing PVC that must be created manually before binding. Requires a subPath specification if the PVC is shared with other components.  

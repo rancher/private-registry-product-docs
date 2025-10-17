@@ -2,7 +2,7 @@ include::generic-attributes.adoc[]
 
 [#pr-deployment]
 == Deployment
-:revdate: 2025-02-21
+:revdate: 2025-10-15
 :page-revdate: {revdate}
 
 The following procedures describe how to deploy {productname} ({productnameshort}) on a {kube} cluster.
@@ -50,20 +50,24 @@ The following procedure describes how to install {productnameshort} using {helm}
 Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
 
 . Log in to {sregistry} using the obtained {scca} mirroring credentials.
+[source, bash]
+  $ head -1 ./password.txt | helm registry login registry.suse.com \
+  --username <SUSE_REGISTRY_USERNAME> --password-stdin
 . Install the latest version of the {productnameshort} {helm} chart.
-  To override the default installation with custom values from the `suse_registry_override.yaml` file`, refer to <<pr-helm-chart-override>>.
-[source]
+[source, bash]
   $ helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
 
-  The command starts deploying several related containers and may take several minutes to complete.
-  It also prints a message with the URL to the {productnameshort} Web portal and commands to obtain the administrator credentials.
+To override the default installation with custom values from the `suse_registry_override.yaml` file, refer to <<pr-helm-chart-override>>.
+
+The command starts deploying several related containers and may take several minutes to complete.
+It also prints a message with the URL to the {productnameshort} Web portal and commands to obtain the administrator credentials.
 
 [#pr-deployment-upgrading]
 === Upgrading {productnameshort}
 To upgrade the release of the {helm} chart to a specific newer version, run the following command:
 [source]
 $ helm upgrade <RELEASE_NAME> \
-oci://registry.suse.com/private-registry/private-registry-helm --version <NEW_VERSION_OF_HELM_CHART>>
--namespace <PRIVATE_REGISTRY_NAMESPACE>
+oci://registry.suse.com/private-registry/private-registry-helm --version <NEW_VERSION_OF_HELM_CHART>
+--namespace <PRIVATE_REGISTRY_NAMESPACE>
