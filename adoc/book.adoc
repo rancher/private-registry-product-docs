@@ -6,7 +6,7 @@
 include::generic-attributes.adoc[]
 
 = Getting started with {productname}
-:revdate: 2025-09-04
+:revdate: 2025-10-15
 :page-revdate: {revdate}
 
 // Release Notes
