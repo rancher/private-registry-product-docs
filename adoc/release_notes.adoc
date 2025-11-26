@@ -13,27 +13,27 @@ This document provides a high-level overview of the features, capabilities and l
 [#pr-relnotes-101]
 === Release 1.0.1
 
-Security Updates:
+Security updates:
 
-* CVE-2025-55198: Helm May Panic Due To Incorrect YAML Content.
-* CVE-2025-55199: Helm Charts with Specific JSON Schema Values Can Cause Memory Exhaustion.
-* CVE-2025-54410: Mooby versions before 25.0.13, when firewalld reloads, Docker fails to re-create iptables rules isolating bridge networks, allowing any container to access all ports on any other container across different bridge networks on the same host—breaking network segmentation in multi-tenant environments (only --internal networks remain protected).
+* CVE-2025-55198: Helm may panic due to incorrect YAML content.
+* CVE-2025-55199: Helm charts with specific JSON schema values can cause memory exhaustion.
+* CVE-2025-54410: Mooby versions before 25.0.13, when firewall reloads, Docker fails to re-create iptables rules isolating bridge networks. This allows any container to access all ports on any other container across different bridge networks on the same host and breaks network segmentation in multi-tenant environments (only --internal networks remain protected).
 * CVE-2025-29923: go-redis allows potential out of order responses when `CLIENT SETINFO` times out during connection establishment.
-* CVE-2025-54388: Moby versions 28.2.0–28.3.2 fail to recreate iptables rules after a firewalld reload, exposing containers with localhost-published ports (e.g., 127.0.0.1:8080) to remote access via the Docker bridge, while unpublished ports remain protected; fixed in version 28.3.3.
-* GHSA-2464-8j7c-4cjm: go-viper's mapstructure May Leak Sensitive Information in Logs When Processing Malformed Data.
-* CVE-2025-8959: HashiCorp go-getter Vulnerable to Arbitrary Read through Symlink Attack
-* CVE-2025-58058: github.com/ulikunitz/xz leaks memory when decoding a corrupted multiple LZMA archives
-* CVE-2025-53547: Helm Chart Dependency Updating With Malicious Chart.yaml Content And Symlink Can Lead To Code Execution
+* CVE-2025-54388: Mooby versions 28.2.0–28.3.2 fails to re-create iptables rules after a firewall reloads. This exposes containers with localhost-published ports (e.g., 127.0.0.1:8080) to remote access via the Docker bridge, while unpublished ports remain protected; fixed in version 28.3.3.
+* GHSA-2464-8j7c-4cjm: go-viper's map structure may leak sensitive information in logs when processing malformed data.
+* CVE-2025-8959: HashiCorp go-getter vulnerable to arbitrary read through symlink attack.
+* CVE-2025-58058: github.com/ulikunitz/xz leaks memory when decoding a corrupted multiple LZMA archives.
+* CVE-2025-53547: Helm chart dependency updating with malicious Chart.yaml content and symlink can lead to code execution.
 
-Bugs Fixed:
+Bugs fixed:
 
-* Trivy: the correct version is shown when calling “trivy version.”
+* Trivy: the correct version is shown when calling `trivy version`.
 
-Container Image Updates:
+Container image updates:
 
 * Valkey updated from 8.0.2 -> 8.0.6
 
-Upgrade Notes:
+Upgrade notes:
 
 * No breaking changes in this release.
 
