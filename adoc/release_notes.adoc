@@ -31,7 +31,7 @@ Bugs fixed:
 
 Container image updates:
 
-* Valkey updated from 8.0.2 -> 8.0.6
+* Valkey updated from 8.0.2 -> 8.0.6.
 
 Upgrade notes:
 
