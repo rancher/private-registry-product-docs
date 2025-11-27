@@ -17,9 +17,9 @@ Security updates:
 
 * CVE-2025-55198: Helm may panic due to incorrect YAML content.
 * CVE-2025-55199: Helm charts with specific JSON schema values can cause memory exhaustion.
-* CVE-2025-54410: Mooby versions before 25.0.13, when firewall reloads, Docker fails to re-create iptables rules isolating bridge networks. This allows any container to access all ports on any other container across different bridge networks on the same host and breaks network segmentation in multi-tenant environments (only --internal networks remain protected).
+* CVE-2025-54410: Moby versions before 25.0.13, when firewall reloads, Docker fails to re-create iptables rules isolating bridge networks. This allows any container to access all ports on any other container across different bridge networks on the same host and breaks network segmentation in multi-tenant environments (only --internal networks remain protected).
 * CVE-2025-29923: go-redis allows potential out of order responses when `CLIENT SETINFO` times out during connection establishment.
-* CVE-2025-54388: Mooby versions 28.2.0–28.3.2 fails to re-create iptables rules after a firewall reloads. This exposes containers with localhost-published ports (e.g., 127.0.0.1:8080) to remote access via the Docker bridge, while unpublished ports remain protected; fixed in version 28.3.3.
+* CVE-2025-54388: Moby versions 28.2.0–28.3.2 fails to re-create iptables rules after a firewall reloads. This exposes containers with localhost-published ports (e.g., 127.0.0.1:8080) to remote access via the Docker bridge, while unpublished ports remain protected; fixed in version 28.3.3.
 * GHSA-2464-8j7c-4cjm: go-viper's map structure may leak sensitive information in logs when processing malformed data.
 * CVE-2025-8959: HashiCorp go-getter vulnerable to arbitrary read through symlink attack.
 * CVE-2025-58058: github.com/ulikunitz/xz leaks memory when decoding a corrupted multiple LZMA archives.
