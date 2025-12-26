@@ -10,6 +10,34 @@ It is designed for {suse} customers who need a container registry that works wel
 
 This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
+[#pr-relnotes-110]
+=== Release 1.1.0
+
+Security Updates:
+* Update Harbor 2.13.2 to 2.14.1 (Release Notes 2.14.1)
+
+Container Image Updates:
+
+* Update the base image bci/bci-micro:15.6 to bci/bci-micro:15.7 
+* Update images:
+  * private-registry/harbor-valkey:8.0.6 -> suse/valkey:8.0.6
+  * private-registry/harbor-db:2.13.2 (postgres 17) -> suse/postgres:17.6
+  * private-registry/harbor-nginx:1.21 -> suse/nginx:1.21
+
+Upgrade Notes:
+
+* Changing the version instead to use the same version of Harbor now uses the same version in the SUSE private registry 1.1.0:
+  * private-registry/harbor-core:1.1.0
+  * private-registry/harbor-exporter:1.1.0
+  * private-registry/harbor-jobservice:1.1.0
+  * private-registry/harbor-portal:1.1.0
+  * private-registry/harbor-registry:1.1.0
+  * private-registry/harbor-registryctl:1.1.0
+  * private-registry/harbor-registryctl:1.1.0
+  The change in image versioning scheme is handled by Helm when upgrading an installation using the chart
+* No breaking changes in this release.
+
+
 [#pr-relnotes-101]
 === Release 1.0.1
 
