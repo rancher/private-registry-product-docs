@@ -10,6 +10,62 @@ It is designed for {suse} customers who need a container registry that works wel
 
 This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
+[#pr-relnotes-110]
+=== Release 1.1.0
+
+Security Updates:
+* Update Harbor 2.13.2 to 2.14.1 (Release Notes 2.14.1)
+
+Container Image Updates:
+
+* Update the base image bci/bci-micro:15.6 to bci/bci-micro:15.7 
+* Update images:
+  * private-registry/harbor-valkey:8.0.6 -> suse/valkey:8.0.6
+  * private-registry/harbor-db:2.13.2 (postgres 17) -> suse/postgres:17.6
+  * private-registry/harbor-nginx:1.21 -> suse/nginx:1.21
+
+Upgrade Notes:
+
+* Changing the version instead to use the same version of Harbor now uses the same version in the SUSE private registry 1.1.0:
+  * private-registry/harbor-core:1.1.0
+  * private-registry/harbor-exporter:1.1.0
+  * private-registry/harbor-jobservice:1.1.0
+  * private-registry/harbor-portal:1.1.0
+  * private-registry/harbor-registry:1.1.0
+  * private-registry/harbor-registryctl:1.1.0
+  * private-registry/harbor-registryctl:1.1.0
+  The change in image versioning scheme is handled by Helm when upgrading an installation using the chart
+* No breaking changes in this release.
+
+
+[#pr-relnotes-101]
+=== Release 1.0.1
+
+Security updates:
+
+* CVE-2025-55198: Helm may panic due to incorrect YAML content.
+* CVE-2025-55199: Helm charts with specific JSON schema values can cause memory exhaustion.
+* CVE-2025-54410: Moby versions before 25.0.13, when firewall reloads, Docker fails to re-create iptables rules isolating bridge networks. This allows any container to access all ports on any other container across different bridge networks on the same host and breaks network segmentation in multi-tenant environments (only --internal networks remain protected).
+* CVE-2025-29923: go-redis allows potential out of order responses when `CLIENT SETINFO` times out during connection establishment.
+* CVE-2025-54388: Moby versions 28.2.0–28.3.2 fails to re-create iptables rules after a firewall reloads. This exposes containers with localhost-published ports (e.g., 127.0.0.1:8080) to remote access via the Docker bridge, while unpublished ports remain protected; fixed in version 28.3.3.
+* GHSA-2464-8j7c-4cjm: go-viper's map structure may leak sensitive information in logs when processing malformed data.
+* CVE-2025-8959: HashiCorp go-getter vulnerable to arbitrary read through symlink attack.
+* CVE-2025-58058: github.com/ulikunitz/xz leaks memory when decoding a corrupted multiple LZMA archives.
+* CVE-2025-53547: Helm chart dependency updating with malicious Chart.yaml content and symlink can lead to code execution.
+
+Bugs fixed:
+
+* Trivy: the correct version is shown when calling `trivy version`.
+
+Container image updates:
+
+* Valkey updated from 8.0.2 -> 8.0.6.
+
+Upgrade notes:
+
+* No breaking changes in this release.
+
+
 [#pr-relnotes-10]
 === Release 1.0
 
