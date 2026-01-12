@@ -1,4 +1,4 @@
-include::generic-attributes.adoc[]
+include::../common/generic-attributes.adoc[]
 
 [#pr-introduction]
 == Introduction

@@ -1,4 +1,4 @@
-include::generic-attributes.adoc[]
+include::../common/generic-attributes.adoc[]
 
 [#pr-ha-helm-chart-example]
 == Example of a {productnameshort} HA setup {helm} chart
