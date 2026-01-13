@@ -81,7 +81,8 @@ It also prints a message with the URL to the {productnameshort} Web portal and c
 To upgrade the release of the {helm} chart to a specific newer version, run the following command:
 [source]
 $ helm upgrade <RELEASE_NAME> \
-oci://registry.suse.com/private-registry/private-registry-helm --version <NEW_VERSION_OF_HELM_CHART> \
+oci://registry.suse.com/private-registry/private-registry-helm \
+--version <NEW_VERSION_OF_HELM_CHART> \
 --namespace <PRIVATE_REGISTRY_NAMESPACE>
 
 The digest is only possible with {helm} 4.
