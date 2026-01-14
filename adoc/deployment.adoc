@@ -69,7 +69,7 @@ With {helm} version 4, you can use a digest to specify the chart to install:
 ====
 It is possible to use kstatus watcher with the flag '--wait=watcher' to make sure that all the objects are ready to finish the installation.
 Using the watcher may cause the command to take longer.
-===
+====
 
 To override the default installation with custom values from the `suse_registry_override.yaml` file, refer to <<pr-helm-chart-override>>.
 
