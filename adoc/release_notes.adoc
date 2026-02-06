@@ -1,9 +1,10 @@
 include::../common/generic-attributes.adoc[]
 
+:revdate: 2026-02-06
+:page-revdate: {revdate}
+
 [#pr-relnotes]
 == Release notes
-:revdate: 2025-09-04
-:page-revdate: {revdate}
 
 {productname} is an on-premises container registry.
 It is designed for {suse} customers who need a container registry that works well with other {suse} services and products.
@@ -13,75 +14,81 @@ This document provides a high-level overview of the features, capabilities and l
 [#pr-relnotes-111]
 === Release 1.1.1
 
-Security Updates:
-* Update Harbor 2.14.1 to 2.14.2 (Release Notes v2.14.2 - https://github.com/goharbor/harbor/releases/tag/v2.14.2)
-* Trivy version update 0.67.2 to 0.68.2 (Release Notes v0.68.2 - https://github.com/aquasecurity/trivy/releases/tag/v0.68.2)
+*Security Updates:*
 
-Container Image Updates:
-  * private-registry/harbor-core:1.1.0 -> private-registry/harbor-core:1.1.1
-  * private-registry/harbor-exporter:1.1.0 -> private-registry/harbor-exporter:1.1.1
-  * private-registry/harbor-jobservice:1.1.0 -> private-registry/harbor-jobservice:1.1.1
-  * private-registry/harbor-portal:1.1.0 -> private-registry/harbor-portal:1.1.1
-  * private-registry/harbor-registry:1.1.0 -> private-registry/harbor-registry:1.1.1
-  * private-registry/harbor-registryctl:1.1.0 -> private-registry/harbor-registryctl:1.1.1
-  * private-registry/harbor-trivy-adapter:1.1.0 -> private-registry/harbor-trivy-adapter:1.1.1
+* Update {harbor} 2.14.1 to 2.14.2 (link:https://github.com/goharbor/harbor/releases/tag/v2.14.2[Release Notes v2.14.2])
+* {trivy} version update 0.67.2 to 0.68.2 (link:https://github.com/aquasecurity/trivy/releases/tag/v0.68.2[Release Notes v0.68.2])
+
+*Container Image Updates:*
+
+* private-registry/harbor-core:1.1.0 ➡ private-registry/harbor-core:1.1.1
+* private-registry/harbor-exporter:1.1.0 ➡ private-registry/harbor-exporter:1.1.1
+* private-registry/harbor-jobservice:1.1.0 ➡ private-registry/harbor-jobservice:1.1.1
+* private-registry/harbor-portal:1.1.0 ➡ private-registry/harbor-portal:1.1.1
+* private-registry/harbor-registry:1.1.0 ➡ private-registry/harbor-registry:1.1.1
+* private-registry/harbor-registryctl:1.1.0 ➡ private-registry/harbor-registryctl:1.1.1
+* private-registry/harbor-trivy-adapter:1.1.0 ➡ private-registry/harbor-trivy-adapter:1.1.1
 
 
-Upgrade Notes:
-* No breaking changes in this release.
+*Upgrade Notes:*
+
+No breaking changes in this release.
 
 [#pr-relnotes-110]
 === Release 1.1.0
 
-Security Updates:
-* Update Harbor 2.13.2 to 2.14.1 (Release Notes 2.14.1)
+*Security Updates:*
 
-Container Image Updates:
+* Updated {harbor} 2.13.2 to 2.14.1 (link:https://github.com/goharbor/harbor/compare/v2.14.0...v2.14.1[Release Notes 2.14.1])
+
+*Container Image Updates:*
 
 * Update the base image bci/bci-micro:15.6 to bci/bci-micro:15.7 
-* Update images:
-  * private-registry/harbor-valkey:8.0.6 -> suse/valkey:8.0.6
-  * private-registry/harbor-db:2.13.2 (postgres 17) -> suse/postgres:17.6
-  * private-registry/harbor-nginx:1.21 -> suse/nginx:1.21
+* Updated images:
+  - private-registry/harbor-valkey:8.0.6 ➡ suse/valkey:8.0.6
+  - private-registry/harbor-db:2.13.2 (postgres 17) ➡ suse/postgres:17.6
+  - private-registry/harbor-nginx:1.21 ➡ suse/nginx:1.21
 
-Upgrade Notes:
+*Upgrade Notes:*
 
-* Changing the version instead to use the same version of Harbor now uses the same version in the SUSE private registry 1.1.0:
-  * private-registry/harbor-core:1.1.0
-  * private-registry/harbor-exporter:1.1.0
-  * private-registry/harbor-jobservice:1.1.0
-  * private-registry/harbor-portal:1.1.0
-  * private-registry/harbor-registry:1.1.0
-  * private-registry/harbor-registryctl:1.1.0
-  * private-registry/harbor-registryctl:1.1.0
-  The change in image versioning scheme is handled by Helm when upgrading an installation using the chart
-* No breaking changes in this release.
+Images are now tagged with the {productname} version instead of the corresponding {harbor} version.
+The change in image versioning scheme is handled by {helm} when upgrading the installation using the chart:
+
+* private-registry/harbor-core:1.1.0
+* private-registry/harbor-exporter:1.1.0
+* private-registry/harbor-jobservice:1.1.0
+* private-registry/harbor-portal:1.1.0
+* private-registry/harbor-registry:1.1.0
+* private-registry/harbor-registryctl:1.1.0
+* private-registry/harbor-registryctl:1.1.0
+
+No breaking changes in this release.
 
 
 [#pr-relnotes-101]
 === Release 1.0.1
 
-Security updates:
+*Security updates:*
 
-* CVE-2025-55198: Helm may panic due to incorrect YAML content.
-* CVE-2025-55199: Helm charts with specific JSON schema values can cause memory exhaustion.
-* CVE-2025-54410: Moby versions before 25.0.13, when firewall reloads, Docker fails to re-create iptables rules isolating bridge networks. This allows any container to access all ports on any other container across different bridge networks on the same host and breaks network segmentation in multi-tenant environments (only --internal networks remain protected).
+* CVE-2025-55198: {helm} may panic due to incorrect YAML content.
+* CVE-2025-55199: {helm} charts with specific JSON schema values can cause memory exhaustion.
+* CVE-2025-54410: Moby versions before 25.0.13, when firewall reloads, {docker} fails to re-create iptables rules isolating bridge networks. This allows any container to access all ports on any other container across different bridge networks on the same host and breaks network segmentation in multi-tenant environments (only `--internal` networks remain protected).
 * CVE-2025-29923: go-redis allows potential out of order responses when `CLIENT SETINFO` times out during connection establishment.
-* CVE-2025-54388: Moby versions 28.2.0–28.3.2 fails to re-create iptables rules after a firewall reloads. This exposes containers with localhost-published ports (e.g., 127.0.0.1:8080) to remote access via the Docker bridge, while unpublished ports remain protected; fixed in version 28.3.3.
+* CVE-2025-54388: Moby versions 28.2.0–28.3.2 fails to re-create iptables rules after a firewall reloads. This exposes containers with localhost-published ports (e.g., 127.0.0.1:8080) to remote access via the {docker} bridge, while unpublished ports remain protected; fixed in version 28.3.3.
 * GHSA-2464-8j7c-4cjm: go-viper's map structure may leak sensitive information in logs when processing malformed data.
-* CVE-2025-8959: HashiCorp go-getter vulnerable to arbitrary read through symlink attack.
+* CVE-2025-8959: HashiCorp go-getter vulnerable to arbitrary read through a symlink attack.
 * CVE-2025-58058: github.com/ulikunitz/xz leaks memory when decoding a corrupted multiple LZMA archives.
-* CVE-2025-53547: Helm chart dependency updating with malicious Chart.yaml content and symlink can lead to code execution.
+* CVE-2025-53547: {helm} chart dependency updating with malicious Chart.yaml content and symlink can lead to code execution.
 
-Bugs fixed:
+*Bugs fixed:*
 
-* Trivy: the correct version is shown when calling `trivy version`.
+* {trivy}: the correct version is shown when calling `trivy version`.
 
-Container image updates:
+*Container image updates:*
 
-* Valkey updated from 8.0.2 -> 8.0.6.
+* {valkey} updated from 8.0.2 ➡ 8.0.6.
 
-Upgrade notes:
+*Upgrade notes:*
 
 * No breaking changes in this release.
 
@@ -89,7 +96,7 @@ Upgrade notes:
 [#pr-relnotes-10]
 === Release 1.0
 
-Key features:
+*Key features:*
 
 * {productname} is based on {harbor} 2.13.2
   - Integration with link:https://github.com/goharbor/community/blob/main/proposals/new/AI-model-processor.md[Model Spec] for first-class handling of AI models

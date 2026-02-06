@@ -5,9 +5,10 @@
 
 include::../common/generic-attributes.adoc[]
 
-= Getting started with {productname}
-:revdate: 2025-10-15
+:revdate: 2026-02-06
 :page-revdate: {revdate}
+
+= Getting started with {productname}
 
 // Release Notes
 [preface]
