@@ -21,13 +21,13 @@ This document provides a high-level overview of the features, capabilities and l
 
 *Container Image Updates:*
 
-* private-registry/harbor-core:1.1.0 -> private-registry/harbor-core:1.1.1
-* private-registry/harbor-exporter:1.1.0 -> private-registry/harbor-exporter:1.1.1
-* private-registry/harbor-jobservice:1.1.0 -> private-registry/harbor-jobservice:1.1.1
-* private-registry/harbor-portal:1.1.0 -> private-registry/harbor-portal:1.1.1
-* private-registry/harbor-registry:1.1.0 -> private-registry/harbor-registry:1.1.1
-* private-registry/harbor-registryctl:1.1.0 -> private-registry/harbor-registryctl:1.1.1
-* private-registry/harbor-trivy-adapter:1.1.0 -> private-registry/harbor-trivy-adapter:1.1.1
+* private-registry/harbor-core:1.1.0 → private-registry/harbor-core:1.1.1
+* private-registry/harbor-exporter:1.1.0 → private-registry/harbor-exporter:1.1.1
+* private-registry/harbor-jobservice:1.1.0 → private-registry/harbor-jobservice:1.1.1
+* private-registry/harbor-portal:1.1.0 → private-registry/harbor-portal:1.1.1
+* private-registry/harbor-registry:1.1.0 → private-registry/harbor-registry:1.1.1
+* private-registry/harbor-registryctl:1.1.0 → private-registry/harbor-registryctl:1.1.1
+* private-registry/harbor-trivy-adapter:1.1.0 → private-registry/harbor-trivy-adapter:1.1.1
 
 
 *Upgrade Notes:*
@@ -45,9 +45,9 @@ No breaking changes in this release.
 
 * Update the base image bci/bci-micro:15.6 to bci/bci-micro:15.7 
 * Updated images:
-  - private-registry/harbor-valkey:8.0.6 -> suse/valkey:8.0.6
-  - private-registry/harbor-db:2.13.2 (postgres 17) -> suse/postgres:17.6
-  - private-registry/harbor-nginx:1.21 -> suse/nginx:1.21
+  - private-registry/harbor-valkey:8.0.6 → suse/valkey:8.0.6
+  - private-registry/harbor-db:2.13.2 (postgres 17) → suse/postgres:17.6
+  - private-registry/harbor-nginx:1.21 → suse/nginx:1.21
 
 *Upgrade Notes:*
 
@@ -86,7 +86,7 @@ No breaking changes in this release.
 
 *Container image updates:*
 
-* {valkey} updated from 8.0.2 -> 8.0.6.
+* {valkey} updated from 8.0.2 → 8.0.6.
 
 *Upgrade notes:*
 
