@@ -1,5 +1,12 @@
 <!-- History -->
 <revhistory xml:id="rh-article-private-registry">
+  <revision><date>2026-02-06</date>
+    <revdescription>
+      <para>
+        Updated release otes for version 1.1.1
+      </para>
+    </revdescription>
+  </revision>
   <revision><date>2025-09-04</date>
     <revdescription>
       <para>
