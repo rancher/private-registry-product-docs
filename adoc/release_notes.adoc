@@ -10,6 +10,26 @@ It is designed for {suse} customers who need a container registry that works wel
 
 This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
+[#pr-relnotes-111]
+=== Release 1.1.1
+
+Security Updates:
+* Update Harbor 2.14.1 to 2.14.2 (Release Notes v2.14.2 - https://github.com/goharbor/harbor/releases/tag/v2.14.2)
+* Trivy version update 0.67.2 to 0.68.2 (Release Notes v0.68.2 - https://github.com/aquasecurity/trivy/releases/tag/v0.68.2)
+
+Container Image Updates:
+  * private-registry/harbor-core:1.1.0 -> private-registry/harbor-core:1.1.1
+  * private-registry/harbor-exporter:1.1.0 -> private-registry/harbor-exporter:1.1.1
+  * private-registry/harbor-jobservice:1.1.0 -> private-registry/harbor-jobservice:1.1.1
+  * private-registry/harbor-portal:1.1.0 -> private-registry/harbor-portal:1.1.1
+  * private-registry/harbor-registry:1.1.0 -> private-registry/harbor-registry:1.1.1
+  * private-registry/harbor-registryctl:1.1.0 -> private-registry/harbor-registryctl:1.1.1
+  * private-registry/harbor-trivy-adapter:1.1.0 -> private-registry/harbor-trivy-adapter:1.1.1
+
+
+Upgrade Notes:
+* No breaking changes in this release.
+
 [#pr-relnotes-110]
 === Release 1.1.0
 
