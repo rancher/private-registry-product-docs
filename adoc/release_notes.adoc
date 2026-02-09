@@ -39,7 +39,7 @@ No breaking changes in this release.
 
 *Security Updates:*
 
-* Updated {harbor} 2.13.2 to 2.14.1 (link:https://github.com/goharbor/harbor/compare/v2.14.0...v2.14.1[Release Notes 2.14.1])
+* Updated {harbor} 2.13.2 to 2.14.1 (link:https://github.com/goharbor/harbor/releases/tag/v2.14.1[Release Notes v2.14.1])
 
 *Container Image Updates:*
 
