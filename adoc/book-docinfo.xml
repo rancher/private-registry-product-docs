@@ -1,0 +1,43 @@
+<!-- History -->
+<revhistory xml:id="rh-article-private-registry">
+  <revision><date>2026-02-23</date>
+    <revdescription>
+      <para>
+        Added the 'Troubleshooting' section
+      </para>
+    </revdescription>
+  </revision>
+  <revision><date>2026-02-06</date>
+    <revdescription>
+      <para>
+        Updated release notes for version 1.1.1
+      </para>
+    </revdescription>
+  </revision>
+  <revision><date>2025-09-04</date>
+    <revdescription>
+      <para>
+        Release notes added to version 1.0
+      </para>
+    </revdescription>
+  </revision>
+  <revision><date>2025-09-01</date>
+    <revdescription>
+      <para>
+        Initial public release
+      </para>
+    </revdescription>
+  </revision>
+</revhistory>
+<meta name="maintainer" content="tbazant@suse.com" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
+<meta name="updated" content="2026-02-23" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
+<!-- Series -->
+<meta name="series" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its">Products &amp; Solutions</meta>
+<!-- Task -->
+<meta name="task" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"><phrase>Container Management</phrase></meta>
+<meta name="category"><phrase>Systems Management</phrase></meta>
+<!-- Social Media -->
+<meta name="title" its:translate="yes" xmlns:its="http://www.w3.org/2005/11/its">Getting Started with {productname}</meta>
+<meta name="social-descr" its:translate="yes" xmlns:its="http://www.w3.org/2005/11/its">Basic steps to deploy and use {productname}</meta>
+<!-- Search -->
+<meta name="description" its:translate="yes" xmlns:its="http://www.w3.org/2005/11/its">{productnameshort} a container registry for {SUSE} customers.</meta>
