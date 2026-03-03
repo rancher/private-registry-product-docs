@@ -16,8 +16,8 @@ The full version of the error message looks as follows:
 Error: INSTALLATION FAILED:
 GET "https://registry.suse.com/v2/private-registry/private-registry-helm/tags/list":
 response status code 401: unauthorized:
-authentication required: [map[Action:pull
-Class: Name:private-registry/private-registry-helm Type:repository]]  
+authentication required:
+[map[Action:pull Class: Name:private-registry/private-registry-helm Type:repository]]  
 ----
 +
 To install and use {productname}, you need the following:
