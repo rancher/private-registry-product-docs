@@ -31,6 +31,9 @@
 </revhistory>
 <meta name="maintainer" content="tbazant@suse.com" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
 <meta name="updated" content="2026-02-23" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
+<meta name="architecture"><phrase>{x86-64}</phrase><phrase>{power}</phrase></meta>
+<meta name="productname" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"><productname version="1.0">{productname}</productname>
+</meta>
 <!-- Series -->
 <meta name="series" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its">Products &amp; Solutions</meta>
 <!-- Task -->
