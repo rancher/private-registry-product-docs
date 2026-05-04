@@ -5,7 +5,7 @@
 
 include::../common/generic-attributes.adoc[]
 
-:revdate: 2026-02-23
+:revdate: 2026-05-04
 :page-revdate: {revdate}
 
 = Getting started with {productname}
@@ -30,11 +30,14 @@ endif::[]
 // Introduction
 include::introduction.adoc[]
 
+// Installation using Rancher UI
+include::install-using-rancher.adoc[]
+
 // Deployment
-include::deployment.adoc[]
+include::install-using-cmdline.adoc[]
 
 // Deployment HA
-include::deployment_ha.adoc[]
+include::ha-setup.adoc[]
 
 //Troubleshooting
 include::troubleshooting.adoc[]

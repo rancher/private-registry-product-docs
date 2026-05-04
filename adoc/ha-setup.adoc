@@ -1,15 +1,15 @@
 include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
-== Deployment with High Availability
-:revdate: 2025-09-01
+== {ha} setup
+:revdate: 2025-05-04
 :page-revdate: {revdate}
 
 You can use {helm} to deploy highly available (HA) {productnameshort} on a {kube} cluster.
-The HA setup ensures that users do not experience interruptions of service if one of the nodes on which {productnameshort} is running becomes unavailable.
+The {hasetup} ensures that users do not experience interruptions of service if one of the nodes on which {productnameshort} is running becomes unavailable.
 
 [#pr-deployment-ha-architecture]
-=== Architecture of the HA setup 
+=== Architecture of the {hasetup} 
 
 Most of the {productnameshort} components are now stateless.
 Therefore, we can scale them by increasing pod replicas, ensuring they run on multiple worker nodes.
@@ -17,9 +17,9 @@ Therefore, we can scale them by increasing pod replicas, ensuring they run on mu
 
 For storage, users should provide an HA {postgresql} and {valkey} or {redis} cluster for application data, along with PVCs or object storage for storing images and charts.
 
-image::private-registry-ha.png[{productnameshort} HA setup, width=100%]
-.{productnameshort} HA setup
-{kube} cluster with {ingress} in HA setup using HA {postgresql} and HA {valkey}.
+image::private-registry-ha.png[{productnameshort} {hasetup}, width=100%]
+.{productnameshort} {hasetup}
+{kube} cluster with {ingress} in {hasetup} using HA {postgresql} and HA {valkey}.
 
 
 [#pr-deployment-ha-prerequisites]
