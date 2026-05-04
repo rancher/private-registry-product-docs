@@ -60,15 +60,34 @@ Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart depl
   oci://registry.suse.com/private-registry/private-registry-helm \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
 
+When you install the {productnameshort} {helm} chart show the following output:
+[source, bash]
+----
+NOTES:
+CHART VERSION: 1.1.6
+It may take several minutes for the SUSE Private Registry  1.1.2 deployment to complete.
+
+Once the deployment has finished, you will be able to open the SUSE Private Registry portal at https://core.harbor.domain
+
+To get the admin credentials, copy and run the following commands:
+
+echo Username: "admin"
+echo Password: $(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
+----
+
 With {helm} version 4, you can use a digest to specify the chart to install:
 [source, bash]
   $ helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
 
-[TIP]
+[TIPs]
 ====
-It is possible to use kstatus watcher with the flag '--wait=watcher' to make sure that all the objects are ready to finish the installation.
+- To get the password for the admin user, you can also run the following command:
+[source, bash]
+kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d; echo
+
+- It is possible to use kstatus watcher with the flag '--wait=watcher' to make sure that all the objects are ready to finish the installation.
 Using the watcher may cause the command to take longer.
 ====
 
@@ -84,10 +103,14 @@ To upgrade the release of the {helm} chart to a specific newer version, run the 
 $ helm upgrade <RELEASE_NAME> \
 oci://registry.suse.com/private-registry/private-registry-helm \
 --version <NEW_VERSION_OF_HELM_CHART> \
---namespace <PRIVATE_REGISTRY_NAMESPACE>
+--namespace <PRIVATE_REGISTRY_NAMESPACE> \
+--set HARBOR_ADMIN_PASSWORD=$(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
 
 The digest is only possible with {helm} 4.
 [source]
   $ helm update <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
-  --namespace <PRIVATE_REGISTRY_NAMESPACE>
+  --namespace <PRIVATE_REGISTRY_NAMESPACE> \
+  --set HARBOR_ADMIN_PASSWORD=$(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
+
+
