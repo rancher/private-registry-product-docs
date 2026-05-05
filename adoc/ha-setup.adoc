@@ -5,7 +5,7 @@ include::../common/generic-attributes.adoc[]
 :revdate: 2025-05-04
 :page-revdate: {revdate}
 
-You can use {helm} to deploy highly available (HA) {productnameshort} on a {kube} cluster.
+You can use {helm} to deploy the highly available (HA) {productnameshort} on a {kube} cluster.
 The {hasetup} ensures that users do not experience interruptions of service if one of the nodes on which {productnameshort} is running becomes unavailable.
 
 [#pr-deployment-ha-architecture]
@@ -15,7 +15,7 @@ Most of the {productnameshort} components are now stateless.
 Therefore, we can scale them by increasing pod replicas, ensuring they run on multiple worker nodes.
 {kube} services ensure connectivity between pods.
 
-For storage, users should provide an HA {postgresql} and {valkey} or {redis} cluster for application data, along with PVCs or object storage for storing images and charts.
+For storage, users should provide an HA {postgresql} and {valkey} or {redis} cluster for the application data, along with PVCs or object storage for storing images and charts.
 
 image::private-registry-ha.png[{productnameshort} {hasetup}, width=100%]
 .{productnameshort} {hasetup}
