@@ -26,7 +26,7 @@ Refer to link:https://documentation.suse.com/en-us/cloudnative/suse-private-regi
 . From the left-hand menu, select menu:Apps[Repositories].
 . Click the btn:[Create] button in the top right and complete the form that opens:
   .. *Target*: Select btn:[OCI Repository].
-  .. *Name*: Enter a name for the repository, such as  `SUSE private registry`.
+  .. *Name*: Enter a name for the repository, such as  `SUSE Private Registry`.
   .. *Description*: Optionally, add a description of the repository.
   .. *OCI Repository Host URL*: Enter \`oci://registry.suse.com/private-registry/private-registry-helm`.
   .. *Authentication*: Change to `Create an HTTP Basic Auth Secret` and enter the user name and password of the registry's credentials.
@@ -45,3 +45,15 @@ image::spr-rancher-add-repo.png[A screenshot showing how to add a {productname} 
 
 .Adding {productname} secrets
 image::spr-rancher-add-secrets.png[A screenshot showing how to add {productname} secrets to {ranchera}, width=100%]
+
+.*STEP 3*: Install the {helm} chart.
+. From the main left menu, select menu:Apps[Charts].
+. Enter the name of the assigned {productname} repository into the search box. For example, `SUSE Private Registry`.
+If it does not appear in the list, click btn:[Refresh all repositories].
+. Click the chart and view the `README.md`.
+. Optionally, you can customize the installation values.
+Either click through the sections on the left side of the `Edit Options` panel to view all the values you can configure, edit the values directly in the chart's YAML file.
+. In the top right corner, click btn:[Install this version].
+
+.Installing {productname}
+image::spr-rancher-install.png[A screenshot showing the installation screen of {productname} in {ranchera}, width=100%]
