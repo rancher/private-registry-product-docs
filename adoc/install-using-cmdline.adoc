@@ -25,25 +25,40 @@ To obtain the credentials from {scca}, follow these steps:
 . Select `Proxies` in the top menu. The credentials are displayed in the top right corner.
 . To see the password, click the 'eye' icon.
 . Create a `password.txt` file containing the obtained password.
-[source]
-  $ head -1 ./password.txt | helm registry login registry.suse.com \
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}head -1 ./password.txt | helm registry login registry.suse.com \
   --username <PRIVATE_REGISTRY_USERNAME> --password-stdin
+----
+
 . Create a namespace for {sregistry}.
-[source]
-$ kubectl create namespace <PRIVATE_REGISTRY_NAMESPACE>
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl create namespace <PRIVATE_REGISTRY_NAMESPACE>
+----
+
 . Store the mirroring credentials retrieved from {scca} as {kube} secrets by running the following command:
-[source]
-  $ kubectl create secret docker-registry suse-registry \
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl create secret docker-registry suse-registry \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
   --docker-server=registry.suse.com \
   --docker-username=<PRIVATE_REGISTRY_USERNAME> \
   --docker-password=$(head -1 ./password.txt)
+----
+
 . Optionally, to use TLS encrypted communication, create a TLS secret from your private key and certificate files.
-[source]
-  $ kubectl create secret tls suse-registry-tls \
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl create secret tls suse-registry-tls \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
   --cert=<CERTIFICATE>.pem \
   --key=<PRIVATE_KEY>.pem
+----
 
 [#pr-deployment-installing-and-running]
 === Installing and running {productnameshort} using {helm}
@@ -51,17 +66,25 @@ The following procedure describes how to install {productnameshort} using {helm}
 Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
 
 . Log in to {sregistry} using the obtained {scca} mirroring credentials.
-[source, bash]
-  $ head -1 ./password.txt | helm registry login registry.suse.com \
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}head -1 ./password.txt | helm registry login registry.suse.com \
   --username <SUSE_REGISTRY_USERNAME> --password-stdin
+----
+
 . Install the latest version of the {productnameshort} {helm} chart.
-[source, bash]
-  $ helm install <RELEASE_NAME> \
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
-
-When you install the {productnameshort} {helm} chart show the following output:
-[source, bash]
+----
++
+When you install the {productnameshort} {helm} chart, it displays the following output:
++
+[source,bash,subs="+attributes"]
 ----
 NOTES:
 CHART VERSION: 1.1.6
@@ -74,20 +97,29 @@ To get the admin credentials, copy and run the following commands:
 echo Username: "admin"
 echo Password: $(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
 ----
-
++
 With {helm} version 4, you can use a digest to specify the chart to install:
-[source, bash]
-  $ helm install <RELEASE_NAME> \
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
+----
 
-[TIPs]
+[TIP]
 ====
-- To get the password for the admin user, you can also run the following command:
-[source, bash]
-kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d; echo
+* To get the password for the administrator user, you can also run the following command:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get secret \
+  --namespace <PRIVATE_REGISTRY_NAMESPACE> \
+  --harbor-core <RELEASE_NAME> \
+  -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d; echo
+----
 
-- It is possible to use kstatus watcher with the flag '--wait=watcher' to make sure that all the objects are ready to finish the installation.
+* It is possible to use kstatus watcher with the flag '--wait=watcher' to make sure that all the objects are ready to finish the installation.
 Using the watcher may cause the command to take longer.
 ====
 
@@ -98,19 +130,25 @@ It also prints a message with the URL to the {productnameshort} Web portal and c
 
 [#pr-deployment-upgrading]
 === Upgrading {productnameshort}
+
 To upgrade the release of the {helm} chart to a specific newer version, run the following command:
-[source]
-$ helm upgrade <RELEASE_NAME> \
-oci://registry.suse.com/private-registry/private-registry-helm \
---version <NEW_VERSION_OF_HELM_CHART> \
---namespace <PRIVATE_REGISTRY_NAMESPACE> \
---set HARBOR_ADMIN_PASSWORD=$(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm upgrade <RELEASE_NAME> \
+  oci://registry.suse.com/private-registry/private-registry-helm \
+  --version <NEW_VERSION_OF_HELM_CHART> \
+  --namespace <PRIVATE_REGISTRY_NAMESPACE> \
+  --set HARBOR_ADMIN_PASSWORD=$(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
+----
 
 The digest is only possible with {helm} 4.
-[source]
-  $ helm update <RELEASE_NAME> \
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm update <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
   --set HARBOR_ADMIN_PASSWORD=$(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
-
+----
 

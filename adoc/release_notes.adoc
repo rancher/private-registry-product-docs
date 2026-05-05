@@ -15,9 +15,11 @@ This document provides a high-level overview of the features, capabilities and l
 === Release 1.1.2
 
 *Security Updates:*
-* CVE-2026-4404:Use of hard coded credentials allows attackers to use the default password and gain access to the web UI, if not set during installation or upgrade.
 
-Now the HARBOR_ADMIN_PASSWORD if is not set during installation or upgrade, it will be generated randomly and stored in a Kubernetes secret. This change mitigates the risk of using a default password and enhances the security of the installation.
+* CVE-2026-4404: Use of hard coded credentials allows attackers to use the default password and gain access to the Web UI, if not set during installation or upgrade.
+
+Now if the `HARBOR_ADMIN_PASSWORD` is not set during the installation or upgrade, it will be generated randomly and stored in a {kube} secret.
+This change mitigates the risk of using a default password and enhances the security of the installation.
 
 *Upgrade Notes:*
 
