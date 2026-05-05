@@ -1,5 +1,12 @@
 <!-- History -->
 <revhistory xml:id="rh-article-private-registry">
+  <revision><date>2026-05-05</date>
+    <revdescription>
+      <para>
+        Added installation in Rancher UI
+      </para>
+    </revdescription>
+  </revision>
   <revision><date>2026-04-10</date>
     <revdescription>
       <para>
