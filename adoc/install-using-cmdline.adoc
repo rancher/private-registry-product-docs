@@ -139,7 +139,6 @@ To upgrade the release of the {helm} chart to a specific newer version, run the 
   oci://registry.suse.com/private-registry/private-registry-helm \
   --version <NEW_VERSION_OF_HELM_CHART> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
-  --set HARBOR_ADMIN_PASSWORD=$(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
 ----
 
 The digest is only possible with {helm} 4.
@@ -149,6 +148,5 @@ The digest is only possible with {helm} 4.
 {prompt_user}helm update <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
-  --set HARBOR_ADMIN_PASSWORD=$(kubectl get secret --namespace <PRIVATE_REGISTRY_NAMESPACE>-harbor-core <RELEASE_NAME> -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 -d)
 ----
 
