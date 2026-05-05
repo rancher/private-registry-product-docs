@@ -52,7 +52,7 @@ image::spr-rancher-add-secrets.png[A screenshot showing how to add {productname}
 If it does not appear in the list, click btn:[Refresh all repositories].
 . Click the chart and view the `README.md`.
 . Optionally, you can customize the installation values.
-Either click through the sections on the left side of the `Edit Options` panel to view all the values you can configure, edit the values directly in the chart's YAML file.
+Either click through the sections on the left side of the `Edit Options` panel to view all the values you can configure, or you can edit the values directly in the chart's YAML file.
 . In the top right corner, click btn:[Install this version].
 
 .Installing {productname}
