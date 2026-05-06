@@ -6,6 +6,7 @@
 *.swp
 .directory
 build/
+*/build/
 .vscode/
 .idea/
 *.code-workspace
