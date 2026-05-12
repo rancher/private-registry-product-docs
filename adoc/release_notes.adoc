@@ -11,6 +11,61 @@ It is designed for {suse} customers who need a container registry that works wel
 
 This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
+This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
+
+[#pr-relnotes-120]
+=== Release 1.2.0
+
+*Security updates:*
+
+* Updates {harbor} 2.14.3 to 2.15.1 (link:https://github.com/goharbor/harbor/releases/tag/v2.15.1[Release Notes v2.15.1]).
+* Updates {trivy} version 0.68.2 to 0.70.0 with adapter v0.36.0 general availability (GA) (link:https://github.com/aquasecurity/trivy/releases/tag/v0.70.0[Release Notes v0.70.0]).
+
+*Component updates:*
+
+* Updates `k8s.io/client-go` to 0.34.1.
+* Updates `aws-sdk-go` to 1.55.8.
+* Updates `go-ldap` to 3.4.11.
+* Updates Go to 1.25.9.
+
+*New features and performance:*
+
+* Adds support for the Cosign v3 Bundle signature format.
+* Introduces an option to disable audit log recording to the database during initialization.
+* Enables pprof support and the ability to export the {harbor} version via the Prometheus exporter binary.
+* Replaces the existing pull-through cache with a new proxy cache implementation.
+* Improves general performance through code refactoring (for example, by using `strings.Builder` and `strings.CutPrefix`).
+
+*Key fixes:*
+
+* Implements a security fix to reject bearer tokens issued before project creation.
+* Fixes issues related to OpenID Connect (OIDC) integration for users with a single group.
+* Corrects errors in user and group search functionality.
+* Resolves various user interface (UI) issues, including an unwanted scrollbar in tag retention and issues with the "Copy Pull Button" when tags are undefined.
+* Adds support for both `docker-compose` v1 and `docker-compose` v2.
+* Calls the `/v2/auth/token` application programming interface (API) to get a bearer token for the {docker} Hub adapter.
+
+*Container image updates:*
+
+* private-registry/harbor-core:1.1.2 ➡ private-registry/1.2/harbor-core:1.2.0
+* private-registry/harbor-exporter:1.1.2 ➡ private-registry/1.2/harbor-exporter:1.2.0
+* private-registry/harbor-jobservice:1.1.2 ➡ private-registry/1.2/harbor-jobservice:1.2.0
+* private-registry/harbor-portal:1.1.2 ➡ private-registry/1.2/harbor-portal:1.2.0
+* private-registry/harbor-registry:1.1.2 ➡ private-registry/1.2/harbor-registry:1.2.0
+* private-registry/harbor-registryctl:1.1.2 ➡ private-registry/1.2/harbor-registryctl:1.2.0
+* private-registry/harbor-trivy-adapter:1.1.2 ➡ private-registry/1.2/harbor-trivy-adapter:1.2.0
+
+*Helm chart updates:*
+
+* Makes health probe `timeoutSeconds` and `failureThreshold` configurable via values.
+* Fixes extra environment variables for the exporter.
+* Installs `PodDisruptionBudget` resources when the replica count is greater than one.
+
+*Upgrade notes:*
+
+* No breaking changes in this release.
+
+
 [#pr-relnotes-112]
 === Release 1.1.2
 
