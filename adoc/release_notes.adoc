@@ -11,7 +11,6 @@ It is designed for {suse} customers who need a container registry that works wel
 
 This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
-This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
 [#pr-relnotes-120]
 === Release 1.2.0
