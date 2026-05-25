@@ -1,0 +1,103 @@
+include::../common/generic-attributes.adoc[]
+
+[#pr-configure-rancher-oidc]
+== Configure {ranchera} as an OIDC Identity Provider
+
+:revdate: 2026-05-20
+:page-revdate: {revdate}
+
+This guide explains how to configure {ranchera} to act as an OIDC Identity Provider, allowing users to authenticate into external applications such as {productname} using their {ranchera} credentials.
+
+
+[#pr-configure-rancher-oidc-enable-flag]
+=== Step 1: Enable the oidc-provider feature flag
+
+. Log in to the {ranchera} UI as an administrator.
+. Click the three-line menu (☰) in the upper left and go to menu:Global Settings[Feature Flags].
+. Find the `oidc-provider` flag, click the *More Actions* icon (⋮), and click *Activate*.
+
+image::activate-oidc-rancher.png[Configure {ranchera} as an OIDC Identity Provider, width=100%]
+
+
+[#pr-configure-rancher-oidc-create-client]
+=== Step 2: Create an OIDCClient resource
+
+{ranchera} uses an `OIDCClient` Custom Resource to register downstream applications.
+
+. Create a file named `rancher-oidc-client.yaml` with the following content:
++
+[source,yaml]
+----
+apiVersion: management.cattle.io/v3
+kind: OIDCClient
+metadata:
+  name: spr-client
+spec:
+  tokenExpirationSeconds: 600
+  refreshTokenExpirationSeconds: 3600
+  redirectURIs:
+    # Replace this with the actual callback URL of your SUSE private registry instance
+    - "https://<SUSE_PRIVATE_REGISTR_URL>/c/oidc/callback"
+----
+
+. Apply the file to the cluster where {ranchera} is running:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl apply -f rancher-oidc-client.yaml
+----
+
+[#pr-configure-rancher-oidc-retrieve-credentials]
+=== Step 3: Retrieve the Client ID and Secret
+
+Once the resource is created, {ranchera} automatically populates the `clientID` and provisions a {kube} Secret containing the `clientSecret`.
+
+. Get the generated Client ID:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get oidcclient spr-client -o jsonpath="{.status.clientID}"
+----
+
+. Fetch the Client Secret. Remember to replace `<YOUR_CLIENT_ID>` with the ID retrieved in the previous step:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get secret <YOUR_CLIENT_ID>
+  -n cattle-oidc-client-secrets
+  -o jsonpath="{.data.client-secret-1}" | base64 -d
+----
+
+[#pr-configure-rancher-oidc-configure-spr]
+=== Step 4: Configure {productname}
+
+You can configure {productname} to use {ranchera} as its OIDC provider by passing the values via {helm}.
+Use the `core.configureUserSettings` block in your `values-oidc.yaml` configuration.
+
+The following is an example block using your {ranchera} endpoint and the credentials retrieved above.
+Replace the values of `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>`.
+
+[source,yaml]
+----
+core:
+  configureUserSettings: |
+    {
+      "auth_mode": "oidc_auth",
+      "oidc_name": "Rancher",
+      "oidc_endpoint": "<RANCHER_URL>/oidc",
+      "oidc_client_id": "<YOUR_CLIENT_ID>",
+      "oidc_client_secret": "<YOUR_CLIENT_SECRET>",
+      "oidc_scope": "openid,profile,offline_access",
+      "oidc_verify_cert": false,
+      "oidc_auto_onboard": true,
+      "oidc_user_claim": "preferred_username",
+      "oidc_groups_claim": "groups",
+      "oidc_admin_group": "spr-admins"
+    }
+----
+
+[NOTE]
+====
+Ensure `oidc_verify_cert` is set to `false` if your {ranchera} instance is using self-signed certificates.
+By specifying `oidc_admin_group`, any {ranchera} user belonging to the `spr-admins` group will automatically be granted System Administrator privileges in {productname}.
+====
