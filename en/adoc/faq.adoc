@@ -134,7 +134,7 @@ This is not yet planned. If you are interested in training material, contact {su
 
 [.qanda]
 Is there a support policy for {productname}?::
-See the link:https://docs.google.com/document/u/0/d/1yYM3ACXdCcBXRPFfzOGEg7GDmAhQCbgYk_9vVx0m7R0/edit[{productname} Support Documentation].
+Yes. The support policy of {productname} is the same as any other {ranchera} Prime add-on.
 
 If the {productname} documentation lacks information, can I refer to the official {harbor} documentation?::
 Yes. Since {productname} is based on {harbor}, the official {harbor} documentation is a useful resource. For features specific to the SUSE version, refer to the {productname} documentation.
