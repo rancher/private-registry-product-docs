@@ -39,6 +39,9 @@ include::install-using-cmdline.adoc[]
 // Deployment HA
 include::ha-setup.adoc[]
 
+//Troubleshooting
+include::faq.adoc[]
+
 include::configure-rancher-oidc.adoc[]
 
 //Troubleshooting

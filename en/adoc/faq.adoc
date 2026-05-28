@@ -1,0 +1,141 @@
+include::../common/generic-attributes.adoc[]
+
+[#pr-faq]
+== Frequently asked questions
+
+:revdate: 2026-05-28
+:page-revdate: {revdate}
+
+[#product-overview-and-differentiators]
+=== Product Overview and Differentiators
+
+[qanda]
+What kind of subscription do customers need for {productname}?::
+It is included in {ranchera} Suite and offered as an add-on for {ranchera} Prime.
++
+The pricing of the add-on is the same as other add-ons.
+
+What are the differentiators with {harbor} (from Application Collection or upstream)?::
+For customers who need a stable product with L3 support and a predictable release cycle, {productname} is the recommended solution.
++
+Over time, {suse} will add out-of-the-box integrations with {ranchera} and other {ranchera} add-ons, and prioritize feature requests from customers.
++
+Upstream images of {harbor} from {dhub} are affected by multiple vulnerabilities that are not always patched. See the link:https://artifacthub.io/packages/helm/{harbor}/{harbor}?modal=security-report[{harbor} security report]. These vulnerabilities are patched in {productname} and in {harbor} from Application Collection.
+
+Do customers have to buy the same number of add-on {productname} subscriptions as {ranchera} Prime subscriptions?::
+Yes, just like other add-ons such as {suse} Security. An additional advantage of the {productname} subscription model is that it allows customers to run as many deployments as they need.
+
+[#relationship-with-upstream-{harbor}]
+=== Relationship With Upstream {harbor}
+
+[qanda]
+How does the release cycle align with upstream {harbor}?::
+The release cycle of {productname} is independent of the release cycle of upstream {harbor}.
++
+When releasing new versions of {productname}, {suse} strives to include the latest version of the upstream {harbor} project, if it meets our quality assurance and maintenance requirements.
+
+Will you publish migration considerations for customers running {harbor} from other sources?::
+Not at this time.
+
+[#deployment-and-installation]
+=== Deployment and Installation
+
+[qanda]
+Do you support installing {productname} via {compose}?::
+No, {productname} is installed and configured via its {helm} chart, which is distributed via the {ranchera} Trusted Registry. Day-two operations can be handled via the {helm} chart and GitOps, which aligns to how most {kube} platforms are operated today.
+
+Do you recommend deployments on the local ({ranchera} Manager) cluster?::
+No, deployments on a downstream cluster that is made accessible to other downstream clusters that need to consume it are recommended.
+
+What are the deployment best practices for a high-availability (HA) environment?::
+Do not deploy {productname} on the {ranchera} Management cluster, as one can deprive the other of resources.
++
+Otherwise, the customer can choose whether to deploy {productname} on each cluster, on one of those clusters, or on a dedicated cluster.
++
+{suse} also provides documentation on link:https://documentation.suse.com/cloudnative/suse-private-registry/html/private-registry/pr-deployment-ha.html[how to deploy a highly available] {productname}. The customer must provide their own HA Postgres database, HA Valkey/Redis server, and HA {ingress} controller, as those are not deployed by the {productname} {helm} chart, nor supported by {suse}.
+
+Will there be guidance for Edge deployments?::
+TBD.
+
+Is the {productname} {helm} chart going to be added to the Application Collection eventually?::
+Yes, the product may be published there at some point in the future.
+
+Do you ship a {kube} operator?::
+While {productname} does not ship with a dedicated operator, it is installed and configured via its {helm} chart. Day-two operations can be handled via the {helm} chart and GitOps. {suse} continues to evaluate operator-based management where it adds clear customer value.
+
+[#security-scanning-and-signing]
+=== Security, Scanning, and Signing
+
+[qanda]
+Do you integrate any signing tool within {productname}?::
+{productname} does not sign images itself, but it can store, distribute and verify OCI-compatible signatures.
++
+A widely used tool is `cosign`, which can sign images and store the signatures in {productname}.
++
+`cosign` signatures attached to images are viewable and downloadable from the {productname} portal.
+
+Is it possible to sign images with Notary or Cosign for approval during the deployment process?::
+{productname} can store, distribute and verify `cosign` signatures.
++
+{productname} itself does not sign the images. Images must be signed during their build process, and then the signature is uploaded to the registry along with the images.
++
+Notary is not included or supported with {productname}.
+
+Are images scanned for CVEs only with Trivy, or can it use {suse} Security/NeuVector as well?::
+Images are scanned with Trivy, which comes out of the box. {suse} Security can be added in addition to or as a replacement for Trivy.
+
+Is it possible to run ClamAV or similar malware scans?::
+{productname} can scan images using various tools. By default, it ships with Trivy. {suse} Security (NeuVector) can also be used.
+
+In the pull-through cache scenario, will the vulnerability criteria be enforced?::
+While the criteria are also enforced in pull-through caches, there are link:https://github.com/go{harbor}/{harbor}/issues/16218[pending] link:https://github.com/go{harbor}/{harbor}/issues/13242[issues] regarding enforcing it for images that have not yet been scanned. The first time an image is pulled, since it has not been scanned yet, the vulnerability criteria will not come into effect.
++
+For improved coverage, pair {productname} with {suse} Security link:https://open-docs.neuvector.com/policy/admission#admission-control-criteria[admission controls].
+
+Are the images of {productname} hardened?::
+Yes, the images are hardened. They are based on SLE BCI and built in the {suse} enterprise-grade Build Service, which is the same one that builds {suse} Linux Enterprise, ensuring a secure supply chain. The images are signed, and {suse} also publishes their SLSA attestation.
+
+Are the images of {productname} signed? How?::
+The images are signed with `cosign`. You can verify them by saving the PEM-formatted signing key published at link:https://www.suse.com/support/kb/doc/?id=000021411[KB 000021411].
++
+Then run, for example:
++
+[source,bash]
+----
+cosign verify --key container-key.pem registry.suse.com/private-registry/{harbor}-portal:latest
+----
+
+[#replication-and-sync]
+=== Replication and Sync
+
+[qanda]
+Do you have a plan to create a plug-in to more easily sync with {suse} Registry and Application Collection?::
+Yes, see link:https://jira.suse.com/browse/PRP-61[PRP-61].
+
+When replicating from {suse} Application Collection, are SBOMs also replicated?::
+TBD.
+
+Does {productname} offer multi-site replication?::
+Yes, {productname} supports multi-site replication through policy-based image replication (pull- and push-based). You can synchronize images across multiple {poductnameshort} deployments while keeping each registry independent.
+
+[#features-and-integration-with-{ranchera}]
+=== Features and Integration With {ranchera}
+
+[qanda]
+Is there a plan to integrate the Registry within {ranchera} using an Extension?::
+Yes, {suse} plans to integrate {productname} with {ranchera} Prime and other offerings. For example, by considering SSO integration, easy setup of {suse} Security as a scanner, easy setup of Application Collection mirroring, monitoring with {suse} Observability, and developing a {ranchera} UI extension.
+
+Will {suse} add the Registry to the Training Catalog?::
+This is not yet planned. If a customer is interested in training material, {suse} is happy to hear about it and work with the Training team.
+
+[#support-and-documentation]
+=== Support and Documentation
+
+[qanda]
+Is there a support policy for {productname}?::
+Please see the link:https://docs.google.com/document/u/0/d/1yYM3ACXdCcBXRPFfzOGEg7GDmAhQCbgYk_9vVx0m7R0/edit[{poductnameshort} Support Documentation].
+
+If the {productname} documentation lacks information, should users refer to the official {harbor} documentation?::
+Since {productname} is based on {harbor}, the existing {harbor} documentation also applies. If there is any documentation that is more specific to {productname}, {suse} will add it.
++
+The link:https://documentation.suse.com/cloudnative/suse-private-registry/html/private-registry/pr-relnotes.html[Release Notes] specify which version of {harbor} a given version of {productname} is based on.
