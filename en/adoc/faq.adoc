@@ -17,7 +17,7 @@ The pricing of the add-on is the same as other add-ons.
 
 What are the differentiators with {harbor} (from Application Collection or upstream)?::
 Use {productname} if you need:
-* L3 support for product issues.
+* Level 3 (L3) support for product issues.
 * A predictable release cycle.
 * Patched images for known vulnerabilities. Upstream {harbor} images from {dhub} often contain link:https://artifacthub.io/packages/helm/harbor/harbor?modal=security-report[numerous unpatched vulnerabilities].
 +
@@ -53,7 +53,7 @@ For HA, do not deploy {productname} on the {ranchera} Management cluster to avoi
 +
 You can deploy {productname} on a dedicated cluster, or on one or more of your application clusters.
 +
-For instructions, see xref:pr-deployment-ha[]. Note that you must provide your own HA components for the Postgres database, Valkey/Redis server, and {ingress} controller. These components are not deployed by the {productname} {helm} chart and are not supported by {suse}.
+For instructions, see xref:pr-deployment-ha[]. Note that you must provide your own HA components for the Postgres database, Valkey or Redis server, and {ingress} controller. These components are not deployed by the {productname} {helm} chart and are not supported by {suse}.
 
 // Will there be guidance for Edge deployments?::
 // TBD.
@@ -69,7 +69,7 @@ Do you ship a {kube} operator?::
 
 [.qanda]
 Do you integrate any signing tool within {productname}?::
-{productname} does not sign images itself, but it can store, distribute and verify OCI-compatible signatures.
+{productname} does not sign images itself, but it can store, distribute and verify Open Container Initiative (OCI)-compatible signatures.
 +
 A widely used tool is `cosign`, which can sign images and store the signatures in {productname}.
 +
@@ -82,7 +82,7 @@ Is it possible to sign images with Notary or Cosign for approval during the depl
 +
 Notary is not included or supported with {productname}.
 
-Are images scanned for CVEs only with Trivy, or can it use {suse} Security/NeuVector as well?::
+Are images scanned for Common Vulnerabilities and Exposures (CVEs) only with Trivy, or can it use {suse} Security (NeuVector) as well?::
 Images are scanned with Trivy, which comes out of the box. {suse} Security can be added in addition to or as a replacement for Trivy.
 
 Is it possible to run ClamAV or similar malware scans?::
@@ -94,7 +94,7 @@ Yes, but with a known limitation. Due to upstream {harbor} link:https://github.c
 For complete coverage, pair {productname} with {suse} Security link:https://open-docs.neuvector.com/policy/admission#admission-control-criteria[admission controls].
 
 Are the images of {productname} hardened?::
-Yes. The container images for {productname} are hardened. They are based on SLE BCI and built in the same enterprise-grade SUSE Build Service used for SUSE Linux Enterprise. This ensures a secure supply chain. The images are also signed, and SUSE publishes their SLSA attestations.
+Yes. The container images for {productname} are hardened. They are based on SUSE Linux Enterprise Base Container Images (SLE BCI) and built in the same enterprise-grade SUSE Build Service used for SUSE Linux Enterprise. This ensures a secure supply chain. The images are also signed, and SUSE publishes their Supply-chain Levels for Software Artifacts (SLSA) attestations.
 
 Are the images of {productname} signed? How?::
 The images are signed with `cosign`. You can verify them by saving the PEM-formatted signing key published at link:https://www.suse.com/support/kb/doc/?id=000021411[KB 000021411].
@@ -111,7 +111,7 @@ cosign verify --key container-key.pem registry.suse.com/private-registry/harbor-
 
 [.qanda]
 Is there a plan for a plug-in to sync with {sregistry} and {sappco}?::
-Yes, such feature is planned.
+Yes, such a feature is planned.
 
 // When replicating from {sappco}, are SBOMs also replicated?::
 // TBD.
@@ -124,7 +124,7 @@ Yes. {productname} supports multi-site, policy-based image replication (pull and
 
 [.qanda]
 Is there a plan to integrate the Registry within {ranchera} using an Extension?::
-Yes. {suse} plans deeper integration with {ranchera} Prime and other offerings. Future enhancements being considered include SSO integration, simplified setup for {ssecurity} scanners and Application Collection mirroring, monitoring with {sobservability}, and a {ranchera} UI extension.
+Yes. {suse} plans deeper integration with {ranchera} Prime and other offerings. Future enhancements being considered include single sign-on (SSO) integration, simplified setup for {ssecurity} scanners and Application Collection mirroring, monitoring with {sobservability}, and a {ranchera} UI extension.
 
 Will {suse} add the Registry to the Training Catalog?::
 This is not yet planned. If you are interested in training material, contact {suse} to discuss possibilities with the Training team.
