@@ -41,7 +41,7 @@ include::ha-setup.adoc[]
 
 include::configure-rancher-oidc.adoc[]
 
-//Troubleshooting
+//FAQ
 include::faq.adoc[]
 
 //Troubleshooting
