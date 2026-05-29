@@ -111,7 +111,7 @@ cosign verify --key container-key.pem registry.suse.com/private-registry/harbor-
 
 [.qanda]
 Is there a plan for a plug-in to sync with {sregistry} and {sappco}?::
-Yes, it is in development.
+Yes, such feature is planned.
 
 // When replicating from {sappco}, are SBOMs also replicated?::
 // TBD.
