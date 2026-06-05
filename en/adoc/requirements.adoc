@@ -3,6 +3,10 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == Requirements
 
+ :revdate: 2026-06-05
+ :page-revdate: {revdate}
+
+
 This section describes the minimum platform prerequisites and recommended production sizing for {productname}.
 
 [#pr-deployment-prerequisites]
@@ -13,10 +17,8 @@ This section describes the minimum platform prerequisites and recommended produc
 * An active subscription for {productname}
 
 [#pr-deployment-hardware-sizing]
-=== Hardware and Sizing Recommendations
-
-Use these values as a production starting point. Tune based on retention policy, image churn, scan concurrency, and replication traffic.
-
+=== Hardware and sizing recommendations
+Use these values as a production starting point. Tune based on retention policy, image churn, scan concurrency and replication traffic.
 ==== Cluster Baseline
 
 [cols="1,1",options="header"]
