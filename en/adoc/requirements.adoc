@@ -1,0 +1,47 @@
+include::../common/generic-attributes.adoc[]
+
+[#pr-requirements]
+== Requirements
+
+ :revdate: 2026-06-05
+ :page-revdate: {revdate}
+
+
+This section describes the minimum platform prerequisites and recommended production sizing for {productname}.
+
+[#pr-deployment-prerequisites]
+=== Prerequisites
+* A {kube} cluster version 1.20 or higher
+* {helm} version 3.2.0 or higher
+* Persistent Volume (PV) provisioner support in your infrastructure
+* An active subscription for {productname}
+
+[#pr-deployment-hardware-sizing]
+=== Hardware and sizing recommendations
+Use these values as a production starting point. Tune based on retention policy, image churn, scan concurrency and replication traffic.
+==== Cluster Baseline
+
+[cols="1,1",options="header"]
+|===
+| Scope | Recommended starting point
+| Worker nodes | 3 worker nodes minimum
+| Node shape | 4 vCPU and 16 GiB RAM per node minimum
+| Preferred node shape | 8 vCPU and 32 GiB RAM per node for higher scan and push concurrency
+|===
+
+These recommendations align with Rancher guidance for RKE2 Kubernetes.
+For details, see https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/installation-requirements#rke2-kubernetes[RKE2 Kubernetes installation requirements].
+
+==== Persistent Storage Baseline
+
+[cols="1,1,1",options="header"]
+|===
+| Component | Default chart size | Recommended starting size
+| Registry data | 5 Gi | 500 Gi to 1 Ti
+| Trivy cache and DB | 5 Gi | 20 Gi to 50 Gi
+| Jobservice logs | 1 Gi | 10 Gi
+| Internal PostgreSQL (if used) | 1 Gi | 20 Gi minimum
+| Internal Valkey (if used) | 1 Gi | 20 Gi minimum
+|===
+
+The chart defaults are installation-oriented and should not be used as long-term production capacity values.
