@@ -3,8 +3,8 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == Requirements
 
- :revdate: 2026-06-05
- :page-revdate: {revdate}
+:revdate: 2026-06-05
+:page-revdate: {revdate}
 
 
 This section describes the minimum platform prerequisites and recommended production sizing for {productname}.
