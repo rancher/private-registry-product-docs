@@ -30,6 +30,9 @@ endif::[]
 // Introduction
 include::introduction.adoc[]
 
+// Prerequisites
+include::requirements.adoc[]
+
 // Installation using Rancher UI
 include::install-using-rancher.adoc[]
 
