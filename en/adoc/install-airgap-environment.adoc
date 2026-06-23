@@ -1,4 +1,10 @@
-== Installing in air-gap environment 
+include::../common/generic-attributes.adoc[]
+
+[#pr-install-airgap]
+== Installing in air-gap environment
+
+:revdate: 2026-06-23
+:page-revdate: {revdate}
 
 {productname} and Hauler provide a robust solution for managing content in disconnected environments while significantly simplifying the air-gapping workflow for Kubernetes distributions like RKE2 and K3s.
 
@@ -11,7 +17,7 @@ For more information, refer to the https://docs.hauler.dev/docs/intro[Hauler doc
 
 ==== Prerequisites
 
-Before beginning the air-gap installation process, ensure you have the following in place:
+Before beginning the air-gapped installation process, ensure you have the following in place:
 
 * *Hauler CLI:* Install Hauler on your source machine (connected to the internet). Visit the https://docs.hauler.dev/docs/getting-started[Hauler Getting Started guide] for installation instructions.
 * *Helm 3.x or later:* Required for managing Helm charts and authentication with registries.
