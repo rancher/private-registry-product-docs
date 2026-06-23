@@ -222,6 +222,7 @@ kubectl get pods -n <PRIVATE_REGISTRY_NAMESPACE>
 +
 [source,bash]
 ----
-# Verify you can pull images from the registry
+# Verify you can login and pull images from the registry
+docker login <suse-private-registry-url> -u <registry-username> -p <registry-password>
 docker pull <registry-url>/library/image:tag
 ----
