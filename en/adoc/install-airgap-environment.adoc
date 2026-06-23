@@ -1,0 +1,227 @@
+== Installing in air-gap environment 
+
+{productname} and Hauler provide a robust solution for managing content in disconnected environments while significantly simplifying the air-gapping workflow for Kubernetes distributions like RKE2 and K3s.
+
+=== {productname} and Hauler
+
+==== About Hauler
+
+* *Hauler:* Purpose-built and lightweight, Hauler is a CLI tool that streamlines the management of content in air-gapped environments. It is engineered as a versatile utility for workflows and pipelines, allowing users to transport charts, container images, and various other OCI artifacts into isolated networks without imposing a rigid workflow.
+For more information, refer to the https://docs.hauler.dev/docs/intro[Hauler documentation].
+
+==== Prerequisites
+
+Before beginning the air-gap installation process, ensure you have the following in place:
+
+* *Hauler CLI:* Install Hauler on your source machine (connected to the internet). Visit the https://docs.hauler.dev/docs/getting-started[Hauler Getting Started guide] for installation instructions.
+* *Helm 3.x or later:* Required for managing Helm charts and authentication with registries.
+* *kubectl:* Needed for deploying to your Kubernetes cluster.
+* *Docker or container runtime:* Required to handle OCI image operations (optional if using Hauler in stand-alone mode).
+
+
+**Registry Credentials:**
+
+* Credentials for registries you want to pull from (e.g., `registry.suse.com` for SUSE images). For instructions on how to obtain these credentials, see <<pr-deployment-kube-secrets>>.
+* For the target {productnameshort} instance, set the administrator password during installation using the `harborAdminPassword` Helm value. You will use this password to authenticate after deployment.
+
+
+==== 3. Configuration
+
+An easy way to air-gap the artifacts is by using a manifest, which is a YAML file with all the artifacts you want to move to the air-gap environment. The manifest file allows you to declaratively define which Helm charts, container images, and files are required for your deployment. This approach provides several benefits:
+
+* Reproducibility: The same manifest can be used consistently across multiple environments
+* Version control: Manifest files can be tracked in version control systems (e.g., Git) to ensure artifact versions are documented and auditable
+* Flexibility: Support for multiple artifact types including Helm charts, OCI images, and arbitrary files
+* Scalability: Easily manage large numbers of artifacts without manual configuration
+
+===== Understanding Hauler Manifest Structure
+
+The Hauler manifest supports three main kinds of artifacts:
+
+* *Charts:* Helm charts that will be deployed in your air-gapped environment. You specify the registry URL (OCI registry), chart name, and version.
+* *Files:* Arbitrary files or binaries from HTTP(S) sources, such as installation scripts or Kubernetes binaries.
+* *Images:* Container images (OCI images) that your applications and SUSE Private Registry depend on.
+
+Each section in the manifest is independent and can be organized logically based on your deployment needs.
+
+===== Example of hauler-manifest.yaml
+
+[source,yaml]
+----
+apiVersion: content.hauler.cattle.io/v1
+kind: Charts
+metadata:
+  name: suse-private-registry-chart
+spec:
+  charts:
+    - name: private-registry-helm
+      repoURL: oci://registry.suse.com/private-registry/1.2
+      version: 1.2.1 # IMPORTANT: Update this to the exact version of the chart you want to pull
+---
+apiVersion: content.hauler.cattle.io/v1
+kind: Files
+metadata:
+  name: rke2-install-files
+spec:
+  files:
+    - path: https://get.rke2.io
+      name: install-rke2.sh
+    - path: https://get.helm.sh/helm-v3.18.0-linux-amd64.tar.gz
+      name: helm-v3.18.0-linux-amd64.tar.gz
+    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2.linux-amd64.tar.gz
+      name: rke2.linux-amd64.tar.gz
+    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2-images.linux-amd64.tar.zst
+      name: rke2-images.linux-amd64.tar.zst
+    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/sha256sum-amd64.txt
+      name: sha256sum-amd64.txt
+---
+apiVersion: content.hauler.cattle.io/v1
+kind: Images
+metadata:
+  name: spr-and-rke2-images
+spec:
+  # Add required RKE2 system images (adjust version as needed)
+  images:
+    - name: rancher/rke2-runtime:v1.34.5-rke2r1
+    - name: rancher/mirrored-pause:3.8
+    - name: rancher/mirrored-coredns-coredns:1.10.1
+    # SUSE Private Registry (Harbor) images
+    - name: registry.suse.com/private-registry/1.2/harbor-core:1.2.0-1.15
+    - name: registry.suse.com/private-registry/1.2/harbor-portal:1.2.0-1.17
+    - name: registry.suse.com/private-registry/1.2/harbor-registry:1.2.0-1.14
+    - name: registry.suse.com/private-registry/1.2/harbor-registryctl:1.2.0-1.14
+    - name: registry.suse.com/private-registry/1.2/harbor-jobservice:1.2.0-1.14
+    - name: registry.suse.com/private-registry/1.2/harbor-exporter:1.2.0-1.15
+    - name: registry.suse.com/private-registry/1.2/harbor-trivy-adapter:1.2.0-1.17
+    - name: registry.suse.com/suse/valkey:8.0.7-71.24
+    - name: registry.suse.com/suse/postgres:17.9-77.1
+    - name: registry.suse.com/suse/nginx:1.21-72.2
+----
+
+==== 4. Synergy: Orchestrating Hauler with SUSE Private Registry
+
+To maximize the utility of both products, adopt the following integration pattern:
+
+* *Centralized Source Control:* Store all hauler-manifest.yaml files in a version-controlled repository (e.g., Git). This ensures that the exact versions of images and charts used in your air-gapped environment are tracked and reproducible.
+* *Hauler-to-Registry Sync:* Instead of manually handling tarballs, utilize Hauler's ability to copy directly from the Hauler store to your SUSE Private Registry instance. This maintains the OCI structure and simplifies provenance tracking.
+* *Pipeline Automation:* Treat the Hauler sync process as a CI job. Automate the retrieval of upstream artifacts and push them into a designated "incoming" project within your SUSE Private Registry.
+* *Security Scanning:* Since SUSE Private Registry is based on Harbor, configure automatic vulnerability scanning on the projects where Hauler pushes content. This ensures that even in disconnected environments, your images remain secure.
+
+==== 5. Workflow
+
+===== About Hauler Store
+
+The Hauler store is a local directory that acts as an intermediate storage for all artifacts collected from registries and remote sources. Think of it as a staging area where Hauler downloads and organizes all content before you transport it to the air-gapped environment. The store maintains the OCI structure, making it easy to load artifacts into your SUSE Private Registry or local registries later.
+
+===== Step-by-Step Instructions
+
+* *Prerequisites:* Establish secure authentication with the Helm and Hauler registries to enable artifact access:
++
+[source,bash]
+----
+# Log in to SUSE registry to pull SUSE Private Registry images and charts
+helm registry login registry.suse.com -u <your-username> -p <your-password>
+
+# Configure Hauler with the same credentials
+hauler login registry.suse.com -u <your-username> -p <your-password>
+
+# If using additional registries, log in to them as well
+# hauler login <other-registry> -u <your-username> -p <your-password>
+----
++
+Replace `<your-username>` and `<your-password>` with your actual SUSE registry credentials.
+
+* *Step 1:* Create and prepare your hauler-manifest.yaml file on your internet-connected machine. Update the manifest to match your specific environment:
+** Update the chart version to the exact version you need for SUSE Private Registry
+** Adjust RKE2 versions if you're using a different Kubernetes version (current example uses v1.34.5)
+** Add or remove images based on your specific requirements
+** If deploying additional applications, add their charts and images to the manifest
+
+* *Step 2:* Synchronize and package the artifacts:
++
+[source,bash]
+----
+# Sync artifacts from remote registries into the Hauler store
+# This downloads all charts, images, and files specified in your manifest
+hauler store sync -f hauler-manifest.yaml
+
+# Generate a portable tarball for your target architecture
+# Available architectures: amd64, arm64
+# This creates a compressed file that can be easily transported
+hauler store save --filename hauler-store.tar.zst
+----
++
+The `hauler store save` command creates a compressed tarball containing all collected artifacts. The resulting file size depends on the artifacts in your manifest (typically 20-50GB for a full RKE2 + SUSE Private Registry deployment).
+
+* *Step 3:* Transport the Hauler store tarball to your isolated air-gapped infrastructure using your preferred method:
+** External storage (USB drives, external hard drives)
+** Sneakernet (physical transport)
+** Direct file transfer if there's a one-way network connection to the air-gapped environment
+
+* *Step 4:* In the air-gapped environment, load the artifacts into your SUSE Private Registry:
++
+[source,bash]
+----
+# Extract and load the Hauler store
+# First, extract the tarball (adjust filename if different)
+tar -xf hauler-store.tar.zst
+
+# Load artifacts from the store into your SUSE Private Registry
+hauler store load \
+  --registry <suse-private-registry-url> \
+  -u <registry-username> \
+  -p <registry-password>
+----
++
+Replace:
+** `<suse-private-registry-url>` with your SUSE Private Registry URL (e.g., `https://registry.example.com`)
+** `<registry-username>` and `<registry-password>` with your SUSE Private Registry credentials
+
+* *Step 5:* Alternatively, use Hauler's ephemeral local registry for immediate deployment:
++
+If you want to deploy directly without waiting for a full SUSE Private Registry setup, you can use Hauler's local registry:
++
+[source,bash]
+----
+# Start Hauler's ephemeral registry (runs on localhost:5000)
+hauler store serve registry --port 5000 &
+
+# Deploy SUSE Private Registry using the local Hauler registry
+# Note: This registry is temporary and will be removed after the process ends
+helm install <RELEASE_NAME> \
+  oci://localhost:5000/private-registry/1.2/private-registry-helm \
+  --create-namespace  <PRIVATE_REGISTRY_NAMESPACE> \
+  --version 1.2.1 \
+  --set global.imageRegistry=localhost:5000 \
+  --set-json 'imagePullSecrets=[]'
+----
++
+After successful deployment, you can configure your SUSE Private Registry to push artifacts to a persistent registry location.
+
+===== Verification and Troubleshooting
+
+After completing the deployment:
+
+. Verify that all artifacts have been successfully loaded:
++
+[source,bash]
+----
+# Check if images are available in your SUSE Private Registry
+# Log into the registry web interface or use the Registry API to verify image presence
+----
+
+. Verify the SUSE Private Registry deployment:
++
+[source,bash]
+----
+# Check the status of SUSE Private Registry pods
+kubectl get pods -n <PRIVATE_REGISTRY_NAMESPACE> 
+----
+
+. Test connectivity and functionality:
++
+[source,bash]
+----
+# Verify you can pull images from the registry
+docker pull <registry-url>/library/image:tag
+----

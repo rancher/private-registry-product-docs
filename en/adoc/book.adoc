@@ -36,6 +36,9 @@ include::requirements.adoc[]
 // Installation using Rancher UI
 include::install-using-rancher.adoc[]
 
+// Installation in air-gap environment
+include::install-airgap-environment.adoc[]
+
 // Deployment
 include::install-using-cmdline.adoc[]
 
