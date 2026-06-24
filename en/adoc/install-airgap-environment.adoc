@@ -31,9 +31,9 @@ Before beginning the air-gapped installation process, ensure you have the follow
 * For the target {productnameshort} instance, set the administrator password during installation using the `harborAdminPassword` Helm value. You will use this password to authenticate after deployment.
 
 
-==== 3. Configuration
+==== Configuration
 
-An easy way to air-gap the artifacts is by using a manifest, which is a YAML file with all the artifacts you want to move to the air-gap environment. The manifest file allows you to declaratively define which Helm charts, container images, and files are required for your deployment. This approach provides several benefits:
+ An easy way to move artifacts into an air-gapped environment is to use a manifest, which is a YAML file with all the artifacts you want to transfer.
 
 * Reproducibility: The same manifest can be used consistently across multiple environments
 * Version control: Manifest files can be tracked in version control systems (e.g., Git) to ensure artifact versions are documented and auditable
@@ -104,7 +104,7 @@ spec:
     - name: registry.suse.com/suse/nginx:1.21-72.2
 ----
 
-==== 4. Synergy: Orchestrating Hauler with SUSE Private Registry
+==== Synergy: Orchestrating Hauler with SUSE Private Registry
 
 To maximize the utility of both products, adopt the following integration pattern:
 
@@ -113,7 +113,7 @@ To maximize the utility of both products, adopt the following integration patter
 * *Pipeline Automation:* Treat the Hauler sync process as a CI job. Automate the retrieval of upstream artifacts and push them into a designated "incoming" project within your SUSE Private Registry.
 * *Security Scanning:* Since SUSE Private Registry is based on Harbor, configure automatic vulnerability scanning on the projects where Hauler pushes content. This ensures that even in disconnected environments, your images remain secure.
 
-==== 5. Workflow
+==== Workflow
 
 ===== About Hauler Store
 
@@ -129,7 +129,11 @@ The Hauler store is a local directory that acts as an intermediate storage for a
 helm registry login registry.suse.com -u <your-username> -p <your-password>
 
 # Configure Hauler with the same credentials
-hauler login registry.suse.com -u <your-username> -p <your-password>
+head -1 ./password.txt | helm registry login registry.suse.com -u <your-username> --password-stdin
+
+# or
+# hauler login registry.suse.com -u <your-username> -p <your-password>
+
 
 # If using additional registries, log in to them as well
 # hauler login <other-registry> -u <your-username> -p <your-password>
@@ -229,6 +233,7 @@ kubectl get pods -n <PRIVATE_REGISTRY_NAMESPACE>
 [source,bash]
 ----
 # Verify you can login and pull images from the registry
-docker login <suse-private-registry-url> -u <registry-username> -p <registry-password>
+docker login <suse-private-registry-url> -u <registry-username>
+# docker login <suse-private-registry-url> -u <registry-username> -p <registry-password>
 docker pull <registry-url>/library/image:tag
 ----
