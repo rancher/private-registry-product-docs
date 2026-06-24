@@ -6,13 +6,13 @@ include::../common/generic-attributes.adoc[]
 :revdate: 2026-06-23
 :page-revdate: {revdate}
 
-{productname} and Hauler provide a robust solution for managing content in disconnected environments while significantly simplifying the air-gapping workflow for Kubernetes distributions like RKE2 and K3s.
+{productname} and Hauler provide a robust solution for managing content in disconnected environments while significantly simplifying the air-gapping workflow for {kube} distributions like {rke2a} and K3s.
 
 === {productname} and Hauler
 
 ==== About Hauler
 
-* *Hauler:* Purpose-built and lightweight, Hauler is a CLI tool that streamlines the management of content in air-gapped environments. It is engineered as a versatile utility for workflows and pipelines, allowing users to transport charts, container images, and various other OCI artifacts into isolated networks without imposing a rigid workflow.
+* *Hauler:* Purpose-built and lightweight, Hauler is a CLI tool that streamlines the management of content in air-gapped environments. It is engineered as a versatile utility for workflows and pipelines, allowing users to transport charts, container images, and other OCI artifacts into isolated networks without imposing a rigid workflow.
 For more information, refer to the https://docs.hauler.dev/docs/intro[Hauler documentation].
 
 ==== Prerequisites
@@ -20,15 +20,15 @@ For more information, refer to the https://docs.hauler.dev/docs/intro[Hauler doc
 Before beginning the air-gapped installation process, ensure you have the following in place:
 
 * *Hauler CLI:* Install Hauler on your source machine (connected to the internet). Visit the https://docs.hauler.dev/docs/getting-started[Hauler Getting Started guide] for installation instructions.
-* *Helm 3.x or later:* Required for managing Helm charts and authentication with registries.
-* *kubectl:* Needed for deploying to your Kubernetes cluster.
-* *Docker or container runtime:* Required to handle OCI image operations (optional if using Hauler in stand-alone mode).
+* *{helm} 3.x or later:* Required for managing {helm} charts and authentication with registries.
+* *kubectl:* Needed for deploying to your {kube} cluster.
+* *{docker} or container runtime:* Required to handle OCI image operations (optional if using Hauler in stand-alone mode).
 
 
 **Registry Credentials:**
 
-* Credentials for registries you want to pull from (e.g., `registry.suse.com` for SUSE images). For instructions on how to obtain these credentials, see <<pr-deployment-kube-secrets>>.
-* For the target {productnameshort} instance, set the administrator password during installation using the `harborAdminPassword` Helm value. You will use this password to authenticate after deployment.
+* Credentials for registries you want to pull from (e.g., `registry.suse.com` for {suse} images). For instructions on how to obtain these credentials, see <<pr-deployment-kube-secrets>>.
+* For the target {productnameshort} instance, set the administrator password during installation using the `harborAdminPassword` {helm} value. You will use this password to authenticate after deployment.
 
 
 ==== Configuration
@@ -37,16 +37,16 @@ Before beginning the air-gapped installation process, ensure you have the follow
 
 * Reproducibility: The same manifest can be used consistently across multiple environments
 * Version control: Manifest files can be tracked in version control systems (e.g., Git) to ensure artifact versions are documented and auditable
-* Flexibility: Support for multiple artifact types including Helm charts, OCI images, and arbitrary files
+* Flexibility: Support for multiple artifact types including {helm} charts, OCI images, and arbitrary files
 * Scalability: Easily manage large numbers of artifacts without manual configuration
 
 ===== Understanding Hauler Manifest Structure
 
 The Hauler manifest supports three main kinds of artifacts:
 
-* *Charts:* Helm charts that will be deployed in your air-gapped environment. You specify the registry URL (OCI registry), chart name, and version.
-* *Files:* Arbitrary files or binaries from HTTP(S) sources, such as installation scripts or Kubernetes binaries.
-* *Images:* Container images (OCI images) that your applications and SUSE Private Registry depend on.
+* *Charts:* {helm} charts that will be deployed in your air-gapped environment. You specify the registry URL (OCI registry), chart name, and version.
+* *Files:* Arbitrary files or binaries from HTTP(S) sources, such as installation scripts or {kube} binaries.
+* *Images:* Container images (OCI images) that your applications and {productname} depend on.
 
 Each section in the manifest is independent and can be organized logically based on your deployment needs.
 
@@ -104,24 +104,24 @@ spec:
     - name: registry.suse.com/suse/nginx:1.21-72.2
 ----
 
-==== Synergy: Orchestrating Hauler with SUSE Private Registry
+==== Synergy: Orchestrating Hauler with {productname}
 
 To maximize the utility of both products, adopt the following integration pattern:
 
 * *Centralized Source Control:* Store all hauler-manifest.yaml files in a version-controlled repository (e.g., Git). This ensures that the exact versions of images and charts used in your air-gapped environment are tracked and reproducible.
-* *Hauler-to-Registry Sync:* Instead of manually handling tarballs, utilize Hauler's ability to copy directly from the Hauler store to your SUSE Private Registry instance. This maintains the OCI structure and simplifies provenance tracking.
-* *Pipeline Automation:* Treat the Hauler sync process as a CI job. Automate the retrieval of upstream artifacts and push them into a designated "incoming" project within your SUSE Private Registry.
-* *Security Scanning:* Since SUSE Private Registry is based on Harbor, configure automatic vulnerability scanning on the projects where Hauler pushes content. This ensures that even in disconnected environments, your images remain secure.
+* *Hauler-to-Registry Sync:* Instead of manually handling tarballs, utilize Hauler's ability to copy directly from the Hauler store to your {productname} instance. This maintains the OCI structure and simplifies provenance tracking.
+* *Pipeline Automation:* Treat the Hauler sync process as a CI job. Automate the retrieval of upstream artifacts and push them into a designated "incoming" project within your {productname}.
+* *Security Scanning:* Since {productname} is based on {harbor}, configure automatic vulnerability scanning on the projects where Hauler pushes content. This ensures that even in disconnected environments, your images remain secure.
 
 ==== Workflow
 
 ===== About Hauler Store
 
-The Hauler store is a local directory that acts as an intermediate storage for all artifacts collected from registries and remote sources. Think of it as a staging area where Hauler downloads and organizes all content before you transport it to the air-gapped environment. The store maintains the OCI structure, making it easy to load artifacts into your SUSE Private Registry or local registries later.
+The Hauler store is a local directory that acts as an intermediate storage for all artifacts collected from registries and remote sources. Think of it as a staging area where Hauler downloads and organizes all content before you transport it to the air-gapped environment. The store maintains the OCI structure, making it easy to load artifacts into your {productname} or local registries later.
 
 ===== Step-by-Step Instructions
 
-* *Prerequisites:* Establish secure authentication with the Helm and Hauler registries to enable artifact access:
+* *Prerequisites:* Establish secure authentication with the {helm} and Hauler registries to enable artifact access:
 +
 [source,bash]
 ----
@@ -139,11 +139,11 @@ head -1 ./password.txt | helm registry login registry.suse.com -u <your-username
 # hauler login <other-registry> -u <your-username> -p <your-password>
 ----
 +
-Replace `<your-username>` and `<your-password>` with your actual SUSE registry credentials.
+Replace `<your-username>` and `<your-password>` with your actual {sregistry} credentials.
 
 * *Step 1:* Create and prepare your hauler-manifest.yaml file on your internet-connected machine. Update the manifest to match your specific environment:
-** Update the chart version to the exact version you need for SUSE Private Registry
-** Adjust RKE2 versions if you're using a different Kubernetes version (current example uses v1.34.5)
+** Update the chart version to the exact version you need for {productname}
+** Adjust {rke2a} versions if you're using a different {kube} version (current example uses v1.34.5)
 ** Add or remove images based on your specific requirements
 ** If deploying additional applications, add their charts and images to the manifest
 
@@ -161,14 +161,14 @@ hauler store sync -f hauler-manifest.yaml
 hauler store save --filename hauler-store.tar.zst
 ----
 +
-The `hauler store save` command creates a compressed tarball containing all collected artifacts. The resulting file size depends on the artifacts in your manifest (typically 20-50GB for a full RKE2 + SUSE Private Registry deployment).
+The `hauler store save` command creates a compressed tarball containing all collected artifacts. The resulting file size depends on the artifacts in your manifest (typically 20-50GB for a full {rke2a} + {productname} deployment).
 
 * *Step 3:* Transport the Hauler store tarball to your isolated air-gapped infrastructure using your preferred method:
 ** External storage (USB drives, external hard drives)
 ** Sneakernet (physical transport)
 ** Direct file transfer if there's a one-way network connection to the air-gapped environment
 
-* *Step 4:* In the air-gapped environment, load the artifacts into your SUSE Private Registry:
+* *Step 4:* In the air-gapped environment, load the artifacts into your {productname}:
 +
 [source,bash]
 ----
@@ -184,12 +184,12 @@ hauler store load \
 ----
 +
 Replace:
-** `<suse-private-registry-url>` with your SUSE Private Registry URL (e.g., `https://registry.example.com`)
-** `<registry-username>` and `<registry-password>` with your SUSE Private Registry credentials
+** `<suse-private-registry-url>` with your {productname} URL (e.g., `https://registry.example.com`)
+** `<registry-username>` and `<registry-password>` with your {productname} credentials
 
 * *Step 5:* Alternatively, use Hauler's ephemeral local registry for immediate deployment:
 +
-If you want to deploy directly without waiting for a full SUSE Private Registry setup, you can use Hauler's local registry:
+To deploy directly without waiting for a full {productname} setup, you can use Hauler's local registry:
 +
 [source,bash]
 ----
@@ -206,7 +206,7 @@ helm install <RELEASE_NAME> \
   --set-json 'imagePullSecrets=[]'
 ----
 +
-After successful deployment, you can configure your SUSE Private Registry to push artifacts to a persistent registry location.
+After successful deployment, you can configure your {productname} to push artifacts to a persistent registry location.
 
 ===== Verification and Troubleshooting
 
@@ -220,7 +220,7 @@ After completing the deployment:
 # Log into the registry web interface or use the Registry API to verify image presence
 ----
 
-. Verify the SUSE Private Registry deployment:
+. Verify the {productname} deployment:
 +
 [source,bash]
 ----
