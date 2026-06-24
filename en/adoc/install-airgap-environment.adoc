@@ -1,7 +1,7 @@
 include::../common/generic-attributes.adoc[]
 
 [#pr-install-airgap]
-== Installing in air-gap environment
+== Installing in air-gapped environment
 
 :revdate: 2026-06-23
 :page-revdate: {revdate}
@@ -33,7 +33,7 @@ Before beginning the air-gapped installation process, ensure you have the follow
 
 ==== Configuration
 
- An easy way to move artifacts into an air-gapped environment is to use a manifest, which is a YAML file with all the artifacts you want to transfer.
+An easy way to move artifacts into an air-gapped environment is to use a manifest, which is a YAML file with all the artifacts you want to transfer.
 
 * Reproducibility: The same manifest can be used consistently across multiple environments
 * Version control: Manifest files can be tracked in version control systems (e.g., Git) to ensure artifact versions are documented and auditable
@@ -120,85 +120,87 @@ To maximize the utility of both products, adopt the following integration patter
 The Hauler store is a local directory that acts as an intermediate storage for all artifacts collected from registries and remote sources. Think of it as a staging area where Hauler downloads and organizes all content before you transport it to the air-gapped environment. The store maintains the OCI structure, making it easy to load artifacts into your {productname} or local registries later.
 
 ===== Step-by-Step Instructions
+--
+*Prerequisites:*
 
-* *Prerequisites:* Establish secure authentication with the {helm} and Hauler registries to enable artifact access:
-+
-[source,bash]
+* Establish secure authentication with the {helm} and Hauler registries to enable artifact access:
+
+[source,bash,subs="+attributes"]
 ----
 # Log in to SUSE registry to pull SUSE Private Registry images and charts
-helm registry login registry.suse.com -u <your-username> -p <your-password>
+{prompt_user}helm registry login registry.suse.com -u <YOUR_USERNAME> -p <YOUR_PASSWORD> <.>
 
 # Configure Hauler with the same credentials
-head -1 ./password.txt | helm registry login registry.suse.com -u <your-username> --password-stdin
+{prompt_user}head -1 ./password.txt | helm registry login registry.suse.com -u <YOUR_USERNAME> --password-stdin
 
 # or
-# hauler login registry.suse.com -u <your-username> -p <your-password>
+# hauler login registry.suse.com -u <YOUR_USERNAME> -p <YOUR_PASSWORD>
 
 
 # If using additional registries, log in to them as well
-# hauler login <other-registry> -u <your-username> -p <your-password>
+# hauler login <OTHER_REGISTRY> -u <YOUR_USERNAME> -p <YOUR_PASSWORD>
 ----
-+
-Replace `<your-username>` and `<your-password>` with your actual {sregistry} credentials.
+<.> Replace `<YOUR_USERNAME>` and `<YOUR_PASSWORD>` with your actual {sregistry} credentials.
+--
 
-* *Step 1:* Create and prepare your hauler-manifest.yaml file on your internet-connected machine. Update the manifest to match your specific environment:
-** Update the chart version to the exact version you need for {productname}
-** Adjust {rke2a} versions if you're using a different {kube} version (current example uses v1.34.5)
-** Add or remove images based on your specific requirements
-** If deploying additional applications, add their charts and images to the manifest
+. Create and prepare your hauler-manifest.yaml file on your internet-connected machine. Update the manifest to match your specific environment:
 
-* *Step 2:* Synchronize and package the artifacts:
+* Update the chart version to the exact version you need for {productname}
+* Adjust {rke2a} versions if you're using a different {kube} version (current example uses v1.34.5)
+* Add or remove images based on your specific requirements
+* If deploying additional applications, add their charts and images to the manifest
+
+. Synchronize and package the artifacts:
 +
-[source,bash]
+[source,bash,subs="+attributes"]
 ----
 # Sync artifacts from remote registries into the Hauler store
 # This downloads all charts, images, and files specified in your manifest
-hauler store sync -f hauler-manifest.yaml
+{prompt_user}hauler store sync -f hauler-manifest.yaml
 
 # Generate a portable tarball for your target architecture
 # Available architectures: amd64, arm64
 # This creates a compressed file that can be easily transported
-hauler store save --filename hauler-store.tar.zst
+{prompt_user}hauler store save --filename hauler-store.tar.zst
 ----
 +
 The `hauler store save` command creates a compressed tarball containing all collected artifacts. The resulting file size depends on the artifacts in your manifest (typically 20-50GB for a full {rke2a} + {productname} deployment).
 
-* *Step 3:* Transport the Hauler store tarball to your isolated air-gapped infrastructure using your preferred method:
-** External storage (USB drives, external hard drives)
-** Sneakernet (physical transport)
-** Direct file transfer if there's a one-way network connection to the air-gapped environment
+. Transport the Hauler store tarball to your isolated air-gapped infrastructure using your preferred method:
 
-* *Step 4:* In the air-gapped environment, load the artifacts into your {productname}:
+* External storage (USB drives, external hard drives)
+* Sneakernet (physical transport)
+* Direct file transfer if there's a one-way network connection to the air-gapped environment
+
+. In the air-gapped environment, load the artifacts into your {productname}:
 +
-[source,bash]
+[source,bash,subs="+attributes"]
 ----
 # Extract and load the Hauler store
 # First, extract the tarball (adjust filename if different)
-tar -xf hauler-store.tar.zst
+{prompt_user}tar -xf hauler-store.tar.zst
 
 # Load artifacts from the store into your SUSE Private Registry
-hauler store load \
-  --registry <suse-private-registry-url> \
-  -u <registry-username> \
-  -p <registry-password>
+{prompt_user}hauler store load \
+  --registry <SUSE_PRIVATE_REGISTRY_URL> \ <.>
+  -u <REGISTRY_USERNAME> \
+  -p <REGISTRY_PASSWORD> <.>
 ----
-+
-Replace:
-** `<suse-private-registry-url>` with your {productname} URL (e.g., `https://registry.example.com`)
-** `<registry-username>` and `<registry-password>` with your {productname} credentials
+<.> Replace `<SUSE_PRIVATE_REGISTRY_URL>` with your {productname} URL (e.g., `https://registry.example.com`)
+<.> Replace `<REGISTRY_USERNAME>` and `<REGISTRY_PASSWORD>` with your {productname} credentials
 
-* *Step 5:* Alternatively, use Hauler's ephemeral local registry for immediate deployment:
+. Alternatively, use Hauler's ephemeral local registry for immediate deployment:
 +
 To deploy directly without waiting for a full {productname} setup, you can use Hauler's local registry:
 +
-[source,bash]
+[source,bash,subs="+attributes"]
 ----
 # Start Hauler's ephemeral registry (runs on localhost:5000)
-hauler store serve registry --port 5000 &
+{prompt_user}hauler store serve registry --port 5000 &
 
 # Deploy SUSE Private Registry using the local Hauler registry
 # Note: This registry is temporary and will be removed after the process ends
-helm install <RELEASE_NAME> \
+{prompt_user}helm install <RELEASE_NAME> \
   oci://localhost:5000/private-registry/1.2/private-registry-helm \
   --create-namespace  <PRIVATE_REGISTRY_NAMESPACE> \
   --version 1.2.1 \
@@ -214,7 +216,7 @@ After completing the deployment:
 
 . Verify that all artifacts have been successfully loaded:
 +
-[source,bash]
+[source,bash,subs="+attributes"]
 ----
 # Check if images are available in your SUSE Private Registry
 # Log into the registry web interface or use the Registry API to verify image presence
@@ -222,18 +224,18 @@ After completing the deployment:
 
 . Verify the {productname} deployment:
 +
-[source,bash]
+[source,bash,subs="+attributes"]
 ----
 # Check the status of SUSE Private Registry pods
-kubectl get pods -n <PRIVATE_REGISTRY_NAMESPACE> 
+{prompt_user}kubectl get pods -n <PRIVATE_REGISTRY_NAMESPACE> 
 ----
 
 . Test connectivity and functionality:
 +
-[source,bash]
+[source,bash,subs="+attributes"]
 ----
 # Verify you can login and pull images from the registry
-docker login <suse-private-registry-url> -u <registry-username>
-# docker login <suse-private-registry-url> -u <registry-username> -p <registry-password>
-docker pull <registry-url>/library/image:tag
+{prompt_user}docker login <SUSE_PRIVATE_REGISTRY_URL> -u <REGISTRY_USERNAME>
+# docker login <SUSE_PRIVATE_REGISTRY_URL> -u <REGISTRY_USERNAME> -p <REGISTRY_PASSWORD>
+{prompt_user}docker pull <REGISTRY_URL>/library/image:tag
 ----
