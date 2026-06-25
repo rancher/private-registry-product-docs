@@ -234,8 +234,9 @@ After completing the deployment:
 +
 [source,bash,subs="+attributes"]
 ----
-# Verify you can login and pull images from the registry
+# Verify that you can log in and pull images from the registry.
+# Note: Hauler uses Docker credentials. If you completed the previous steps
+# and pushed images, you are already authenticated.
 {prompt_user}docker login <SUSE_PRIVATE_REGISTRY_URL> -u <REGISTRY_USERNAME>
-# docker login <SUSE_PRIVATE_REGISTRY_URL> -u <REGISTRY_USERNAME> -p <REGISTRY_PASSWORD>
 {prompt_user}docker pull <REGISTRY_URL>/library/image:tag
 ----
