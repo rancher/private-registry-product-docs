@@ -3,7 +3,7 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == Requirements
 
-:revdate: 2026-06-05
+:revdate: 2026-07-01
 :page-revdate: {revdate}
 
 
@@ -11,10 +11,24 @@ This section describes the minimum platform prerequisites and recommended produc
 
 [#pr-deployment-prerequisites]
 === Prerequisites
-* A {kube} cluster version 1.20 or higher
+* A {kube} cluster in version 1.33, 1.34 and 1.35
 * {helm} version 3.2.0 or higher
 * Persistent Volume (PV) provisioner support in your infrastructure
 * An active subscription for {productname}
+
+[#pr-supported-kubernetes-versions]
+==== Which Kubernetes versions are supported?
+SPR versions 1.0, 1.1 and 1.2 are currently validated on Kubernetes versions 1.33, 1.34 and 1.35.
+
+[cols="1,1",options="header"]
+|===
+| SPR version | Kubernetes versions
+| 1.0 | 1.33, 1.34, 1.35
+| 1.1 | 1.33, 1.34, 1.35
+| 1.2 | 1.33, 1.34, 1.35
+|===
+
+Versions outside 1.33 through 1.35 are not currently validated for this release.
 
 [#pr-deployment-hardware-sizing]
 === Hardware and sizing recommendations

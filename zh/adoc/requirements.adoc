@@ -3,7 +3,7 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == 要求
 
-:revdate: 2026-06-05
+:revdate: 2026-07-01
 :page-revdate: {revdate}
 
 
@@ -11,10 +11,24 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-prerequisites]
 === 先决条件
-* {kube} 集群版本 1.20 或更高版本。
+* {kube} 集群版本 1.33、1.34 和 1.35。
 * {helm} 版本 3.2.0 或更高版本。
 * 您的基础设施中对持久卷 (PV) 提供者的支持。
 * {productname} 的有效订阅。
+
+[#pr-supported-kubernetes-versions]
+==== 支持哪些 Kubernetes 版本？
+SPR 1.0、1.1 和 1.2 版本当前已在 Kubernetes 1.33、1.34 和 1.35 版本上完成验证。
+
+[cols="1,1",options="header"]
+|===
+| SPR 版本 | Kubernetes 版本
+| 1.0 | 1.33, 1.34, 1.35
+| 1.1 | 1.33, 1.34, 1.35
+| 1.2 | 1.33, 1.34, 1.35
+|===
+
+超出 1.33 到 1.35 范围的版本当前不在此版本的验证范围内。
 
 [#pr-deployment-hardware-sizing]
 === 硬件和规模建议。

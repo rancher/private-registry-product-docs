@@ -3,7 +3,7 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == 要件
 
-:revdate: 2026-06-05
+:revdate: 2026-07-01
 :page-revdate: {revdate}
 
 
@@ -11,10 +11,24 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-prerequisites]
 === 前提条件
-* {kube} クラスター バージョン 1.20 以上
+* {kube} クラスター バージョン 1.33、1.34、1.35
 * {helm} バージョン 3.2.0 以上
 * インフラストラクチャにおける永続ボリューム (PV) プロビジョナーのサポート
 * {productname} の有効なサブスクリプション
+
+[#pr-supported-kubernetes-versions]
+==== サポートされる Kubernetes バージョンは？
+SPR バージョン 1.0、1.1、1.2 は、このリリースで Kubernetes バージョン 1.33、1.34、1.35 で検証されています。
+
+[cols="1,1",options="header"]
+|===
+| SPR バージョン | Kubernetes バージョン
+| 1.0 | 1.33, 1.34, 1.35
+| 1.1 | 1.33, 1.34, 1.35
+| 1.2 | 1.33, 1.34, 1.35
+|===
+
+1.33 から 1.35 以外のバージョンは、このリリースでは現在検証されていません。
 
 [#pr-deployment-hardware-sizing]
 === ハードウェアおよびサイズの推奨事項
