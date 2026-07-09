@@ -1,6 +1,6 @@
 include::../common/generic-attributes.adoc[]
 
-:revdate: 2026-02-06
+:revdate: 2026-07-09
 :page-revdate: {revdate}
 
 [#pr-relnotes]
@@ -11,6 +11,47 @@ It is designed for {suse} customers who need a container registry that works wel
 
 This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
+
+[#pr-relnotes-121]
+=== Release 1.2.1
+
+*Security updates:*
+
+* Updates {harbor} 2.15.1 to 2.15.2 (link:https://github.com/goharbor/harbor/releases/tag/v2.15.2[Release Notes v2.15.2]).
+* Validates blob-mount source projects and rejects tokens missing the `iat` claim.
+* Hardens cryptography usage and removes the unused SMTP package.
+* Disables and ignores `tlog` during Cosign signing checks and verification.
+
+*Component updates:*
+
+* Updates {harbor} 2.15.1 to 2.15.2 (link:https://github.com/goharbor/harbor/releases/tag/v2.15.2[Release Notes v2.15.2]).
+* Updates {trivy} to version 0.72.0 (link:https://github.com/aquasecurity/trivy/releases/tag/v0.72.0[Release Notes v0.72.0]) and the Trivy adapter to version 0.38.0.
+* Upgrades Go to version 1.26.4.
+* Upgrades Harbor UI to Angular 21, Clarity v18, and Node.js v22.
+* Updates the registry source tag to `v2.8.3-harbor.1` of the distribution project (link:https://github.com/goharbor/distribution/releases/tag/v2.8.3-harbor.1[Release Notes v2.8.3-harbor.1]).
+* Replaces the `gopkg.in/yaml.v2` package with `github.com/goccy/go-yaml`.
+
+*Key fixes:*
+
+* Bumps the repository `update_time` on tag and artifact changes.
+* Fixes multiple UI and UX issues, including checkboxes, form alignment, dark theme rendering, and i18n localization across portal components.
+* Aligns pending job queue counts and improves form styling.
+* Uses the selected tag for the pull command copy function.
+* Makes the OpenAPI generator download URL and `PIP_INDEX_URL` configurable.
+
+*Container image updates:*
+
+* private-registry/1.2/harbor-core:1.2.0 ➡ private-registry/1.2/harbor-core:1.2.1
+* private-registry/1.2/harbor-exporter:1.2.0 ➡ private-registry/1.2/harbor-exporter:1.2.1
+* private-registry/1.2/harbor-jobservice:1.2.0 ➡ private-registry/1.2/harbor-jobservice:1.2.1
+* private-registry/1.2/harbor-portal:1.2.0 ➡ private-registry/1.2/harbor-portal:1.2.1
+* private-registry/1.2/harbor-registry:1.2.0 ➡ private-registry/1.2/harbor-registry:1.2.1
+* private-registry/1.2/harbor-registryctl:1.2.0 ➡ private-registry/1.2/harbor-registryctl:1.2.1
+* private-registry/1.2/harbor-trivy-adapter:1.2.0 ➡ private-registry/1.2/harbor-trivy-adapter:1.2.1
+
+*Upgrade notes:*
+
+* No breaking changes in this release.
 
 [#pr-relnotes-120]
 === Release 1.2.0
