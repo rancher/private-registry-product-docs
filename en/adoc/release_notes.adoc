@@ -1,6 +1,6 @@
 include::../common/generic-attributes.adoc[]
 
-:revdate: 2026-02-06
+:revdate: 2026-07-16
 :page-revdate: {revdate}
 
 [#pr-relnotes]
@@ -163,6 +163,38 @@ The change in image versioning scheme is handled by {helm} when upgrading the in
 
 No breaking changes in this release.
 
+
+[#pr-relnotes-102]
+=== Release 1.0.2
+
+*Security updates:*
+
+* Updates {harbor} 2.13.2 to 2.13.5 (link:https://github.com/goharbor/harbor/releases/tag/v2.13.5[Release Notes v2.13.5]).
+
+*Component updates:*
+
+* (cherry-pick) Remove payload from config audit log
+* bump go and base images
+* [CP] Bump trivy to 0.69.3 & adapter to v0.35.1-rc.1 on release-2.13.0
+* fix(security): reject bearer tokens issued before project creation
+* update the GitHub Actions workflows to use the ubuntu-latest runner
+* Bump trivy-adapter v0.35.1 GA on release-2.13.0
+
+*Container image updates:*
+
+* private-registry/harbor-core:2.13.2 ➡ private-registry/harbor-core:2.13.5
+* private-registry/harbor-exporter:2.13.2 ➡ private-registry/harbor-exporter:2.13.5
+* private-registry/harbor-jobservice:2.13.2 ➡ private-registry/harbor-jobservice:2.13.5
+* private-registry/harbor-portal:2.13.2 ➡ private-registry/harbor-portal:2.13.5
+* private-registry/harbor-registryctl:2.13.2 ➡ private-registry/harbor-registryctl:2.13.5
+* private-registry/harbor-trivy-adapter:0.33.2 ➡ private-registry/harbor-trivy-adapter:0.35.1
+* private-registry/harbor-db:2.13.2 (postgres 17) ➡ suse/postgres:17.10
+* private-registry/harbor-nginx:1.21 ➡ suse/nginx:1.27
+* private-registry/harbor-valkey:8.0.6 ➡ suse/valkey:8.0.9
+
+*Upgrade notes:*
+
+* No breaking changes in this release.
 
 [#pr-relnotes-101]
 === Release 1.0.1
