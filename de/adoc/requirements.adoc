@@ -18,11 +18,11 @@ Dieser Abschnitt beschreibt die minimalen Plattformvoraussetzungen und die empfo
 
 [#pr-supported-kubernetes-versions]
 ==== Welche Kubernetes-Versionen werden unterstützt?
-SPR-Versionen 1.0, 1.1 und 1.2 sind derzeit für Kubernetes-Versionen 1.33, 1.34 und 1.35 validiert.
+{productnameshort}-Versionen 1.0, 1.1 und 1.2 sind derzeit für Kubernetes-Versionen 1.33, 1.34 und 1.35 validiert.
 
 [cols="1,1",options="header"]
 |===
-| SPR-Version | Kubernetes-Versionen
+| {productnameshort}-Version | Kubernetes-Versionen
 | 1.0 | 1.33, 1.34, 1.35
 | 1.1 | 1.33, 1.34, 1.35
 | 1.2 | 1.33, 1.34, 1.35

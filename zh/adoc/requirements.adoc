@@ -18,11 +18,11 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-supported-kubernetes-versions]
 ==== 支持哪些 Kubernetes 版本？
-SPR 1.0、1.1 和 1.2 版本当前已在 Kubernetes 1.33、1.34 和 1.35 版本上完成验证。
+{productnameshort} 1.0、1.1 和 1.2 版本当前已在 Kubernetes 1.33、1.34 和 1.35 版本上完成验证。
 
 [cols="1,1",options="header"]
 |===
-| SPR 版本 | Kubernetes 版本
+| {productnameshort} 版本 | Kubernetes 版本
 | 1.0 | 1.33, 1.34, 1.35
 | 1.1 | 1.33, 1.34, 1.35
 | 1.2 | 1.33, 1.34, 1.35

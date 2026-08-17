@@ -18,11 +18,11 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-supported-kubernetes-versions]
 ==== サポートされる Kubernetes バージョンは？
-SPR バージョン 1.0、1.1、1.2 は、このリリースで Kubernetes バージョン 1.33、1.34、1.35 で検証されています。
+{productnameshort} バージョン 1.0、1.1、1.2 は、このリリースで Kubernetes バージョン 1.33、1.34、1.35 で検証されています。
 
 [cols="1,1",options="header"]
 |===
-| SPR バージョン | Kubernetes バージョン
+| {productnameshort} バージョン | Kubernetes バージョン
 | 1.0 | 1.33, 1.34, 1.35
 | 1.1 | 1.33, 1.34, 1.35
 | 1.2 | 1.33, 1.34, 1.35
