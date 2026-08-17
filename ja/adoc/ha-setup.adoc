@@ -2,7 +2,7 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == {ha} セットアップ
-:revdate: 2025-05-04
+:revdate: 2026-08-17
 :page-revdate: {revdate}
 
 {helm} を使用して、高可用性 (HA) の {productnameshort} を {kube} クラスターにデプロイできます。
@@ -21,7 +21,7 @@ image::private-registry-ha.png[{productnameshort} {hasetup}, width=100%]。{prod
 
 [#pr-deployment-ha-prerequisites]
 === 前提条件
-* {kube} クラスターのバージョン 1.20 以上
+* {kube} クラスターのバージョン 1.33、1.34、1.35
 * {helm} のバージョン 3.2.0 以上
 * HA {ingress} コントローラー ({productnameshort} は外部エンドポイントを管理しません)
 * HA {postgresql} 9.6+ ({productnameshort} は HA データベースのデプロイを処理しません)

@@ -2,7 +2,7 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == {ha} setup
-:revdate: 2025-05-04
+:revdate: 2026-08-17
 :page-revdate: {revdate}
 
 You can use {helm} to deploy the highly available (HA) {productnameshort} on a {kube} cluster.
@@ -24,7 +24,7 @@ image::private-registry-ha.png[{productnameshort} {hasetup}, width=100%]
 
 [#pr-deployment-ha-prerequisites]
 === Prerequisites
-* A {kube} cluster version 1.20 or higher
+* A {kube} cluster in version 1.33, 1.34 and 1.35
 * {helm} version 3.2.0 or higher
 * HA {ingress} controller ({productnameshort} does not manage the external endpoint)
 * HA {postgresql} 9.6+ ({productnameshort} does not handle the deployment of HA database)
