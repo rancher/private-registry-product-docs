@@ -11,7 +11,7 @@ This section describes the minimum platform prerequisites and recommended produc
 
 [#pr-deployment-prerequisites]
 === Prerequisites
-* A {kube} cluster in version 1.33, 1.34 and 1.35
+* A {kube} cluster in version 1.33, 1.34 or 1.35
 * {helm} version 3.2.0 or higher
 * Persistent Volume (PV) provisioner support in your infrastructure
 * An active subscription for {productname}
@@ -33,6 +33,7 @@ Versions outside 1.33 through 1.35 are not currently validated for this release.
 [#pr-deployment-hardware-sizing]
 === Hardware and sizing recommendations
 Use these values as a production starting point. Tune based on retention policy, image churn, scan concurrency and replication traffic.
+
 ==== Cluster Baseline
 
 [cols="1,1",options="header"]
