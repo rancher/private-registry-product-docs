@@ -11,7 +11,7 @@ Esta seção descreve os pré-requisitos mínimos da plataforma e o dimensioname
 
 [#pr-deployment-prerequisites]
 === Pré-requisitos
-* Versão 1.33, 1.34 e 1.35 do cluster {kube}
+* Versão 1.33, 1.34 ou 1.35 do cluster {kube}
 * {helm}Versão 3.2.0 ou superior
 * Suporte a provisionador de Volume Persistente (PV) em sua infraestrutura
 * Uma assinatura ativa para {productname}
@@ -33,6 +33,7 @@ Versões fora de 1.33 a 1.35 não estão atualmente validadas para esta versão.
 [#pr-deployment-hardware-sizing]
 === Recomendações de hardware e dimensionamento
 Use esses valores como um ponto de partida para a produção. Ajuste com base na política de retenção, rotatividade de imagens, concorrência de varredura e tráfego de replicação.
+
 ==== Linha de Base do Cluster
 
 [cols="1,1",options="header"]

@@ -33,6 +33,7 @@ Les versions en dehors de 1.33 à 1.35 ne sont actuellement pas validées pour c
 [#pr-deployment-hardware-sizing]
 === Recommandations matérielles et de dimensionnement :
 Utilisez ces valeurs comme point de départ pour la production. Ajustez en fonction de la politique de rétention, du renouvellement d'images, de la concurrence des analyses et du trafic de réplication.
+
 ==== Base de référence du cluster
 
 [cols="1,1",options="header"]

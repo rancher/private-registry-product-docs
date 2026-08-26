@@ -11,7 +11,7 @@ Dieser Abschnitt beschreibt die minimalen Plattformvoraussetzungen und die empfo
 
 [#pr-deployment-prerequisites]
 === Voraussetzungen
-* Eine {kube} Cluster-Version 1.33, 1.34 und 1.35
+* Eine {kube} Cluster-Version 1.33, 1.34 oder 1.35
 * {helm} Version 3.2.0 oder höher
 * Unterstützung für Persistent Volume (PV) Bereitsteller in Ihrer Infrastruktur
 * Ein aktives Abonnement für {productname}
@@ -33,6 +33,7 @@ Versionen außerhalb von 1.33 bis 1.35 sind für diese Version derzeit nicht val
 [#pr-deployment-hardware-sizing]
 === Hardware- und Größenempfehlungen
 Verwenden Sie diese Werte als Ausgangspunkt für die Produktion. Passen Sie basierend auf der Aufbewahrungsrichtlinie, Bildwechsel, Scan-Konkurrenz und Replikationstrafik an.
+
 ==== Cluster-Baseline
 
 [cols="1,1",options="header"]

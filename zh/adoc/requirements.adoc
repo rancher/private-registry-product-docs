@@ -33,6 +33,7 @@ include::../common/generic-attributes.adoc[]
 [#pr-deployment-hardware-sizing]
 === 硬件和规模建议。
 将这些值作为生产的起始点。根据保留策略、镜像更换、扫描并发和复制流量进行调整。 +
+
 ==== 集群基线
 
 [cols="1,1",options="header"]

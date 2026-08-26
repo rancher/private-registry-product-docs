@@ -11,7 +11,7 @@ Esta sección describe los requisitos mínimos de la plataforma y el tamaño de 
 
 [#pr-deployment-prerequisites]
 === Requisitos previos
-* Un clúster {kube} versión 1.33, 1.34 y 1.35
+* Un clúster {kube} versión 1.33, 1.34 o 1.35
 * {helm} Versión 3.2.0 o superior
 * Soporte para el aprovisionador de Volumen Persistente (PV) en su infraestructura
 * Una suscripción activa para {productname}
@@ -33,6 +33,7 @@ Las versiones fuera del rango 1.33 a 1.35 no están validadas actualmente para e
 [#pr-deployment-hardware-sizing]
 === Recomendaciones de hardware y tamaño
 Utiliza estos valores como punto de partida para la producción. Ajusta según la política de retención, la rotación de imágenes, la concurrencia de escaneo y el tráfico de replicación.
+
 ==== Línea base del clúster
 
 [cols="1,1",options="header"]
