@@ -355,7 +355,7 @@ If the restore does not complete as expected, check the following:
 
 * `velero restore describe <RESTORE_NAME> --details` reports resources that already exist.
 The target namespace was not empty. Restore into a clean cluster or a clean namespace.
-* PVCs stay in `Pending` state.
+* PVCs remain `Pending`.
 The `StorageClass` of the source cluster does not exist in the recovery cluster, or it cannot provision the requested volume.
 * No volume data is restored.
 The Velero node agent was not running when the backup was created, so no `PodVolumeBackup` was produced. Verify the backup with `velero backup describe <BACKUP_NAME> --details`.
