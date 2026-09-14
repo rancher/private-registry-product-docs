@@ -6,6 +6,7 @@ include::../common/generic-attributes.adoc[]
 :page-revdate: {revdate}
 
 The {productname} ({productnameshort}) {helm} chart is delivered with default values.
+For guidance about using replica, scheduling, exposure, and persistence values in a resilient deployment, see xref:pr-deployment-ha[].
 You can adjust the {helm} chart installation in one of the following ways:
 
 Ensure you replace `<APP_VERSION>` with your specific application version (for example, `1.2`).
