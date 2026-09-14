@@ -15,7 +15,7 @@ This approach protects the registry configuration and the container images store
 Velero protects {productnameshort} by backing up {kube} resources and persistent data.
 In most cases, it is the recommended backup method for registry deployments on {kube}.
 
-The scope of the backup depends on whether the registry database and image storage run inside the cluster or outside it:
+The scope of the backup depends on whether the registry database and image storage run inside or outside the cluster:
 
 * *Internal {postgresql}:* Velero backs up the registry resources and the data volume for the internal {postgresql} database, but you must also create a separate database-level backup for application consistency. This is the registry database, not the Kubernetes etcd data store.
 * *External {postgresql}:* Velero backs up the registry deployment and its {kube} resources. Protect the external {postgresql} database and the external object storage with the native backup tools of the database or the cloud provider.
