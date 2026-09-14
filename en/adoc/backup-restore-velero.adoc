@@ -66,7 +66,7 @@ After a restore, expect the following:
 
 * *Lost memory data:* The registry keeps repository and artifact pull times in memory and writes them to the database periodically. Any data that was not yet written to the database is lost. This typically has a low impact on operations.
 * *Lost user sessions:* The {redis} volume is excluded from the backup, so all active sessions are lost and users must log in again.
-* *Hanging tasks:* Replication, garbage collection, and security scans can remain in a pending or interrupted state, and must be restarted or stopped manually from the administrator interface.
+* *Hanging tasks:* Replication, garbage collection and security scans can remain in a pending or interrupted state and must be restarted or stopped manually from the administrator interface.
 * *Crash consistency:* Velero volume snapshots are crash-consistent. This protects the storage state after a crash, but it does not guarantee that the database transactions are complete. For a production deployment with an internal {postgresql} database, also create an application-consistent database dump.
 
 [#pr-velero-backup]
