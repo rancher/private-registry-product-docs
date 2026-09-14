@@ -148,7 +148,7 @@ When only the pod, the PVC, and the PV are excluded, the StatefulSet is restored
 ==== Step 3: Creating the backup
 
 Use the backup method that matches your storage platform.
-Replace `<BACKUP_NAME>` with a name for the backup and `<RETENTION_DURATION>` with the retention period, for example `720h`.
+Replace `<BACKUP_NAME>` with a name for the backup and `<RETENTION_DURATION>` with the retention period, for example, `720h`.
 
 *File System Backup*
 
