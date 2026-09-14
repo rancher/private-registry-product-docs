@@ -33,7 +33,7 @@ Velero stores backups in an object store, and it does not provide a PVC-backed o
 [#pr-velero-prerequisites]
 === Prerequisites
 
-Before starting the backup process, make sure that you have the following:
+Before starting the backup process, make sure you have the following:
 
 * A supported {kube} cluster and a {productnameshort} release that is compatible with both the cluster and the Velero version you use.
 * {helm}, `kubectl` and the https://velero.io/docs/main/basic-install/[Velero CLI] installed.
