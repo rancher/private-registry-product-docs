@@ -47,6 +47,9 @@ include::ha-setup.adoc[]
 
 include::configure-rancher-oidc.adoc[]
 
+// Backup and restore with Velero
+include::backup-restore-velero.adoc[]
+
 //FAQ
 include::faq.adoc[]
 

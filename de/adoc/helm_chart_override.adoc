@@ -8,10 +8,12 @@ include::../common/generic-attributes.adoc[]
 Das {productname} ({productnameshort}) {helm} Chart wird mit Standardwerten geliefert.
 Sie können die Installation des {helm} Charts auf eine der folgenden Arten anpassen:
 
+Wenn Sie die Installation überschreiben, ersetzen Sie `<APP_VERSION>` durch die gewünschte Anwendungsversion (z. B. `1.2`).
+
 * Fügen Sie spezifische Parameter zu den `--set` Flags in der `helm install` Befehlszeile hinzu, zum Beispiel:
 [source]
 $ helm install <RELEASE_NAME> \
-oci://registry.suse.com/private-registry/private-registry-helm \
+oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
 --namespace <PRIVATE_REGISTRY_NAMESPACE> \
 --set harborAdminPassword=<MY_PASSWORD> \
 --set externalURL=https://<PRIVATE_REGISTRY_FQDN> \
@@ -19,7 +21,7 @@ oci://registry.suse.com/private-registry/private-registry-helm \
 * Create a {suse} custom `suse_registry_override.yaml` file and pass it to the `--f` flag, for example:
 [source]
   $ helm install <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
   -f suse_registry_override.yaml
 

@@ -35,9 +35,11 @@ image::private-registry-ha.png[{productnameshort} {hasetup}, width=100%]
 [#pr-deployment-ha-procedure]
 === Deploying {productnameshort} with HA
 
+Replace `<APP_VERSION>` with the desired application version (for example, `1.2`).
+
 . Download the {productnameshort} {helm} chart.
 [source]
-  $ helm pull oci://registry.suse.com/private-registry/private-registry-helm --untar
+  $ helm pull oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm --untar
 . Update the deployment parameters to match your requirements.
 Refer to <<pr-ha-helm-chart-example>> for an example {helm} chart for {productnameshort} HA setup.
 Refer to <<pr-helm-chart-override>> for a complete list of values to specify or override.

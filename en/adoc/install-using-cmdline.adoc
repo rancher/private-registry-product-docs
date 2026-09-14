@@ -56,7 +56,10 @@ To obtain the credentials from {scca}, follow these steps:
 [#pr-deployment-installing-and-running]
 === Installing and running {productnameshort} using {helm}
 The following procedure describes how to install {productnameshort} using {helm}.
-Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
+Before you begin, replace the following placeholders:
+
+* `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
+* `<APP_VERSION>` with the desired application version (for example, `1.2`).
 
 . Log in to {sregistry} using the obtained {scca} mirroring credentials.
 +
@@ -71,7 +74,7 @@ Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart depl
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm install <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
 ----
 +
@@ -96,7 +99,7 @@ With {helm} version 4, you can use a digest to specify the chart to install:
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm install <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
 ----
 
@@ -129,7 +132,7 @@ To upgrade the release of the {helm} chart to a specific newer version, run the 
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm upgrade <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
   --version <NEW_VERSION_OF_HELM_CHART> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
 ----
@@ -139,7 +142,6 @@ The digest is only possible with {helm} 4.
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm update <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
 ----
-

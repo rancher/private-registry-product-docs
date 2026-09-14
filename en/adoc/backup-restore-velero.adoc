@@ -1,0 +1,365 @@
+include::../common/generic-attributes.adoc[]
+
+[#backup-restore-velero]
+== Backing up and restoring with Velero
+:revdate: 2026-09-07
+:page-revdate: {revdate}
+
+https://velero.io/docs/main/[Velero] provides a framework for backing up and restoring {productname} deployments on supported {kube} clusters.
+It captures the {kube} API objects of the registry and the data in the persistent volumes that the registry uses.
+This approach protects the registry configuration and the container images stored in the cluster against accidental deletion or cluster failure.
+
+[#pr-velero-before-you-start]
+=== Before you start
+
+Velero protects {productnameshort} by backing up {kube} resources and persistent data.
+In most cases, it is the recommended backup method for registry deployments on {kube}.
+
+The scope of the backup depends on whether the registry database and image storage run inside or outside the cluster:
+
+* *Internal {postgresql}:* Velero backs up the registry resources and the data volume for the internal {postgresql} database, but you must also create a separate database-level backup for application consistency. This is the registry database, not the Kubernetes etcd data store.
+* *External {postgresql}:* Velero backs up the registry deployment and its {kube} resources. Protect the external {postgresql} database and the external object storage with the native backup tools of the database or the cloud provider.
+
+Velero does not back up {redis} data.
+{redis} mainly holds sessions and caches, so users must log in again after a restore.
+
+[IMPORTANT]
+====
+For a full disaster-recovery workflow, the Velero backup repository must be separate from the cluster where {productnameshort} runs.
+A cluster-local backend such as `local-path`, a PVC-backed store, or an NFS-backed store is not a portable production backup target.
+Velero stores backups in an object store, and it does not provide a PVC-backed or NFS-backed `BackupStorageLocation` that supports a full-cluster recovery workflow.
+====
+
+[#pr-velero-prerequisites]
+=== Prerequisites
+
+Before starting the backup process, make sure you have the following:
+
+* A supported {kube} cluster and a {productnameshort} release that is compatible with both the cluster and the Velero version you use.
+* {helm}, `kubectl` and the https://velero.io/docs/main/basic-install/[Velero CLI] installed.
+* A Velero server with the storage-provider plugin that your object store requires. See the https://velero.io/docs/main/supported-providers/[supported providers].
+* An off-cluster `BackupStorageLocation` for production use.
+* For File System Backup, the Velero node agent running in the cluster. Install it with `velero install --use-node-agent`, or enable it in the Velero {helm} chart.
+* For CSI volume snapshots, a CSI driver that supports snapshots and a `VolumeSnapshotClass` that is labeled `velero.io/csi-volumesnapshot-class: "true"`.
+* A recovery cluster that provides the same `StorageClass` names as the source cluster, so that the restored PVCs can bind.
+
+[#pr-velero-storage]
+=== Recommended storage configuration
+
+For production environments and full disaster recovery, use a storage backend that is independent from the primary cluster.
+This keeps backups available even if the cluster is lost or the registry namespace is deleted.
+
+Supported backup backends include:
+
+* Amazon S3
+* Azure Blob Storage
+* Google Cloud Storage
+* Any other approved Velero provider plugin
+
+For the complete supported-provider list, see the https://velero.io/docs/main/supported-providers/[Velero supported providers] page.
+
+[#pr-velero-expectations]
+=== What to expect after a restore
+
+A successful backup does not preserve every runtime state.
+After a restore, expect the following:
+
+* *Lost memory data:* The registry keeps repository and artifact pull times in memory and writes them to the database periodically. Any data that was not yet written to the database is lost. This typically has a low impact on operations.
+* *Lost user sessions:* The {redis} volume is excluded from the backup, so all active sessions are lost and users must log in again.
+* *Hanging tasks:* Replication, garbage collection and security scans can remain in a pending or interrupted state and must be restarted or stopped manually from the administrator interface.
+* *Crash consistency:* Velero volume snapshots are crash-consistent. This protects the storage state after a crash, but it does not guarantee that the database transactions are complete. For a production deployment with an internal {postgresql} database, also create an application-consistent database dump.
+
+[#pr-velero-backup]
+=== Backing up {productnameshort}
+
+[#pr-velero-backup-prepare]
+==== Step 1: Preparing the registry
+
+Before you create a backup, record the information that you need for a later restore.
+Then stop the tasks that could change registry data while the backup runs.
+Replace `<PRIVATE_REGISTRY_NAMESPACE>` with the namespace of your deployment and `<RELEASE_NAME>` with the name of your {helm} release.
+
+. Save your {productnameshort} chart version, application version and {helm} values in a secure recovery record:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm list -n <PRIVATE_REGISTRY_NAMESPACE>
+{prompt_user}helm get values <RELEASE_NAME> -n <PRIVATE_REGISTRY_NAMESPACE> \
+  -o yaml > <VALUES_FILE>.yaml
+----
++
+[NOTE]
+====
+The `-o yaml` option is required.
+Without it, `helm get values` prints a `USER-SUPPLIED VALUES:` header, and the resulting file is not a valid values file.
+====
+. Record your namespace, release name, persistent volume claim (PVC) names, and storage classes. The following command only lists the PVCs in the namespace; it does not back up the PVC data or the storage configuration:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get pvc -n <PRIVATE_REGISTRY_NAMESPACE>
+----
+. Record your TLS, OIDC, image-pull, and database secret references. The following command only lists the existing secrets in the namespace; it does not back up the secrets or their values:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get secrets -n <PRIVATE_REGISTRY_NAMESPACE>
+----
+. Enable *Repository Read Only* in the {productnameshort} administrator interface.
+. Stop or postpone image pushes, chart pushes, garbage collection, replication, and security scans.
+
+[#pr-velero-backup-exclude-redis]
+==== Step 2: Excluding {redis}
+
+{redis} is not part of the backup target because it mainly contains user session and cache data.
+Exclude it from the backup so that the restored environment does not contain stale session state.
+
+. Identify the {redis} resources of your release:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get sts,pod -n <PRIVATE_REGISTRY_NAMESPACE> -l component=redis
+----
++
+The {redis} PVC is created from a volume claim template and does not carry the `component` label, so it cannot be selected by label.
+Its name is always `data-<RELEASE_NAME>-harbor-redis-0`.
+. Exclude the {redis} pod, PVC, and persistent volume (PV) from the backup:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl label pod -n <PRIVATE_REGISTRY_NAMESPACE> -l component=redis \
+  velero.io/exclude-from-backup=true --overwrite
+{prompt_user}kubectl label pvc -n <PRIVATE_REGISTRY_NAMESPACE> \
+  data-<RELEASE_NAME>-harbor-redis-0 velero.io/exclude-from-backup=true --overwrite
+{prompt_user}kubectl label pv $(kubectl get pvc -n <PRIVATE_REGISTRY_NAMESPACE> \
+  data-<RELEASE_NAME>-harbor-redis-0 -o jsonpath='{.spec.volumeName}') \
+  velero.io/exclude-from-backup=true --overwrite
+----
+
+[WARNING]
+====
+Do not add the `velero.io/exclude-from-backup` label to the {redis} StatefulSet.
+Excluding the StatefulSet removes the {redis} workload from the backup entirely.
+After a restore, the cluster then has no {redis} deployment, and the core and job service pods fail repeatedly.
+When only the pod, the PVC, and the PV are excluded, the StatefulSet is restored and creates an empty {redis} volume.
+====
+
+[#pr-velero-backup-create]
+==== Step 3: Creating the backup
+
+Use the backup method that matches your storage platform.
+Replace `<BACKUP_NAME>` with a name for the backup and `<RETENTION_DURATION>` with the retention period, for example, `720h`.
+
+*File System Backup*
+
+File System Backup copies the volume content through the Velero node agent.
+It does not depend on volume snapshot support in the storage provider, so it also works with storage backends such as `local-path`.
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero backup create <BACKUP_NAME> \
+  --include-namespaces <PRIVATE_REGISTRY_NAMESPACE> \
+  --default-volumes-to-fs-backup \
+  --ttl <RETENTION_DURATION> \
+  --wait
+----
+
+*CSI volume snapshots*
+
+If your storage platform supports CSI snapshots, use the snapshot-based approach instead.
+It requires a CSI driver with snapshot support and a `VolumeSnapshotClass` that is labeled `velero.io/csi-volumesnapshot-class: "true"`.
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero backup create <BACKUP_NAME> \
+  --include-namespaces <PRIVATE_REGISTRY_NAMESPACE> \
+  --snapshot-volumes \
+  --ttl <RETENTION_DURATION> \
+  --wait
+----
+
+[#pr-velero-backup-verify]
+==== Step 4: Verifying the backup
+
+A backup is not complete until you verify that the expected resources and volumes are included.
+
+. Review the result and the volume coverage:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero backup describe <BACKUP_NAME> --details
+----
+. Confirm that the phase is `Completed`, and that the registry PVC, the {postgresql} PVC, and the job service PVC are included in the backup.
+. Confirm that no {redis} volume is listed in the backup:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n velero get podvolumebackups \
+  -l velero.io/backup-name=<BACKUP_NAME> \
+  -o custom-columns='POD:.spec.pod.name,VOLUME:.spec.volume,PHASE:.status.phase'
+----
+. Disable *Repository Read Only* after the backup completes successfully.
+
+[#pr-velero-schedule]
+=== Automating backups
+
+You can automate {productnameshort} backups with Velero schedules.
+A schedule creates periodic backups based on a standard cron expression, which provides consistent recovery points without manual intervention.
+
+. Verify that the {redis} pod, PVC, and PV are still labeled with `velero.io/exclude-from-backup=true`:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get pod,pvc -n <PRIVATE_REGISTRY_NAMESPACE> \
+  -l velero.io/exclude-from-backup=true
+----
++
+[NOTE]
+====
+The label on a pod is lost when the pod is recreated, for example, after an upgrade or a node restart.
+Check the {redis} pod label again after any operation that recreates the pod.
+The labels on the PVC and the PV persist.
+====
+. Create a schedule that uses the same backup method as your manual backup. For example, to run a File System Backup every day at 2:00 AM:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero schedule create <SCHEDULE_NAME> \
+  --schedule="0 2 * * *" \
+  --include-namespaces <PRIVATE_REGISTRY_NAMESPACE> \
+  --default-volumes-to-fs-backup \
+  --ttl <RETENTION_DURATION>
+----
++
+If you back up with CSI snapshots, replace `--default-volumes-to-fs-backup` with `--snapshot-volumes`.
+. Verify that the schedule is active and configured correctly:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero schedule get <SCHEDULE_NAME>
+----
+
+[#pr-velero-restore]
+=== Restoring {productnameshort}
+
+[#pr-velero-restore-internal-db]
+==== Restoring a deployment with an internal {postgresql} database
+
+Use this procedure when {postgresql} runs inside the {kube} cluster.
+Velero recreates the namespace, the workloads, the PVCs, the secrets, and the {helm} release secret.
+Therefore, do not install the chart before you restore.
+
+[WARNING]
+====
+Do not run `helm install` before the restore.
+Velero skips every resource that already exists.
+A pre-created release therefore keeps the empty PVCs and the new secrets of the fresh installation, and the backed-up data is not restored.
+A new installation also regenerates the `<RELEASE_NAME>-core` secret and the token CA, which invalidates all existing robot accounts.
+====
+
+. Provision the target {kube} cluster with the same `StorageClass` names as the source cluster, and install the required {ingress} and Velero components.
+Configure Velero with the same `BackupStorageLocation` that holds the backup.
+. Wait until the backup is visible in the target cluster before you restore it. If the backup is still synchronizing from the object store, `velero backup get` can report that it is unavailable or return `not found` until the object-store upload completes:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero backup get <BACKUP_NAME>
+----
+. Restore the backup:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero restore create <RESTORE_NAME> \
+  --from-backup <BACKUP_NAME> \
+  --wait
+----
+. Review the result and confirm that all items were restored:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero restore describe <RESTORE_NAME> --details
+----
++
+A warning about the `kube-root-ca.crt` ConfigMap that already exists is expected and can be ignored.
+Warnings about PVCs, secrets, or workloads that already exist indicate that the namespace was not empty, and that the restore is incomplete.
+. Confirm that the {helm} release is known again in the restored cluster:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm list -n <PRIVATE_REGISTRY_NAMESPACE>
+----
+. Verify that the TLS, OIDC, image-pull, and database secrets were restored.
+Recreate only the secrets that are managed outside the namespace, such as certificates issued by an external certificate manager.
+Do not recreate the secrets that the chart generates, because this invalidates the robot accounts of the registry.
+. If the recovery cluster is reached at a different address than the source cluster, update `externalURL` and the {ingress} host in the saved values file.
+Then upgrade the release with that file:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm upgrade <RELEASE_NAME> \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
+  --namespace <PRIVATE_REGISTRY_NAMESPACE> \
+  --version <CHART_VERSION> \
+  -f <VALUES_FILE>.yaml
+----
+. Disable *Repository Read Only*.
+
+[NOTE]
+====
+The chart version, the application version, and the values file that you saved in <<pr-velero-backup-prepare>> are a fallback for rebuilding the release manually.
+They are not required for the restore itself.
+====
+
+[#pr-velero-restore-external-db]
+==== Restoring a deployment with an external {postgresql} database
+
+Use this procedure when your database and object storage are managed outside of the {kube} cluster.
+
+. Provision the target {kube} cluster and the required Velero components, and configure Velero with the same `BackupStorageLocation` that holds the backup.
+. Confirm that the backup is available in the target cluster before you start the restore:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero backup get <BACKUP_NAME>
+----
+. Restore the external {postgresql} database with the native recovery procedure of your database provider.
+. Restore the external registry object-storage data with its native recovery procedure.
+. Restore the {productnameshort} {kube} resources and the in-cluster PVCs into an empty namespace:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}velero restore create <RESTORE_NAME> \
+  --from-backup <BACKUP_NAME> \
+  --wait
+----
+. Verify that the connection secret of the external database and the TLS CA or OIDC credentials were restored, and recreate only the ones that are managed outside the namespace.
+. Start the registry and verify that it connects to the restored database.
+. Disable *Repository Read Only*.
+
+[#pr-velero-verification]
+=== Verification and troubleshooting
+
+After the restore, validate that the registry is fully operational.
+
+. Check the PVCs and the pods, and confirm that the PVCs are bound and the pods are running:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get pvc -n <PRIVATE_REGISTRY_NAMESPACE>
+{prompt_user}kubectl get pods -n <PRIVATE_REGISTRY_NAMESPACE>
+----
+. Validate the API health, the administrator login, and the image pull and image push operations.
+. Confirm that the projects, users, and artifacts that existed at backup time are present again, and that a robot account can still authenticate.
+
+If the restore does not complete as expected, check the following:
+
+* `velero restore describe <RESTORE_NAME> --details` reports resources that already exist.
+The target namespace was not empty. Restore into a clean cluster or a clean namespace.
+* PVCs remain `Pending`.
+The `StorageClass` of the source cluster does not exist in the recovery cluster, or it cannot provision the requested volume.
+* No volume data is restored.
+The Velero node agent was not running when the backup was created, so no `PodVolumeBackup` was produced. Verify the backup with `velero backup describe <BACKUP_NAME> --details`.
+* Velero cannot find the backup in the recovery cluster.
+The `BackupStorageLocation` is not the one that holds the backup, or it is not in the `Available` phase. Check it with `kubectl -n velero get backupstoragelocation`.
+* Users cannot log in, and robot accounts fail to authenticate.
+The chart-generated secrets were recreated instead of restored.

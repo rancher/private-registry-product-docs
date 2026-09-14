@@ -56,7 +56,10 @@ Um die Anmeldeinformationen von {scca} zu erhalten, befolgen Sie diese Schritte:
 [#pr-deployment-installing-and-running]
 === Installation und Ausführung von {productnameshort} mit {helm}
 Das folgende Verfahren beschreibt, wie man {productnameshort} mit {helm} installiert.
-Ersetzen Sie `<RELEASE_NAME>` durch Ihren benutzerdefinierten Release-Namen für die Implementierung des {helm} Charts.
+Vor dem Start ersetzen Sie die folgenden Platzhalter:
+
+* `<RELEASE_NAME>` durch Ihren benutzerdefinierten Release-Namen für die Implementierung des {helm} Charts.
+* `<APP_VERSION>` durch die gewünschte Anwendungsversion (z. B. `1.2`).
 
 . Melden Sie sich bei {sregistry} mit den erhaltenen {scca} Spiegelungsanmeldeinformationen an.
 +
@@ -71,7 +74,7 @@ Ersetzen Sie `<RELEASE_NAME>` durch Ihren benutzerdefinierten Release-Namen für
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm install <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
 ----
 +
@@ -96,7 +99,7 @@ Mit {helm} Version 4 können Sie ein Digest verwenden, um das zu installierende 
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm install <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE>
 ----
 
@@ -129,7 +132,7 @@ Um das Release des {helm} Charts auf eine bestimmte neuere Version zu upgraden, 
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm upgrade <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
   --version <NEW_VERSION_OF_HELM_CHART> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
 ----
@@ -139,7 +142,6 @@ Das Digest ist nur mit {helm} 4 möglich.
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm update <RELEASE_NAME> \
-  oci://registry.suse.com/private-registry/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
 ----
-
