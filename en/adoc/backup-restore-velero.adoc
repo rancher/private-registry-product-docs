@@ -5,7 +5,7 @@ include::../common/generic-attributes.adoc[]
 :revdate: 2026-09-07
 :page-revdate: {revdate}
 
-https://velero.io/docs/main/[Velero] provides a framework to back up and restore {productname} deployments on supported {kube} clusters.
+https://velero.io/docs/main/[Velero] provides a framework for backing up and restoring {productname} deployments on supported {kube} clusters.
 It captures the {kube} API objects of the registry and the data in the persistent volumes that the registry uses.
 This approach protects the registry configuration and the container images stored in the cluster against accidental deletion or cluster failure.
 
