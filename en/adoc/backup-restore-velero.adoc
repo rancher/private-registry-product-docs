@@ -79,7 +79,7 @@ Before you create a backup, record the information that you need for a later res
 Then stop the tasks that could change registry data while the backup runs.
 Replace `<PRIVATE_REGISTRY_NAMESPACE>` with the namespace of your deployment and `<RELEASE_NAME>` with the name of your {helm} release.
 
-. Save your {productnameshort} chart version, application version, and {helm} values in a secure recovery record:
+. Save your {productnameshort} chart version, application version and {helm} values in a secure recovery record:
 +
 [source,bash,subs="+attributes"]
 ----
