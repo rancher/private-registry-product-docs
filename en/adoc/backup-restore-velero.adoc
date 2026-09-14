@@ -361,5 +361,5 @@ The `StorageClass` of the source cluster does not exist in the recovery cluster,
 The Velero node agent was not running when the backup was created, so no `PodVolumeBackup` was produced. Verify the backup with `velero backup describe <BACKUP_NAME> --details`.
 * Velero cannot find the backup in the recovery cluster.
 The `BackupStorageLocation` is not the one that holds the backup, or it is not in the `Available` phase. Check it with `kubectl -n velero get backupstoragelocation`.
-* Users cannot log in and robot accounts fail to authenticate.
+* Users cannot log in, and robot accounts fail to authenticate.
 The chart-generated secrets were recreated instead of restored.
