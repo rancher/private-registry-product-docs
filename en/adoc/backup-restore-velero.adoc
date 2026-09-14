@@ -216,7 +216,7 @@ A schedule creates periodic backups based on a standard cron expression, which p
 +
 [NOTE]
 ====
-The label on a pod is lost when the pod is recreated, for example after an upgrade or a node restart.
+The label on a pod is lost when the pod is recreated, for example, after an upgrade or a node restart.
 Check the {redis} pod label again after any operation that recreates the pod.
 The labels on the PVC and the PV persist.
 ====
