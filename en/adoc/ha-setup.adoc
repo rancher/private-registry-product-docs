@@ -34,7 +34,7 @@ The stateful parts of the deployment require separate resilience decisions:
 [#pr-deployment-ha-options]
 === Choosing a resilience model
 
-Choose a model based on the failure that the deployment must tolerate:
+Choose a model based on the kinds of failure that the deployment must tolerate:
 
 [cols="1,2,2",options="header"]
 |===
@@ -42,7 +42,7 @@ Choose a model based on the failure that the deployment must tolerate:
 
 | Pod availability
 | Run two or more replicas of the stateless {productnameshort} components on separate worker nodes.
-| Protects against a pod or single-node failure, but does not protect the database, cache, storage, or {ingress} endpoint.
+| Protects against failures affecting pods or worker nodes, but does not protect the database, cache, storage, or {ingress} endpoint.
 
 | Production availability
 | Combine distributed application replicas with HA {postgresql}, HA {valkey} or {redis}, durable image storage, and a highly available {ingress} endpoint.
@@ -60,7 +60,7 @@ For example, two replicas on the same worker node are both affected when that no
 === Distributing {productnameshort} components
 
 The example in <<pr-ha-helm-chart-example>> sets three replicas for the portal, core, job service, and registry components, together with the corresponding `nodeSelector` and `topologySpreadConstraints` values.
-These settings are available for the {productnameshort} components in the <<pr-helm-chart-override>>.
+These settings are available for the {productnameshort} components in <<pr-helm-chart-override>>.
 
 Use the following scheduling principles:
 
@@ -88,7 +88,7 @@ image::private-registry-ha.png[{kube} cluster with {ingress} in {hasetup} using 
 === Providing a highly available endpoint
 
 Use a highly available {ingress} controller or load balancer in front of the {productnameshort} services.
-Configure stable DNS and TLS certificates that remain valid when pods or worker nodes change.
+The endpoint provides the redundancy; DNS only needs a stable record that resolves reliably to it, and the TLS certificate only needs to remain valid when pods or worker nodes change.
 The `externalURL` value and `expose.ingress.hosts.core` value must identify the same registry address.
 
 {productnameshort} does not manage the external endpoint.
@@ -216,15 +216,40 @@ Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart depl
 ----
 
 [#pr-deployment-ha-operations]
-=== Operating a resilient deployment
+=== Performing maintenance and upgrades
 
-Before upgrades or planned maintenance, verify that the registry has enough available capacity to run during a node drain.
-Upgrade one failure domain at a time and verify pod readiness, registry API health, image pulls, and image pushes after each change.
+Follow this procedure for planned maintenance, such as a node drain or a rolling upgrade:
+
+. Verify that the registry has enough available capacity to run during a node drain.
+. Upgrade one failure domain at a time.
+. After each change, verify pod readiness, registry API health, and image pulls and pushes.
+For example, log in and push and pull a test image to confirm that the registry serves traffic correctly:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}docker login <SUSE_PRIVATE_REGISTRY_URL> -u <REGISTRY_USERNAME>
+{prompt_user}docker pull <SUSE_PRIVATE_REGISTRY_URL>/library/<TEST_IMAGE>:<TAG>
+{prompt_user}docker push <SUSE_PRIVATE_REGISTRY_URL>/library/<TEST_IMAGE>:<TAG>
+----
+
+Set `persistence.resourcePolicy` to `keep` when PVCs must remain after a {helm} release is deleted, for example when a release is reinstalled as part of maintenance.
+This setting does not replace backups and does not protect PVCs from deletion outside {helm}.
+
+Before placing the deployment into production, test the failure of one pod and one worker node, and test the documented recovery procedure with a non-production backup.
+
+[#pr-deployment-ha-retention]
+=== Configuring retention and garbage collection
+
+Retention and garbage-collection settings are standing configuration, not steps in the maintenance procedure in <<pr-deployment-ha-operations>>.
+Set them up once, independently of any planned maintenance, and let them run on their own schedule.
 
 Configure image retention policies and schedule garbage collection in the {productnameshort} administrator interface.
 Garbage collection removes unreferenced image data after retention policies or artifact deletions run.
 Review the reclaimable storage before a production garbage-collection run and monitor storage growth afterward.
-The registry upload-purging settings also remove abandoned upload data; see the <<pr-helm-chart-override>> for the available `registry.upload_purging` values.
+The registry upload-purging settings also remove leftover data from incomplete or interrupted image uploads (as opposed to garbage collection, which removes unreferenced but otherwise complete image data); see the <<pr-helm-chart-override>> for the available `registry.upload_purging` values.
+
+[#pr-deployment-ha-monitoring]
+=== Monitoring the deployment
 
 Monitor the following conditions:
 
@@ -245,12 +270,6 @@ metrics:
 
 Create alerts for unavailable replicas, repeated pod restarts, storage capacity, failed scans, failed jobs, and dependency health.
 Use `metrics.serviceMonitor.additionalLabels` when your monitoring stack requires a label to discover the `ServiceMonitor`.
-
-Set `persistence.resourcePolicy` to `keep` when PVCs must remain after a {helm} release is deleted.
-This setting does not replace backups and does not protect PVCs from deletion outside {helm}.
-
-Test the failure of one pod and one worker node before placing the deployment into production.
-Also test the documented recovery procedure with a non-production backup.
 
 [#pr-deployment-ha-network]
 === Managing network traffic
@@ -300,7 +319,8 @@ Confirm the following items before you rely on the deployment for production wor
 
 * Replicas are distributed across worker nodes or failure domains.
 * Worker nodes have enough reserved capacity for a node failure.
-* The {ingress} endpoint, DNS, and TLS certificates are redundant and tested.
+* The {ingress} endpoint is redundant, and DNS reliably resolves to it.
+* The TLS certificate is valid on every endpoint instance and renews automatically before it expires.
 * {postgresql} and {valkey} or {redis} have tested failover and backup procedures.
 * Image and chart storage remains available during a worker-node failure.
 * Monitoring detects unavailable replicas, dependency failures, storage exhaustion, and failed jobs.

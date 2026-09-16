@@ -6,7 +6,7 @@ include::../common/generic-attributes.adoc[]
 :page-revdate: {revdate}
 
 The {productname} ({productnameshort}) {helm} chart is delivered with default values.
-For guidance about using replica, scheduling, exposure, and persistence values in a resilient deployment, see xref:pr-deployment-ha[].
+For guidance about using replicas, scheduling, exposure, and persistence values in a resilient deployment, see xref:pr-deployment-ha[].
 You can adjust the {helm} chart installation in one of the following ways:
 
 Ensure you replace `<APP_VERSION>` with your specific application version (for example, `1.2`).
@@ -19,7 +19,7 @@ oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
 --set harborAdminPassword=<MY_PASSWORD> \
 --set externalURL=https://<PRIVATE_REGISTRY_FQDN> \
 --set expose.ingress.hosts.core=<PRIVATE_REGISTRY_FQDN>
-* Create a {suse} custom `suse_registry_override.yaml` file and pass it to the `--f` flag, for example:
+* Create a {suse} custom `suse_registry_override.yaml` file and pass it to the `-f` flag, for example:
 [source]
   $ helm install <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
@@ -50,7 +50,7 @@ redis:
    password: "<MY_PASSWORD_REDIS>"
 ----
 [callouts]
-<1> How {sregistry} is exposed. Can be `ingress`, `loadBalancer`, `nodePort` or `clusterIPhis`. Default is `ingress`.
+<1> How {sregistry} is exposed. Can be `ingress`, `loadBalancer`, `nodePort` or `clusterIP`. Default is `ingress`.
 <2> Host name for the {kube} internal networking configuration.
 <3> URL where the {sregistry} application runs. It is used to generate links in the user interface, redirects and also for API responses.
 <4> The administrator password to the application.
