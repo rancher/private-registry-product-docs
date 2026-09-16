@@ -208,7 +208,7 @@ To deploy directly without waiting for a full {productname} setup, you can use H
   --set-json 'imagePullSecrets=[]'
 ----
 +
-After successful deployment, you can configure your {productname} to push artifacts to a persistent registry location.
+After a successful deployment, you can configure and use {productname} as your persistent artifact registry.
 
 ===== Verification and Troubleshooting
 

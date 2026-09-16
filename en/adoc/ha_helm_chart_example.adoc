@@ -2,80 +2,194 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-ha-helm-chart-example]
 == Example of a {productnameshort} HA setup {helm} chart
-:revdate: 2025-09-01
+:revdate: 2026-09-07
 :page-revdate: {revdate}
 
-The following example values file illustrates parameters that are required for the minimal {productnameshort} HA setup.
+The following example values file illustrates a starting point for a {productnameshort} HA setup.
+It uses external {postgresql} and external {valkey} or {redis} services.
+This example uses three replicas for the main services. Two replicas provide basic redundancy, but three replicas leave two instances available after one pod or node becomes unavailable.
+Three replicas also provide more capacity during planned maintenance or a rolling update.
+
+Replicas alone do not make the deployment tolerate a node failure.
+The example therefore also sets `topologySpreadConstraints`, so that the replicas of a component are placed on different nodes, and `nodeSelector`, so that the registry components run on a dedicated worker-node pool with sufficient capacity.
+The selected nodes must have the label specified in the `nodeSelector` configuration.
+
+For the design decisions behind these values, see xref:pr-deployment-ha[].
+For the complete list of values, see <<pr-helm-chart-override>>.
 
 [source,yaml]
 ----
 expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: secret //<1>
+    secret:
+      secretName: <TLS_SECRET_NAME>
   ingress:
     hosts:
-      core: core.harbor.domain //<1>
+      core: <PRIVATE_REGISTRY_FQDN> //<2>
 
-externalURL: https://core.harbor.domain //<2>
+externalURL: https://<PRIVATE_REGISTRY_FQDN> //<3>
 
-portal:
-  replicas: 2 //<3>
+harborAdminPassword: "<MY_PASSWORD>" //<4>
 
 core:
-  replicas: 2 //<3>
+  replicas: 3 //<5>
+  nodeSelector:
+    <NODE_LABEL_KEY>: <NODE_LABEL_VALUE> //<6>
+  topologySpreadConstraints: //<7>
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+      matchLabelKeys:
+        - pod-template-hash //<8>
+      labelSelector:
+        matchLabels:
+          component: core
+          release: <RELEASE_NAME>
 
-jobservice:
-  replicas: 2 //<3>
+portal:
+  replicas: 3
+  # Repeat the nodeSelector and topologySpreadConstraints of the core
+  # component, with "component: portal" in the label selector. //<9>
 
 registry:
-  replicas: 2 //<3>
+  replicas: 3
+  # Repeat with "component: registry" in the label selector.
+
+jobservice:
+  replicas: 3
+  jobLoggers:
+    - database //<10>
+  # Repeat with "component: jobservice" in the label selector.
+
+# Increase Trivy replicas when vulnerability scanning is a critical workload
+trivy:
+  replicas: 3
+  # Repeat the nodeSelector and topologySpreadConstraints of the core
+  # component, with "component: trivy" in the label selector, but without
+  # matchLabelKeys.
+
+# With "expose.type: ingress" the chart does not deploy its own nginx proxy,
+# so "nginx.replicas" has no effect. Endpoint redundancy comes from the
+# Ingress controller. //<11>
+
+metrics:
+  enabled: true //<12>
+  serviceMonitor:
+    enabled: true //<13>
+
+# While not strictly for the HA of the registry itself, consider increasing exporter replicas for robust monitoring availability
+exporter:
+  replicas: 3
+  # Repeat with "component: exporter" in the label selector.
+
+# The CA certificate that signed the certificate of the external PostgreSQL
+# server. The secret must contain the key "ca.crt".
+caBundleSecretName: <CA_SECRET_NAME> //<14>
 
 database:
   type: external
-  external: // <4>
-    host: "192.168.0.1"
+  external: //<15>
+    host: <POSTGRESQL_HOST>
     port: "5432"
-    username: "user"
-    password: "password"
+    username: <POSTGRESQL_USER>
     coreDatabase: "registry"
-    existingSecret: "" //<5>
-    sslmode: "disable" //<6>
+    existingSecret: <POSTGRESQL_SECRET_NAME> //<16>
+    sslmode: "verify-full" //<17>
 
 redis:
   type: external
-  external: //<7>
-    addr: "192.168.0.2:6379" //<8>
-    sentinelMasterSet: "" //<9>
-    coreDatabaseIndex: "0" //<10>
+  external: //<18>
+    addr: <VALKEY_HOST>:6379 //<19>
+    sentinelMasterSet: "" //<20>
+    coreDatabaseIndex: "0" //<21>
     jobserviceDatabaseIndex: "1"
     registryDatabaseIndex: "2"
     trivyAdapterIndex: "5"
-    harborDatabaseIndex: "6" //<11>
-    cacheLayerDatabaseIndex: "7"//<12>
-    username: "" //<13>
-    password: ""
-    existingSecret: "" //<14>
+    harborDatabaseIndex: "6" //<22>
+    cacheLayerDatabaseIndex: "7" //<23>
+    username: "" //<24>
+    existingSecret: <VALKEY_SECRET_NAME> //<25>
 
 persistence:
-  enabled: true //<15>
+  enabled: true //<26>
+  resourcePolicy: keep //<27>
+  persistentVolumeClaim:
+    registry:
+      storageClass: <STORAGE_CLASS_NAME>
+      accessMode: ReadWriteMany //<28>
+      size: 500Gi //<29>
+    trivy:
+      storageClass: <STORAGE_CLASS_NAME>
+      size: 20Gi //<30>
 ----
 [callouts]
-<1> Core service host name in {ingress} rule.
-<2> The external URL for the harbor-core service.
-<3> Number of replicas to create. Specify two or more.
-<4> Fill the database connection details in the `external` section.
-<5> If using an existing secret, the value must be `password`.
-<6> Accepts one of the following values:
-  disable:: Do not use SSL.
+<1> Can be `auto`, `secret` or `none`. Depending on the option, you may have to include additional values.
+<2> Core service host name in {ingress} rule.
+<3> The external URL for the `harbor-core` service. The host name must match `expose.ingress.hosts.core` and the certificate in `<TLS_SECRET_NAME>`.
+<4> The initial administrator password. In production, store the password in a {kube} secret and reference it with `existingSecretAdminPasswordKey` instead of setting it in the values file.
+<5> Number of replicas to create. Two replicas provide basic redundancy. Three replicas are a recommended production starting point because two instances remain available after one pod or node becomes unavailable. Replicas do not guarantee node failure tolerance unless you distribute them across different nodes or failure domains.
+<6> Schedules the component on a dedicated worker-node pool. The selected nodes must carry this label.
+<7> Places the replicas of the component on different nodes. Set `topologyKey` to `topology.kubernetes.io/zone` to spread the replicas across availability zones instead. +
+  {kube} enforces the constraint when it schedules a pod, and does not rebalance the replicas later. +
+  Verify the pod labels of your release with `kubectl get pods --namespace <PRIVATE_REGISTRY_NAMESPACE> --show-labels` and adjust `matchLabels` to match them.
+<8> Counts only the pods of the revision being rolled out. Without it, a rolling update also counts the pods it is about to replace, so the replacements can be placed on fewer nodes than `maxSkew` allows, and they are not rebalanced afterwards.
+<9> Apply the same `nodeSelector` and `topologySpreadConstraints` values to every component that runs more than one replica, including the exporter and {trivy}. Without them, {kube} may place all replicas of a component on the same node, or on nodes outside the selected worker-node pool. +
+  Also repeat `matchLabelKeys` for `portal`, `registry`, `jobservice` and `exporter`, which the chart deploys as `Deployment` resources. Omit it for `trivy`: the chart deploys `trivy` as a `StatefulSet`, whose pods do not have a `pod-template-hash` label, and whose default rolling update replaces one replica at a time without running old and new replicas side by side.
+<10> Writes job logs to the database instead of a volume. The default `file` logger uses the `persistence.persistentVolumeClaim.jobservice.jobLog` volume, which defaults to `ReadWriteOnce`. A `ReadWriteOnce` volume confines all job service replicas to a single node. Keep the `file` logger only if the job log volume uses `ReadWriteMany`.
+<11> The chart deploys its own {nginx} proxy only when `expose.type` is `clusterIP`, `nodePort` or `loadBalancer`. With `ingress`, raise the replica count of the {ingress} controller instead.
+<12> Required for the exporter to be deployed. Defaults to `false`.
+<13> Creates a {prometheus} `ServiceMonitor`. Requires the {prometheus} Operator CRDs in the cluster. Use `metrics.serviceMonitor.additionalLabels` when your monitoring stack requires a label to discover the `ServiceMonitor`.
+<14> The name of an existing secret containing the CA certificate that signed the certificate of the external {postgresql} server. The key in the secret must be `ca.crt`. Required when `sslmode` is `verify-ca` or `verify-full`. +
+  The same CA bundle is injected into the trust store of the core, job service, registry and {trivy} components.
+<15> Fill the database connection details in the `external` section.
+<16> The name of an existing secret containing the database password. The key in the secret must be `password`. Alternatively, set `password` directly in the `external` section.
+<17> Accepts one of the following values:
+  disable:: Do not use SSL. Not recommended for production.
   require:: Always use SSL and skip verification.
   verify-ca:: Always use SSL. Verify that the certificate presented by the server was signed by a trusted CA.
-  verify-full:: Always use SSL. Verify that the certificate presented by the server was signed by a trusted CA and the server host name matches the one in the certificate.
-<7> Fill the connection information in the `external` section.
-<8> Supports redis and redis+sentinel. +
-  Address for redis is `<redis_host>:<redis_port>`. +
-  Address for redis+sentinel is `<sentinel1_host>:<sentinel1_port>`,`<sentinel2_host>:<sentinel2_port>`...
-<9> The name of the set of {valkey} instances to monitor. It must be set to support redis+sentinel.
-<10> Must be `0` as the library that Harbor uses does not support configurations.
-<11> Optional. Defaults to `0` but can be configured to `6`.
-<12> Optional. Defaults to `0` but can be configured to `7`.
-<13> If empty, it is authenticated against the default user.
-<14> If used, the key must be <REDIS_PASSWORD>.
-<15> To store all the images, metadata and scans, ensure that the xref:helm-persistence-parameters[persistence-related settings] are properly configured.
+  verify-full:: Always use SSL. Verify that the certificate presented by the server was signed by a trusted CA and the server host name matches the one in the certificate. +
+  `verify-ca` and `verify-full` also require `caBundleSecretName`. Without it, the components cannot verify the certificate of the database and fail to start.
+<18> Fill the connection information in the `external` section.
+<19> Supports direct and Sentinel connections. Cluster mode is not supported. +
+  Address for a direct connection is `<VALKEY_HOST>:<VALKEY_PORT>`. +
+  Address for a Sentinel connection is `<SENTINEL1_HOST>:<SENTINEL1_PORT>`,`<SENTINEL2_HOST>:<SENTINEL2_PORT>`...
+<20> The name of the set of {valkey} or {redis} instances to monitor. It must be set for a Sentinel connection.
+<21> Must be `0`, because the client library used by {productnameshort} does not support another value for the core database index.
+<22> Optional. The database index for miscellaneous business logic. Defaults to `0` but can be configured to `6`.
+<23> Optional. The database index for the cache layer. Defaults to `0` but can be configured to `7`. The index is only used when `cache.enabled` is `true`, which is not the default.
+<24> If empty, it is authenticated against the default user.
+<25> The name of an existing secret containing the {valkey} or {redis} password. The key in the secret must be `REDIS_PASSWORD`. Alternatively, set `password` directly in the `external` section.
+<26> To store all the images, metadata and scans, ensure that the xref:helm-persistence-parameters[persistence-related settings] are properly configured.
+<27> Keeps the PVCs when the {helm} release is deleted. This setting does not replace backups and does not protect the PVCs from deletion outside {helm}.
+<28> Replace `<STORAGE_CLASS_NAME>` with a storage class that supports the selected access mode and remains available after a node failure. Use `ReadWriteMany` only when the storage implementation supports simultaneous access from the nodes that run the registry pods.
+<29> The chart default of `5Gi` is installation-oriented. Size the volume from the recommendations in xref:pr-deployment-hardware-sizing[].
+<30> The chart default of `5Gi` may not be enough for the {trivy} vulnerability database and cache. Each {trivy} replica gets its own volume.
+
+For a production deployment, store the registry content in external object storage instead of a filesystem volume.
+Object storage removes the shared-volume requirement and keeps the registry content available when a worker node fails.
+Replace the `persistence.persistentVolumeClaim.registry` values with an `imageChartStorage` configuration. For example:
+
+[source,yaml]
+----
+persistence:
+  enabled: true
+  resourcePolicy: keep
+  imageChartStorage:
+    type: s3 //<1>
+    s3:
+      region: <S3_REGION>
+      bucket: <S3_BUCKET>
+      accesskey: <S3_ACCESS_KEY>
+      secretkey: <S3_SECRET_KEY>
+    disableredirect: true //<2>
+  persistentVolumeClaim:
+    trivy:
+      storageClass: <STORAGE_CLASS_NAME>
+      size: 20Gi
+----
+[callouts]
+<1> Accepts `filesystem`, `azure`, `gcs`, `s3`, `swift` or `oss`. The keys below `type` are specific to the selected back end; see the `imageChartStorage` section of the chart's `values.yaml` for the full set. Protect the object store with its own availability, access-control, retention, and backup policies.
+<2> By default the registry answers a pull with a redirect to the object storage, which requires every registry client to reach the storage endpoint directly. Set `disableredirect` to `true` when the object storage is only reachable from inside the cluster, so that the registry serves the content itself.
