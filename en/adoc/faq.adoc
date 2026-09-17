@@ -36,7 +36,7 @@ The release cycle of {productname} is independent of the release cycle of upstre
 When releasing new versions of {productname}, {suse} aims to include the latest version of the upstream {harbor} project that meets SUSE quality assurance and maintenance requirements.
 
 Will you publish migration considerations for customers running {harbor} from other sources?::
-Not at this time.
+Yes, see xref:pr-migrating-from-harbor[] to help you migrate.
 
 [#deployment-and-installation]
 === Deployment and installation

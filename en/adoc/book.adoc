@@ -47,6 +47,8 @@ include::ha-setup.adoc[]
 
 include::configure-rancher-oidc.adoc[]
 
+// Migration from upstream Harbor
+include::migrating-from-upstream-harbor.adoc[]
 // Backup and restore with Velero
 include::backup-restore-velero.adoc[]
 
