@@ -149,11 +149,11 @@ In-cluster stateful services keep the deployment self-contained, but you must de
 
 For the supported connection and storage values, see <<pr-ha-helm-chart-example>> and <<pr-helm-chart-override>>.
 
-When you use filesystem storage, confirm that the storage class can make the volume available after a node failure.
+When you use file system storage, confirm that the storage class can make the volume available after a node failure.
 Shared `ReadWriteMany` access is not automatically required for every deployment, but the access mode must match the selected chart configuration and storage implementation.
 When you use object storage, protect the object store with its own availability, access-control, retention, and backup policies.
 
-To configure filesystem storage, set the storage class and access mode in the values file. For example:
+To configure file system storage, set the storage class and access mode in the values file. For example:
 
 [source,yaml]
 ----
@@ -246,7 +246,7 @@ Set them up once, independently of any planned maintenance, and let them run on 
 Configure image retention policies and schedule garbage collection in the {productnameshort} administrator interface.
 Garbage collection removes unreferenced image data after retention policies or artifact deletions run.
 Review the reclaimable storage before a production garbage-collection run and monitor storage growth afterward.
-The registry upload-purging settings also remove leftover data from incomplete or interrupted image uploads (as opposed to garbage collection, which removes unreferenced but otherwise complete image data); see the <<pr-helm-chart-override>> for the available `registry.upload_purging` values.
+The registry upload-purging settings also remove leftover data from incomplete or interrupted image uploads (as opposed to garbage collection, which removes unreferenced but otherwise complete image data); see <<pr-helm-chart-override>> for the available `registry.upload_purging` values.
 
 [#pr-deployment-ha-monitoring]
 === Monitoring the deployment

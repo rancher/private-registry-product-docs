@@ -144,7 +144,7 @@ persistence:
 <13> Creates a {prometheus} `ServiceMonitor`. Requires the {prometheus} Operator CRDs in the cluster. Use `metrics.serviceMonitor.additionalLabels` when your monitoring stack requires a label to discover the `ServiceMonitor`.
 <14> The name of an existing secret containing the CA certificate that signed the certificate of the external {postgresql} server. The key in the secret must be `ca.crt`. Required when `sslmode` is `verify-ca` or `verify-full`. +
   The same CA bundle is injected into the trust store of the core, job service, registry and {trivy} components.
-<15> Fill the database connection details in the `external` section.
+<15> Provide the database connection details in the `external` section.
 <16> The name of an existing secret containing the database password. The key in the secret must be `password`. Alternatively, set `password` directly in the `external` section.
 <17> Accepts one of the following values:
   disable:: Do not use SSL. Not recommended for production.
@@ -152,7 +152,7 @@ persistence:
   verify-ca:: Always use SSL. Verify that the certificate presented by the server was signed by a trusted CA.
   verify-full:: Always use SSL. Verify that the certificate presented by the server was signed by a trusted CA and the server host name matches the one in the certificate. +
   `verify-ca` and `verify-full` also require `caBundleSecretName`. Without it, the components cannot verify the certificate of the database and fail to start.
-<18> Fill the connection information in the `external` section.
+<18> Provide the connection information in the `external` section.
 <19> Supports direct and Sentinel connections. Cluster mode is not supported. +
   Address for a direct connection is `<VALKEY_HOST>:<VALKEY_PORT>`. +
   Address for a Sentinel connection is `<SENTINEL1_HOST>:<SENTINEL1_PORT>`,`<SENTINEL2_HOST>:<SENTINEL2_PORT>`...
@@ -168,7 +168,7 @@ persistence:
 <29> The chart default of `5Gi` is installation-oriented. Size the volume from the recommendations in xref:pr-deployment-hardware-sizing[].
 <30> The chart default of `5Gi` may not be enough for the {trivy} vulnerability database and cache. Each {trivy} replica gets its own volume.
 
-For a production deployment, store the registry content in external object storage instead of a filesystem volume.
+For a production deployment, store the registry content in external object storage instead of a file system volume.
 Object storage removes the shared-volume requirement and keeps the registry content available when a worker node fails.
 Replace the `persistence.persistentVolumeClaim.registry` values with an `imageChartStorage` configuration. For example:
 
@@ -192,4 +192,4 @@ persistence:
 ----
 [callouts]
 <1> Accepts `filesystem`, `azure`, `gcs`, `s3`, `swift` or `oss`. The keys below `type` are specific to the selected back end; see the `imageChartStorage` section of the chart's `values.yaml` for the full set. Protect the object store with its own availability, access-control, retention, and backup policies.
-<2> By default the registry answers a pull with a redirect to the object storage, which requires every registry client to reach the storage endpoint directly. Set `disableredirect` to `true` when the object storage is only reachable from inside the cluster, so that the registry serves the content itself.
+<2> By default, the registry responds to pull requests by redirecting clients directly to object storage. Set `disableredirect` to `true` when the object storage is only reachable from inside the cluster, so that the registry serves the content itself.
