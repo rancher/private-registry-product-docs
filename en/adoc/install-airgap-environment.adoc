@@ -56,16 +56,37 @@ Before using the following example, replace the placeholders:
 
 * `<APP_VERSION>` with the desired application version (for example, `1.2`), as in <<pr-deployment-installing-and-running>>.
 * `<CHART_VERSION>` with the exact chart version you want to pull (for example, `1.2.19`).
+* `<RKE2_VERSION_URLENCODED>` with the {rke2a} release you want to install, found on the https://github.com/rancher/rke2/releases[{rke2a} releases page] (for example, `v1.34.5+rke2r1` written as `v1.34.5%2Brke2r1`, since a literal `+` is not valid in a URL).
+* `<HELM_VERSION>` with the {helm} release you want to install, found on the https://github.com/helm/helm/releases[{helm} releases page] (for example, `v3.18.0`).
 
 [IMPORTANT]
 ====
-The `Images` list must use the *exact* image tags the chart's own `values.yaml` defaults expect, not a hand-copied or simplified list. Get the authoritative list by running:
+The `Images` list must use the *exact* image tags the chart's own `values.yaml` defaults expect, not a hand-copied or simplified list. Get the authoritative list, already formatted as ready-to-use image references, by running:
 
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}helm show values oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
-  --version <CHART_VERSION> | grep -E "repository:|tag:"
+  --version <CHART_VERSION> \
+  | grep -E "repository:|tag:" | paste - - | awk '{print "registry.suse.com/"$2":"$4}'
 ----
+
+For example, against chart version `1.2.19`, this prints:
+
+[source,bash]
+----
+registry.suse.com/suse/nginx:1.27-21.8
+registry.suse.com/private-registry/1.2/harbor-portal:1.2.1-1.118
+registry.suse.com/private-registry/1.2/harbor-core:1.2.1-1.109
+registry.suse.com/private-registry/1.2/harbor-jobservice:1.2.1-1.107
+registry.suse.com/private-registry/1.2/harbor-registry:1.2.1-1.109
+registry.suse.com/private-registry/1.2/harbor-registryctl:1.2.1-1.109
+registry.suse.com/private-registry/1.2/harbor-trivy-adapter:1.2.1-1.118
+registry.suse.com/suse/postgres:17.10-83.19
+registry.suse.com/suse/valkey:8.0.10-17.8
+registry.suse.com/private-registry/1.2/harbor-exporter:1.2.1-1.109
+----
+
+Copy each line as-is into the manifest's `Images.spec.images[].name` field.
 
 A manifest built from the wrong tags still lets `hauler store sync` and `helm install` succeed, but every pod fails `ImagePullBackOff` once you are air-gapped, with no route back to the internet to self-correct.
 ====
@@ -90,25 +111,21 @@ spec:
   files:
     - path: https://get.rke2.io
       name: install-rke2.sh
-    - path: https://get.helm.sh/helm-v3.18.0-linux-amd64.tar.gz
-      name: helm-v3.18.0-linux-amd64.tar.gz
-    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2.linux-amd64.tar.gz
+    - path: https://get.helm.sh/helm-<HELM_VERSION>-linux-amd64.tar.gz
+      name: helm-<HELM_VERSION>-linux-amd64.tar.gz
+    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/rke2.linux-amd64.tar.gz
       name: rke2.linux-amd64.tar.gz
-    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2-images.linux-amd64.tar.zst
+    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/rke2-images.linux-amd64.tar.zst
       name: rke2-images.linux-amd64.tar.zst
-    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/sha256sum-amd64.txt
+    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/sha256sum-amd64.txt
       name: sha256sum-amd64.txt
 ---
 apiVersion: content.hauler.cattle.io/v1
 kind: Images
 metadata:
-  name: spr-and-rke2-images
+  name: spr-images
 spec:
-  # Add required RKE2 system images (adjust version as needed)
   images:
-    - name: rancher/rke2-runtime:v1.34.5-rke2r1
-    - name: rancher/mirrored-pause:3.8
-    - name: rancher/mirrored-coredns-coredns:1.10.1
     # SUSE Private Registry (Harbor) images -- get the full, exact list with
     # the `helm show values` command above; do not hand-copy the example below
     - name: registry.suse.com/private-registry/<APP_VERSION>/harbor-core:<IMAGE_TAG>
@@ -122,6 +139,8 @@ spec:
     - name: registry.suse.com/suse/postgres:<IMAGE_TAG>
     - name: registry.suse.com/suse/nginx:<IMAGE_TAG>
 ----
+
+NOTE: The manifest's `Images` kind only needs to list {productname}'s own images. {rke2a}'s own required images are already covered by the `rke2-images.linux-amd64.tar.zst` file downloaded above and are loaded separately (see the https://docs.rke2.io/install/airgap[{rke2a} air-gap installation documentation] for the load methods and for the correct tarball to use with a non-default CNI plugin).
 
 ==== Synergy: Orchestrating Hauler with {productname}
 
