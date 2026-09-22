@@ -1,13 +1,16 @@
 <!-- History -->
 <revhistory xml:id="rh-article-private-registry">
-  <revision><date>2026-09-07</date>
-    <revdescription>
-      <para>
-        Reworked the HA setup chapter and its example Helm chart values
   <revision><date>2026-09-11</date>
     <revdescription>
       <para>
         Added a new section on importing data from Harbor
+      </para>
+    </revdescription>
+  </revision>
+  <revision><date>2026-09-07</date>
+    <revdescription>
+      <para>
+        Reworked the HA setup chapter and its example Helm chart values
       </para>
     </revdescription>
   </revision>

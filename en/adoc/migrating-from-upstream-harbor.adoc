@@ -53,6 +53,7 @@ Set variables for your environment:
 SRC_NAMESPACE=<harbor-namespace>
 SRC_HOST=<harbor-external-hostname>
 SRC_ADMIN_PASSWORD=<harbor-admin-password>
+SRC_CA_CERT=<path-to-harbor-ca-certificate>
 EXPORT_PATH=./harbor-export-$(date +%Y%m%d-%H%M%S)
 {prompt_user}install -d -m 0700 "$EXPORT_PATH"
 
@@ -60,11 +61,14 @@ SRC_DB_POD=$(kubectl -n "$SRC_NAMESPACE" get pod -l component=database -o jsonpa
 SRC_REGISTRY_POD=$(kubectl -n "$SRC_NAMESPACE" get pod -l component=registry -o jsonpath='{.items[0].metadata.name}')
 ----
 
+Before starting the export, stop or postpone garbage collection, replication, and vulnerability scans. Read-only mode does not stop these operations, and scaling down their workers can interrupt jobs that are in progress.
+
 Put {harbor} into read-only mode so no new writes land during the export:
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}curl -sk -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+{prompt_user}curl -s -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  --cacert "$\{SRC_CA_CERT}" \
   -H 'Content-Type: application/json' \
   -X PUT "https://$\{SRC_HOST}/api/v2.0/configurations" \
   -d '{"read_only":true}'
@@ -75,7 +79,9 @@ Scale down the components that could still write to the database or registry sto
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}kubectl -n "$SRC_NAMESPACE" scale deploy -l component=jobservice --replicas=0
-{prompt_user}kubectl -n "$SRC_NAMESPACE" scale deploy -l component=trivy --replicas=0
+{prompt_user}kubectl -n "$SRC_NAMESPACE" scale statefulset -l component=trivy --replicas=0
+{prompt_user}kubectl -n "$SRC_NAMESPACE" wait --for=delete pod -l component=jobservice --timeout=120s
+{prompt_user}kubectl -n "$SRC_NAMESPACE" wait --for=delete pod -l component=trivy --timeout=120s
 ----
 
 Dump the database:
@@ -130,6 +136,8 @@ Set variables for the destination:
 [source,bash,subs="+attributes"]
 ----
 DST_NAMESPACE=<spr-namespace>
+DST_HOST=<spr-external-hostname>
+DST_CA_CERT=<path-to-spr-ca-certificate>
 DST_DB_POD=$(kubectl -n "$DST_NAMESPACE" get pod -l component=database -o jsonpath='{.items[0].metadata.name}')
 DST_REGISTRY_POD=$(kubectl -n "$DST_NAMESPACE" get pod -l component=registry -o jsonpath='{.items[0].metadata.name}')
 ----
@@ -140,8 +148,10 @@ Scale down the components that write to or read from the database, but leave `re
 ----
 {prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=core --replicas=0
 {prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=jobservice --replicas=0
-{prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=trivy --replicas=0
+{prompt_user}kubectl -n "$DST_NAMESPACE" scale statefulset -l component=trivy --replicas=0
 {prompt_user}kubectl -n "$DST_NAMESPACE" wait --for=delete pod -l component=core --timeout=120s
+{prompt_user}kubectl -n "$DST_NAMESPACE" wait --for=delete pod -l component=jobservice --timeout=120s
+{prompt_user}kubectl -n "$DST_NAMESPACE" wait --for=delete pod -l component=trivy --timeout=120s
 ----
 
 [#pr-migrating-from-harbor-restore-database]
@@ -181,7 +191,7 @@ EOF
 
 {prompt_user}kubectl -n "$DST_NAMESPACE" debug "$DST_REGISTRY_POD" -c restore-helper \
   --image=registry.suse.com/bci/bci-busybox:16.0 \
-  --target=registry --custom=/tmp/debug-profile.json -- sleep 600
+  --target=registry --custom=/tmp/debug-profile.json -- sleep infinity
 ----
 
 Wait for the debug container to be running, then locate the PID of the registry process from inside it:
@@ -204,13 +214,11 @@ Copy the blob archive in and extract it into the registry's storage path through
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}kubectl -n "$DST_NAMESPACE" cp "$\{EXPORT_PATH}/harbor-registry-blobs.tgz" \
-  "$\{DST_REGISTRY_POD}:/tmp/harbor-registry-blobs.tgz" -c restore-helper
-
-{prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_REGISTRY_POD" -c restore-helper -- sh -c \
-  "rm -rf /proc/$\{REGISTRY_PID}/root/storage/* && \
-   tar xzf /tmp/harbor-registry-blobs.tgz -C /proc/$\{REGISTRY_PID}/root/storage && \
-   rm -f /tmp/harbor-registry-blobs.tgz"
+{prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_REGISTRY_POD" -c restore-helper -- \
+  sh -c "rm -rf /proc/$\{REGISTRY_PID}/root/storage/*"
+{prompt_user}cat "$\{EXPORT_PATH}/harbor-registry-blobs.tgz" | \
+  kubectl -n "$DST_NAMESPACE" exec -i "$DST_REGISTRY_POD" -c restore-helper -- \
+  tar xzf - -C "/proc/$\{REGISTRY_PID}/root/storage"
 ----
 
 Restart the registry deployment so it picks up the restored files with a clean process (this also clears the temporary debug container):
@@ -228,8 +236,12 @@ Restart the registry deployment so it picks up the restored files with a clean p
 ----
 {prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=core --replicas=1
 {prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=jobservice --replicas=1
-{prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=trivy --replicas=1
+{prompt_user}kubectl -n "$DST_NAMESPACE" scale statefulset -l component=trivy --replicas=1
 {prompt_user}kubectl -n "$DST_NAMESPACE" rollout status deploy -l component=core --timeout=180s
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  -H 'Content-Type: application/json' \
+  -X PUT "https://$\{DST_HOST}/api/v2.0/configurations" \
+  -d '{"read_only":false}'
 ----
 
 [#pr-migrating-from-harbor-verify]
@@ -239,17 +251,20 @@ Check {productnameshort}'s health endpoint:
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}curl -sk -u admin:<spr-admin-password> "https://<spr-host>/api/v2.0/health"
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  "https://$\{DST_HOST}/api/v2.0/health"
 ----
 
 Confirm known data survived by querying the API for a project, its repositories/artifacts, and a known user, substituting values you expect to exist:
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}curl -sk -u admin:<spr-admin-password> "https://<spr-host>/api/v2.0/projects/<project-name>"
-{prompt_user}curl -sk -u admin:<spr-admin-password> \
-  "https://<spr-host>/api/v2.0/projects/<project-name>/repositories/<repo-name>/artifacts/<tag>"
-{prompt_user}curl -sk -u admin:<spr-admin-password> "https://<spr-host>/api/v2.0/users?username=<username>"
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  "https://$\{DST_HOST}/api/v2.0/projects/<project-name>"
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  "https://$\{DST_HOST}/api/v2.0/projects/<project-name>/repositories/<repo-name>/artifacts/<tag>"
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  "https://$\{DST_HOST}/api/v2.0/users?username=<username>"
 ----
 
 API checks only confirm the database rows migrated. To confirm the blob data itself is intact, do a real pull-back of a known image or {helm} chart:
@@ -258,6 +273,8 @@ API checks only confirm the database rows migrated. To confirm the blob data its
 ----
 {prompt_user}docker pull <spr-host>/<project-name>/<repo-name>:<tag>
 {prompt_user}helm pull oci://<spr-host>/<project-name>/<chart-name> --version <chart-version>
+{prompt_user}docker tag <known-local-image> "$\{DST_HOST}/<project-name>/<repo-name>:migration-test"
+{prompt_user}docker push "$\{DST_HOST}/<project-name>/<repo-name>:migration-test"
 ----
 
 A successful pull with the expected digest is the strongest confirmation that the migration succeeded end-to-end.
