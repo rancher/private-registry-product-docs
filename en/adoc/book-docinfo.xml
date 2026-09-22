@@ -4,6 +4,10 @@
     <revdescription>
       <para>
         Reworked the HA setup chapter and its example Helm chart values
+  <revision><date>2026-09-11</date>
+    <revdescription>
+      <para>
+        Added a new section on importing data from Harbor
       </para>
     </revdescription>
   </revision>

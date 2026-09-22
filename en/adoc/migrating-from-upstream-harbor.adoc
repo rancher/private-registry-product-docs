@@ -3,31 +3,31 @@ include::../common/generic-attributes.adoc[]
 [#pr-migrating-from-harbor]
 == Migrating data from upstream {harbor} to {productname}
 
-:revdate: 2026-09-17
+:revdate: 2026-09-22
 :page-revdate: {revdate}
 
 [#pr-migrating-from-harbor-overview]
 === Overview
 
-{productname} ({productnameshort}) is derived from {harbor} and shares the same PostgreSQL database schema and registry blob storage layout.
-This means that data from an existing Harbor installation, including projects, users, repositories, artefacts, robot accounts, policies and image/chart blobs, can be migrated to {productnameshort} using a database dump/restore and a copy of the registry blob storage. This avoids the need to re-push every artefact manually.
-§
+{productname} ({productnameshort}) is derived from {harbor} and shares the same {postgresql} database schema and registry blob storage layout.
+This means that data from an existing {harbor} installation, including projects, users, repositories, artifacts, robot accounts, policies, and image or chart blobs, can be migrated to {productnameshort} using a database dump and restore along with a copy of the registry blob storage. This avoids the need to re-push every artifact manually.
+
 This guide covers migrating:
 
-* The {harbor} PostgreSQL database (all metadata: projects, users, repositories, artifacts, tags, policies, etc.)
+* The {postgresql} database of {harbor} (all metadata, including projects, users, repositories, artifacts, tags, and policies)
 * The registry blob storage (the actual image layers and {helm} chart content)
 
-It does not cover the migration of Harbor's configuration itself (e.g. auth backends, replication endpoints and quotas). Review your existing Harbor Helm values and reapply the relevant settings to your {productnameshort} installation separately.
+It does not cover the migration of the configuration of {harbor} itself, such as authentication backends, replication endpoints, and quotas. Review your existing {harbor} {helm} values and reapply the relevant settings to your {productnameshort} installation separately.
 
 [#pr-migrating-from-harbor-prerequisites]
 === Prerequisites
 
-* `kubectl` access to the namespace(s) hosting both the source {harbor} installation and the destination {productnameshort} installation (the same cluster or different clusters both work, as long as your `kubectl` context can reach whichever side you're operating on at each step).
-* Enough local (or otherwise accessible) disk space to hold the database dump and the registry blob archive -- size the blob archive against your {harbor} registry's actual storage usage.
-* A destination PostgreSQL major version equal to or newer than the source. Both {harbor} and {productnameshort} bundle PostgreSQL, so this is normally satisfied automatically, but confirm it if either side uses an external/managed database.
-* A cluster that supports ephemeral debug containers (`kubectl debug`, GA since {kube} 1.25). This is required to work around a specific {productnameshort} limitation described in <<pr-migrating-from-harbor-restore>>.
-* If your cluster enforces the `restricted` Pod Security Standard, plan for a temporary exception: the debug container used in <<pr-migrating-from-harbor-restore>> needs `runAsUser: 0` and the `SYS_PTRACE` capability. Loosening the namespace's Pod Security label for the duration of the migration (or using an equivalent exemption) is the simplest approach.
-* A maintenance window. Both the source {harbor} and the destination {productnameshort} are put into a read-only/quiesced state (and briefly scaled down) while data is copied, so clients cannot push during the migration.
+* `kubectl` access to the namespace(s) hosting both the source {harbor} installation and the destination {productnameshort} installation (the same cluster or different clusters both work, if your `kubectl` context can reach whichever side you're operating on at each step).
+* Enough local or otherwise accessible disk space to hold the database dump and the registry blob archive. Size the blob archive against the actual storage usage of your {harbor} registry.
+* A destination {postgresql} major version equal to or newer than the source. Both {harbor} and {productnameshort} bundle PostgreSQL, so this is normally satisfied automatically, but confirm it if either side uses an external/managed database.
+* A cluster that supports ephemeral debug containers (`kubectl debug`, GA since {kube} 1.25). This is required to work around a specific {productnameshort} limitation described in xref:pr-migrating-from-harbor-restore[].
+* If your cluster enforces the `restricted` Pod Security Standard, plan for a temporary exception: the debug container used in xref:pr-migrating-from-harbor-restore[] needs `runAsUser: 0` and the `SYS_PTRACE` capability. Loosening the Pod Security label of the namespace during the migration (or using an equivalent exemption) is the simplest approach.
+* A maintenance window. Both the source {harbor} and the destination {productnameshort} are put into a read-only or quiesced state (and briefly scaled down) while data is copied, so clients cannot push during the migration.
 
 [WARNING]
 ====
@@ -37,11 +37,11 @@ Take a full backup or storage snapshot of both the source {harbor} and destinati
 [#pr-migrating-from-harbor-migration-overview]
 === Migration overview
 
-* <<pr-migrating-from-harbor-export>>
-* <<pr-migrating-from-harbor-decommission>>
-* <<pr-migrating-from-harbor-prepare-spr>>
-* <<pr-migrating-from-harbor-restore>>
-* <<pr-migrating-from-harbor-verify>>
+* xref:pr-migrating-from-harbor-export[]
+* xref:pr-migrating-from-harbor-decommission[]
+* xref:pr-migrating-from-harbor-prepare-spr[]
+* xref:pr-migrating-from-harbor-restore[]
+* xref:pr-migrating-from-harbor-verify[]
 
 [#pr-migrating-from-harbor-export]
 === Step 1: Export data from {harbor}
@@ -64,9 +64,9 @@ Put {harbor} into read-only mode so no new writes land during the export:
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}curl -sk -u "admin:${SRC_ADMIN_PASSWORD}" \
+{prompt_user}curl -sk -u "admin:$\{SRC_ADMIN_PASSWORD}" \
   -H 'Content-Type: application/json' \
-  -X PUT "https://${SRC_HOST}/api/v2.0/configurations" \
+  -X PUT "https://$\{SRC_HOST}/api/v2.0/configurations" \
   -d '{"read_only":true}'
 ----
 
@@ -83,7 +83,7 @@ Dump the database:
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}kubectl -n "$SRC_NAMESPACE" exec "$SRC_DB_POD" -- pg_dump -U postgres -d registry \
-  > "${EXPORT_PATH}/harbor-db.sql"
+  > "$\{EXPORT_PATH}/harbor-db.sql"
 ----
 
 Archive the registry blob storage:
@@ -91,36 +91,36 @@ Archive the registry blob storage:
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}kubectl -n "$SRC_NAMESPACE" exec "$SRC_REGISTRY_POD" -c registry -- \
-  tar czf - -C /storage . > "${EXPORT_PATH}/harbor-registry-blobs.tgz"
+  tar czf - -C /storage . > "$\{EXPORT_PATH}/harbor-registry-blobs.tgz"
 ----
 
 Confirm both exports are non-empty before continuing:
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}[ -s "${EXPORT_PATH}/harbor-db.sql" ] && [ -s "${EXPORT_PATH}/harbor-registry-blobs.tgz" ] \
+{prompt_user}[ -s "$\{EXPORT_PATH}/harbor-db.sql" ] && [ -s "$\{EXPORT_PATH}/harbor-registry-blobs.tgz" ] \
   && echo "Export looks good" || echo "ERROR: export incomplete"
 ----
 
-Keep `$EXPORT_PATH` until the migration is verified in <<pr-migrating-from-harbor-verify>> -- do not delete it after decommissioning {harbor}.
+Keep `$EXPORT_PATH` until the migration is verified in xref:pr-migrating-from-harbor-verify[]. Do not delete it after decommissioning {harbor}.
 
 [#pr-migrating-from-harbor-decommission]
 === Step 2: Decommission the source {harbor}
 
-Once you have confirmed that the above export files are present and not empty, keep the source {harbor} deployment available until the migrated {productname} instance is running correctly with the restored data. If something goes wrong during verification, you can restore the old registry from the export instead of losing access to the source data. You can keep the source deployment scaled down or read-only as long as you're not ready to remove it completely. Just make sure that it's not accepting any writes that the migrated instance won't see.
+Once you have confirmed that the above export files are present and not empty, keep the source {harbor} deployment available until the migrated {productname} instance is running correctly with the restored data. If something goes wrong during verification, you can restore the old registry from the export instead of losing access to the source data. You can keep the source deployment scaled down or read-only as long as you are not ready to remove it completely. Just make sure that it is not accepting any writes that the migrated instance will not see.
 
 [#pr-migrating-from-harbor-prepare-spr]
 === Step 3: Install or prepare {productname}
 
-Install {productnameshort} following the standard installation procedure described in <<pr-deployment>>. Two choices matter specifically for a smooth migration:
+Install {productnameshort} following the standard installation procedure described in xref:pr-deployment[]. Two choices matter specifically for a smooth migration:
 
 External hostname::
-Configure {productnameshort} with the same external URL/hostname the source {harbor} used. This keeps existing client logins, robot account credentials, CI pipeline configuration, and pull secrets working without changes after the cutover. If you must change the hostname, plan a separate client-side update.
+Configure {productnameshort} with the same external URL or hostname the source {harbor} used. This keeps existing client logins, robot account credentials, CI pipeline configuration, and pull secrets working without changes after the cutover. If you must change the hostname, plan a separate client-side update.
 
 Persistent storage::
-Provision enough storage for the restored registry blobs plus headroom for future growth, sized against the blob archive produced in <<pr-migrating-from-harbor-export>>.
+Provision enough storage for the restored registry blobs plus headroom for future growth, sized against the blob archive produced in xref:pr-migrating-from-harbor-export[].
 
-Do not seed {productnameshort} with production traffic yet -- the restore in the next step overwrites its database and registry storage.
+Do not seed {productnameshort} with production traffic yet, because the restore in the next step overwrites its database and registry storage.
 
 [#pr-migrating-from-harbor-restore]
 === Step 4: Restore the data into {productnameshort}
@@ -134,7 +134,7 @@ DST_DB_POD=$(kubectl -n "$DST_NAMESPACE" get pod -l component=database -o jsonpa
 DST_REGISTRY_POD=$(kubectl -n "$DST_NAMESPACE" get pod -l component=registry -o jsonpath='{.items[0].metadata.name}')
 ----
 
-Scale down the components that write to or read from the database -- but leave `registry` running, since the blob-restore step below needs the registry pod alive to copy files into it:
+Scale down the components that write to or read from the database, but leave `registry` running. The blob-restore step below needs the registry pod alive to copy files into it:
 
 [source,bash,subs="+attributes"]
 ----
@@ -149,7 +149,7 @@ Scale down the components that write to or read from the database -- but leave `
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}kubectl -n "$DST_NAMESPACE" cp "${EXPORT_PATH}/harbor-db.sql" "${DST_DB_POD}:/tmp/harbor-db.sql"
+{prompt_user}kubectl -n "$DST_NAMESPACE" cp "$\{EXPORT_PATH}/harbor-db.sql" "$\{DST_DB_POD}:/tmp/harbor-db.sql"
 {prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_DB_POD" -- \
   psql -U postgres -d registry -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 {prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_DB_POD" -- \
@@ -162,7 +162,7 @@ Scale down the components that write to or read from the database -- but leave `
 
 [IMPORTANT]
 ====
-{productnameshort}'s `registry` container image does not include a `tar` binary. A plain `kubectl cp` or `kubectl exec ... tar` against it fails -- `kubectl cp` itself relies on `tar` being present in the target container for both directions of the copy. (Upstream {harbor}'s registry image does have `tar`, which is why it works fine for the export in <<pr-migrating-from-harbor-export>> -- this limitation is specific to restoring *into* {productnameshort}.)
+The `registry` container image of {productnameshort} does not include a `tar` binary. A plain `kubectl cp` or `kubectl exec ... tar` against it fails, because `kubectl cp` itself relies on `tar` being present in the target container for both directions of the copy. (The registry image of upstream {harbor} does contain `tar`, which is why it works fine for the export in xref:pr-migrating-from-harbor-export[]. This limitation is specific to restoring *into* {productnameshort}.)
 ====
 
 Work around this by attaching an ephemeral debug container -- one that does have `tar` -- to the registry pod, sharing its process namespace. From there, the registry container's filesystem is reachable through `/proc/<pid>/root`:
@@ -184,7 +184,7 @@ EOF
   --target=registry --custom=/tmp/debug-profile.json -- sleep 600
 ----
 
-Wait for the debug container to be running, then locate the registry process's PID from inside it:
+Wait for the debug container to be running, then locate the PID of the registry process from inside it:
 
 [source,bash,subs="+attributes"]
 ----
@@ -204,12 +204,12 @@ Copy the blob archive in and extract it into the registry's storage path through
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}kubectl -n "$DST_NAMESPACE" cp "${EXPORT_PATH}/harbor-registry-blobs.tgz" \
-  "${DST_REGISTRY_POD}:/tmp/harbor-registry-blobs.tgz" -c restore-helper
+{prompt_user}kubectl -n "$DST_NAMESPACE" cp "$\{EXPORT_PATH}/harbor-registry-blobs.tgz" \
+  "$\{DST_REGISTRY_POD}:/tmp/harbor-registry-blobs.tgz" -c restore-helper
 
 {prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_REGISTRY_POD" -c restore-helper -- sh -c \
-  "rm -rf /proc/${REGISTRY_PID}/root/storage/* && \
-   tar xzf /tmp/harbor-registry-blobs.tgz -C /proc/${REGISTRY_PID}/root/storage && \
+  "rm -rf /proc/$\{REGISTRY_PID}/root/storage/* && \
+   tar xzf /tmp/harbor-registry-blobs.tgz -C /proc/$\{REGISTRY_PID}/root/storage && \
    rm -f /tmp/harbor-registry-blobs.tgz"
 ----
 
@@ -252,7 +252,7 @@ Confirm known data survived by querying the API for a project, its repositories/
 {prompt_user}curl -sk -u admin:<spr-admin-password> "https://<spr-host>/api/v2.0/users?username=<username>"
 ----
 
-API checks only confirm the database rows migrated. To confirm the blob data itself is intact, do a real pull-back of a known image and/or {helm} chart:
+API checks only confirm the database rows migrated. To confirm the blob data itself is intact, do a real pull-back of a known image or {helm} chart:
 
 [source,bash,subs="+attributes"]
 ----
@@ -265,4 +265,4 @@ A successful pull with the expected digest is the strongest confirmation that th
 [#pr-migrating-from-harbor-rollback]
 === Rollback
 
-If verification fails, don't discard the {harbor} export. Reinstall {harbor} (or resume the instance left scaled down in <<pr-migrating-from-harbor-decommission>>) and resume serving traffic from it while you investigate, then retry the {productnameshort} restore from the same export once the issue is resolved.
+If verification fails, do not discard the {harbor} export. Reinstall {harbor} (or resume the instance left scaled down in xref:pr-migrating-from-harbor-decommission[]) and resume serving traffic from it while you investigate. Then retry the {productnameshort} restore from the same export once the issue is resolved.
