@@ -1,0 +1,323 @@
+include::../common/generic-attributes.adoc[]
+
+[#migrating-from-harbor]
+== Migrating data from upstream {harbor} to {productname}
+
+:revdate: 2026-09-22
+:page-revdate: {revdate}
+
+[#migrating-from-harbor-overview]
+=== Overview
+
+{productname} ({productnameshort}) is derived from {harbor} and shares the same {postgresql} database schema and registry blob storage layout.
+This means that data from an existing {harbor} installation, including projects, users, repositories, artifacts, policies, and image or chart blobs, can be migrated to {productnameshort} using a database dump and restore along with a copy of the registry blob storage. This avoids the need to re-push every artifact manually.
+
+This guide covers migrating:
+
+* The {postgresql} database of {harbor} (all metadata, including projects, users, repositories, artifacts, tags, and policies)
+* The registry blob storage (the actual image layers and {helm} chart content)
+
+It does not cover the migration of the configuration of {harbor} itself, such as authentication backends, replication endpoints, and quotas. Review your existing {harbor} {helm} values and reapply the relevant settings to your {productnameshort} installation separately.
+
+[#migrating-from-harbor-prerequisites]
+=== Prerequisites
+
+* `kubectl` access to a separate namespace for each installation. Each namespace must contain only one {harbor} or {productnameshort} release. The commands use component labels and are not safe when multiple releases share a namespace.
+* Enough local or otherwise accessible disk space to hold the database dump and the registry blob archive. Size the blob archive against the actual storage usage of your {harbor} registry.
+* The bundled {postgresql} database for both installations. This procedure does not support external databases.
+* File-system registry storage for both installations. This procedure does not export or restore object-storage content. For object storage, use a provider-specific transfer procedure.
+* A supported source {harbor} version. The source {harbor} version must match the {harbor} version that your {productnameshort} release is based on. Upgrade an older source to this version before exporting. Do not migrate from a newer source into an older destination.
+* A cluster that supports ephemeral debug containers (`kubectl debug`, GA since {kube} 1.25). This is required to work around a specific {productnameshort} limitation described in xref:pro-migrating-from-harbor-restore[].
+* If your cluster enforces the `restricted` Pod Security Standard, plan for a temporary exception: the debug container used in xref:pro-migrating-from-harbor-restore[] needs `runAsUser: 0` and the `SYS_PTRACE` capability. Loosening the Pod Security label of the namespace during the migration (or using an equivalent exemption) is the simplest approach.
+* A maintenance window. Both the source {harbor} and the destination {productnameshort} are put into a read-only or quiesced state (and briefly scaled down) while data is copied, so clients cannot push during the migration.
+
+The supported version combination for this procedure is:
+
+|===
+| {productnameshort} version | Supported source {harbor} version | Required action for other source versions
+
+| 1.2.1
+| 2.15.2
+| Upgrade the source to 2.15.2 before exporting. Do not restore a newer source into an older destination.
+|===
+
+[WARNING]
+====
+Take a full backup or storage snapshot of both the source {harbor} and destination {productnameshort} independently of the export this procedure produces. The steps below are destructive to the {productnameshort} database and registry storage -- they overwrite both.
+====
+
+[#migrating-from-harbor-migration-overview]
+=== Migration overview
+
+* xref:pro-migrating-from-harbor-export[]
+* xref:pro-migrating-from-harbor-decommission[]
+* xref:pro-migrating-from-harbor-prepare-spr[]
+* xref:pro-migrating-from-harbor-restore[]
+* xref:pro-migrating-from-harbor-verify[]
+
+[#pro-migrating-from-harbor-export]
+=== Step 1: Export data from {harbor}
+
+Set variables for your environment:
+
+[source,bash,subs="+attributes"]
+----
+SRC_NAMESPACE=<harbor-namespace>
+SRC_HOST=<harbor-external-hostname>
+SRC_ADMIN_PASSWORD=<harbor-admin-password>
+SRC_CA_CERT=<path-to-harbor-ca-certificate>
+SRC_HARBOR_VERSION=<harbor-version>
+EXPORT_PATH=./harbor-export-$(date +%Y%m%d-%H%M%S)
+{prompt_user}install -d -m 0700 "$EXPORT_PATH"
+
+SRC_DB_POD=$(kubectl -n "$SRC_NAMESPACE" get pod -l component=database -o jsonpath='{.items[0].metadata.name}')
+SRC_REGISTRY_POD=$(kubectl -n "$SRC_NAMESPACE" get pod -l component=registry -o jsonpath='{.items[0].metadata.name}')
+SRC_JOBSERVICE_REPLICAS=$(kubectl -n "$SRC_NAMESPACE" get deploy -l component=jobservice -o jsonpath='{.items[0].spec.replicas}')
+SRC_TRIVY_REPLICAS=$(kubectl -n "$SRC_NAMESPACE" get statefulset -l component=trivy -o jsonpath='{.items[0].spec.replicas}')
+{prompt_user}[ "$SRC_HARBOR_VERSION" = "2.15.2" ] || { echo "ERROR: upgrade the source Harbor to 2.15.2 before exporting"; exit 1; }
+----
+
+Before starting the export, stop or postpone garbage collection, replication, and vulnerability scans. Read-only mode does not stop these operations, and scaling down their workers can interrupt jobs that are in progress.
+
+Put {harbor} into read-only mode so no new writes land during the export:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}curl -s -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  --cacert "$\{SRC_CA_CERT}" \
+  -H 'Content-Type: application/json' \
+  -X PUT "https://$\{SRC_HOST}/api/v2.0/configurations" \
+  -d '{"read_only":true}'
+----
+
+You can also enable this from the {harbor} UI, under *Administration > Configuration > Repository*, instead of using the API call above.
+
+[NOTE]
+====
+Keep the source in read-only mode until the migration is verified in xref:pro-migrating-from-harbor-verify[]. Only disable it if you need to fall back to the source, as described in xref:pro-migrating-from-harbor-rollback[].
+====
+
+Scale down the components that could still write to the database or registry storage in the background (job execution, vulnerability scanning). Leave `core`, `registry`, and `database` running -- they're needed to serve the export itself:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$SRC_NAMESPACE" scale deploy -l component=jobservice --replicas=0
+{prompt_user}kubectl -n "$SRC_NAMESPACE" scale statefulset -l component=trivy --replicas=0
+{prompt_user}kubectl -n "$SRC_NAMESPACE" wait --for=delete pod -l component=jobservice --timeout=120s
+{prompt_user}kubectl -n "$SRC_NAMESPACE" wait --for=delete pod -l component=trivy --timeout=120s
+----
+
+Dump the database:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$SRC_NAMESPACE" exec "$SRC_DB_POD" -- pg_dump -U postgres -d registry \
+  > "$\{EXPORT_PATH}/harbor-db.sql"
+----
+
+Archive the registry blob storage:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$SRC_NAMESPACE" exec "$SRC_REGISTRY_POD" -c registry -- \
+  tar czf - -C /storage . > "$\{EXPORT_PATH}/harbor-registry-blobs.tgz"
+----
+
+Confirm both exports are non-empty before continuing:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}[ -s "$\{EXPORT_PATH}/harbor-db.sql" ] && [ -s "$\{EXPORT_PATH}/harbor-registry-blobs.tgz" ] \
+  && echo "Export looks good" || echo "ERROR: export incomplete"
+----
+
+Keep `$EXPORT_PATH` until the migration is verified in xref:pro-migrating-from-harbor-verify[]. Do not delete it after retaining {harbor} for rollback.
+
+[#pro-migrating-from-harbor-decommission]
+=== Step 2: Retain the source {harbor} for rollback
+
+Once you have confirmed that the above export files are present and not empty, keep the source {harbor} deployment available until the migrated {productname} instance is running correctly with the restored data. If something goes wrong during verification, you can restore the old registry from the export instead of losing access to the source data. You can keep the source deployment scaled down or read-only as long as you are not ready to remove it completely. Just make sure that it is not accepting any writes that the migrated instance will not see.
+
+[#pro-migrating-from-harbor-prepare-spr]
+=== Step 3: Install or prepare {productname}
+
+Install {productnameshort} following the standard installation procedure described in xref:pr-deployment[]. Two choices matter specifically for a smooth migration:
+
+External hostname::
+Configure {productnameshort} with the same external URL or hostname the source {harbor} used. This keeps client endpoints and pull-secret references consistent after the cutover. The fresh installation's generated secrets are not restored by this procedure, so regenerate robot account credentials after the migration and update clients that use them.
+
+Persistent storage::
+Provision enough storage for the restored registry blobs plus headroom for future growth, sized against the blob archive produced in xref:pro-migrating-from-harbor-export[].
+
+Do not seed {productnameshort} with production traffic yet, because the restore in the next step overwrites its database and registry storage. The fresh installation's core secret and token certificate authority are also not restored. Regenerate robot account credentials after the restore.
+
+[#pro-migrating-from-harbor-restore]
+=== Step 4: Restore the data into {productnameshort}
+
+Set variables for the destination:
+
+[source,bash,subs="+attributes"]
+----
+DST_NAMESPACE=<spr-namespace>
+DST_HOST=<spr-external-hostname>
+DST_CA_CERT=<path-to-spr-ca-certificate>
+DST_DB_POD=$(kubectl -n "$DST_NAMESPACE" get pod -l component=database -o jsonpath='{.items[0].metadata.name}')
+DST_REGISTRY_POD=$(kubectl -n "$DST_NAMESPACE" get pod -l component=registry -o jsonpath='{.items[0].metadata.name}')
+DST_CORE_REPLICAS=$(kubectl -n "$DST_NAMESPACE" get deploy -l component=core -o jsonpath='{.items[0].spec.replicas}')
+DST_JOBSERVICE_REPLICAS=$(kubectl -n "$DST_NAMESPACE" get deploy -l component=jobservice -o jsonpath='{.items[0].spec.replicas}')
+DST_TRIVY_REPLICAS=$(kubectl -n "$DST_NAMESPACE" get statefulset -l component=trivy -o jsonpath='{.items[0].spec.replicas}')
+----
+
+Scale down the components that write to or read from the database, but leave `registry` running. The blob-restore step below needs the registry pod alive to copy files into it:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=core --replicas=0
+{prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=jobservice --replicas=0
+{prompt_user}kubectl -n "$DST_NAMESPACE" scale statefulset -l component=trivy --replicas=0
+{prompt_user}kubectl -n "$DST_NAMESPACE" wait --for=delete pod -l component=core --timeout=120s
+{prompt_user}kubectl -n "$DST_NAMESPACE" wait --for=delete pod -l component=jobservice --timeout=120s
+{prompt_user}kubectl -n "$DST_NAMESPACE" wait --for=delete pod -l component=trivy --timeout=120s
+----
+
+[#migrating-from-harbor-restore-database]
+==== Restore the database
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$DST_NAMESPACE" cp "$\{EXPORT_PATH}/harbor-db.sql" "$\{DST_DB_POD}:/tmp/harbor-db.sql"
+{prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_DB_POD" -- \
+  psql -U postgres -d registry -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+{prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_DB_POD" -- \
+  psql -v ON_ERROR_STOP=1 -U postgres -d registry -f /tmp/harbor-db.sql
+{prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_DB_POD" -- rm -f /tmp/harbor-db.sql
+----
+
+[#migrating-from-harbor-restore-blobs]
+==== Restore the registry blobs
+
+[IMPORTANT]
+====
+The `registry` container image of {productnameshort} does not include a `tar` binary. A plain `kubectl cp` or `kubectl exec ... tar` against it fails, because `kubectl cp` itself relies on `tar` being present in the target container for both directions of the copy. (The registry image of upstream {harbor} does contain `tar`, which is why it works fine for the export in xref:pro-migrating-from-harbor-export[]. This limitation is specific to restoring *into* {productnameshort}.)
+====
+
+Work around this by attaching an ephemeral debug container -- one that does have `tar` -- to the registry pod, sharing its process namespace. From there, the registry container's filesystem is reachable through `/proc/<pid>/root`:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}cat > /tmp/debug-profile.json <<'EOF'
+{
+  "securityContext": {
+    "runAsUser": 0,
+    "runAsNonRoot": false,
+    "capabilities": { "add": ["SYS_PTRACE"] }
+  }
+}
+EOF
+
+{prompt_user}kubectl -n "$DST_NAMESPACE" debug "$DST_REGISTRY_POD" -c restore-helper \
+  --image=registry.suse.com/bci/bci-busybox:16.0 \
+  --target=registry --custom=/tmp/debug-profile.json -- sleep infinity
+----
+
+Wait for the debug container to be running, then locate the PID of the registry process from inside it:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$DST_NAMESPACE" wait --for=jsonpath='{.status.ephemeralContainerStatuses[?(@.name=="restore-helper")].state.running}' \
+  pod/"$DST_REGISTRY_POD" --timeout=60s
+
+REGISTRY_PID=$(kubectl -n "$DST_NAMESPACE" exec "$DST_REGISTRY_POD" -c restore-helper -- sh -c '
+  for p in /proc/[0-9]*; do
+    if tr "\0" " " < "$p/cmdline" 2>/dev/null | grep -q "^registry serve"; then
+      basename "$p"; break
+    fi
+  done
+')
+----
+
+Copy the blob archive in and extract it into the registry's storage path through the debug container:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$DST_NAMESPACE" exec "$DST_REGISTRY_POD" -c restore-helper -- \
+  sh -c "rm -rf /proc/$\{REGISTRY_PID}/root/storage/*"
+{prompt_user}cat "$\{EXPORT_PATH}/harbor-registry-blobs.tgz" | \
+  kubectl -n "$DST_NAMESPACE" exec -i "$DST_REGISTRY_POD" -c restore-helper -- \
+  tar xzf - -C "/proc/$\{REGISTRY_PID}/root/storage"
+----
+
+Restart the registry deployment so it picks up the restored files with a clean process (this also clears the temporary debug container):
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$DST_NAMESPACE" rollout restart deploy -l component=registry
+{prompt_user}kubectl -n "$DST_NAMESPACE" rollout status deploy -l component=registry --timeout=180s
+----
+
+[#pro-migrating-from-harbor-restore-bring-up]
+==== Bring the rest of {productnameshort} back up
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=core --replicas="$DST_CORE_REPLICAS"
+{prompt_user}kubectl -n "$DST_NAMESPACE" scale deploy -l component=jobservice --replicas="$DST_JOBSERVICE_REPLICAS"
+{prompt_user}kubectl -n "$DST_NAMESPACE" scale statefulset -l component=trivy --replicas="$DST_TRIVY_REPLICAS"
+{prompt_user}kubectl -n "$DST_NAMESPACE" rollout status deploy -l component=core --timeout=180s
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  -H 'Content-Type: application/json' \
+  -X PUT "https://$\{DST_HOST}/api/v2.0/configurations" \
+  -d '{"read_only":false}'
+----
+
+[#pro-migrating-from-harbor-verify]
+=== Step 5: Verify the migration
+
+Check {productnameshort}'s health endpoint:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  "https://$\{DST_HOST}/api/v2.0/health"
+----
+
+Confirm known data survived by querying the API for a project, its repositories/artifacts, and a known user, substituting values you expect to exist:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  "https://$\{DST_HOST}/api/v2.0/projects/<project-name>"
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  "https://$\{DST_HOST}/api/v2.0/projects/<project-name>/repositories/<repo-name>/artifacts/<tag>"
+{prompt_user}curl -s --cacert "$\{DST_CA_CERT}" -u "admin:$\{SRC_ADMIN_PASSWORD}" \
+  "https://$\{DST_HOST}/api/v2.0/users?username=<username>"
+----
+
+API checks only confirm the database rows migrated. To confirm the blob data itself is intact, do a real pull-back of a known image or {helm} chart:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}docker pull <spr-host>/<project-name>/<repo-name>:<tag>
+{prompt_user}helm pull oci://<spr-host>/<project-name>/<chart-name> --version <chart-version>
+{prompt_user}docker tag <known-local-image> "$\{DST_HOST}/<project-name>/<repo-name>:migration-test"
+{prompt_user}docker push "$\{DST_HOST}/<project-name>/<repo-name>:migration-test"
+----
+
+A successful pull with the expected digest is the strongest confirmation that the migration succeeded end-to-end.
+
+[#pro-migrating-from-harbor-rollback]
+=== Rollback
+
+If verification fails, do not discard the {harbor} export. Before directing clients back to the source, disable read-only mode and restore the source worker counts saved in Step 1:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}curl -s -u "admin:$\{SRC_ADMIN_PASSWORD}" --cacert "$\{SRC_CA_CERT}" \
+  -H 'Content-Type: application/json' \
+  -X PUT "https://$\{SRC_HOST}/api/v2.0/configurations" \
+  -d '{"read_only":false}'
+{prompt_user}kubectl -n "$SRC_NAMESPACE" scale deploy -l component=jobservice --replicas="$SRC_JOBSERVICE_REPLICAS"
+{prompt_user}kubectl -n "$SRC_NAMESPACE" scale statefulset -l component=trivy --replicas="$SRC_TRIVY_REPLICAS"
+----
+
+Resume serving traffic from the source while you investigate. Then retry the {productnameshort} restore from the same export once the issue is resolved.

@@ -5,7 +5,7 @@
 
 include::../common/generic-attributes.adoc[]
 
-:revdate: 2026-05-04
+:revdate: 2026-09-22
 :page-revdate: {revdate}
 
 = Getting started with {productname}
@@ -47,6 +47,8 @@ include::ha-setup.adoc[]
 
 include::configure-rancher-oidc.adoc[]
 
+// Migration from upstream Harbor
+include::migrating-from-upstream-harbor.adoc[]
 // Backup and restore with Velero
 include::backup-restore-velero.adoc[]
 
