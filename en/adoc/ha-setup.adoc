@@ -2,48 +2,326 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == {ha} setup
-:revdate: 2026-08-17
+:revdate: 2026-09-07
 :page-revdate: {revdate}
 
 You can use {helm} to deploy the highly available (HA) {productnameshort} on a {kube} cluster.
-The {hasetup} ensures that users do not experience interruptions of service if one of the nodes on which {productnameshort} is running becomes unavailable.
+An HA deployment reduces interruptions when a pod or worker node becomes unavailable.
+It does not protect the registry from every failure.
+The database, cache, image storage, {ingress} endpoint, and {kube} cluster must also remain available.
+
+This topic describes the {productnameshort}-specific choices and trade-offs.
+For {kube} control-plane and worker-node design, see the https://kubernetes.io/docs/setup/production-environment/production-environment/[Kubernetes production environment documentation].
+For Rancher-managed clusters, see the https://ranchermanager.docs.rancher.com/cluster-deployment/production-checklist/production-installation-checklist[Rancher production installation checklist].
 
 [#pr-deployment-ha-architecture]
-=== Architecture of the {hasetup} 
+=== Understanding the {hasetup}
 
-Most of the {productnameshort} components are now stateless.
-Therefore, we can scale them by increasing pod replicas, ensuring they run on multiple worker nodes.
-{kube} services ensure connectivity between pods.
+Most {productnameshort} application components are stateless.
+You can run multiple replicas and distribute them across worker nodes or failure domains.
+This protects the application from a pod or node failure, but only when the replicas do not share the same failure domain.
 
-For storage, users should provide an HA {postgresql} and {valkey} or {redis} cluster for the application data, along with PVCs or object storage for storing images and charts.
+The stateful parts of the deployment require separate resilience decisions:
 
-image::private-registry-ha.png[{productnameshort} {hasetup}, width=100%]
+* {postgresql} stores registry metadata, projects, users, and configuration.
+* {valkey} or {redis} stores sessions, queues, and cache data.
+* Image and chart storage holds the registry content.
+* Persistent volumes hold database data, job logs, and scanner data when the corresponding chart settings use PVCs.
+* The {ingress} controller, load balancer, DNS, and TLS endpoint provide access to the registry.
+
+{productnameshort} does not deploy or manage HA for these external endpoints and services.
+
+[#pr-deployment-ha-options]
+=== Choosing a resilience model
+
+Choose a model based on the kinds of failure that the deployment must tolerate:
+
+[cols="1,2,2",options="header"]
+|===
+| Model | Configuration | Trade-off
+
+| Pod availability
+| Run two or more replicas of the stateless {productnameshort} components on separate worker nodes.
+| Protects against failures affecting pods or worker nodes, but does not protect the database, cache, storage, or {ingress} endpoint.
+
+| Production availability
+| Combine distributed application replicas with HA {postgresql}, HA {valkey} or {redis}, durable image storage, and a highly available {ingress} endpoint.
+| Reduces more failure modes, but requires you to operate or purchase these services separately.
+
+| Disaster recovery
+| Keep backups in a separate environment and prepare a recovery {kube} cluster with compatible storage and networking.
+| Protects against cluster loss, but recovery is not automatic and has a defined recovery point and recovery time.
+|===
+
+Increasing the replica count alone does not create a resilient deployment.
+For example, two replicas on the same worker node are both affected when that node fails.
+
+[#pr-deployment-ha-components]
+=== Distributing {productnameshort} components
+
+The example in <<pr-ha-helm-chart-example>> sets three replicas for the portal, core, job service, and registry components, together with the corresponding `nodeSelector` and `topologySpreadConstraints` values.
+These settings are available for the {productnameshort} components in <<pr-helm-chart-override>>.
+
+Use the following scheduling principles:
+
+* Label a dedicated or reliable worker-node pool and select it with `nodeSelector` or node affinity.
+* Use pod anti-affinity or topology spread constraints to place replicas on different nodes or failure domains.
+* Reserve enough CPU and memory for another replica when one node is unavailable.
+* Use taints and tolerations when only selected workloads should run on the registry nodes.
+* Test node drains and upgrades with the planned replica count and storage configuration.
+
+Kubernetes does not automatically spread replicas across failure domains unless the workload includes suitable scheduling rules.
+For more information, see the https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/[Kubernetes pod assignment] and https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/[topology spread constraints] documentation.
+
+The chart can create a pod disruption budget for each component with `<COMPONENT>.podDisruptionBudget.enabled`, which is disabled by default.
+Node-drain policy remains a cluster-level control.
+Define it with the platform tools used by your organization and verify that the disruption budgets do not prevent planned maintenance.
+
+Size the worker-node pool with at least one node more than the replica count.
+With `whenUnsatisfiable: DoNotSchedule` and a pool the same size as the replica count, draining a node leaves one replica of every component unschedulable until the node returns.
+The registry stays available on the remaining replicas, but the deployment runs without spare capacity for the duration of the maintenance.
+
 .{productnameshort} {hasetup}
-{kube} cluster with {ingress} in {hasetup} using HA {postgresql} and HA {valkey}.
+image::private-registry-ha.png[{kube} cluster with {ingress} in {hasetup} using HA {postgresql} and HA {valkey}, width=100%]
 
+[#pr-deployment-ha-endpoint]
+=== Providing a highly available endpoint
+
+Use a highly available {ingress} controller or load balancer in front of the {productnameshort} services.
+The endpoint provides the redundancy; DNS only needs a stable record that resolves reliably to it, and the TLS certificate only needs to remain valid when pods or worker nodes change.
+The `externalURL` value and `expose.ingress.hosts.core` value must identify the same registry address.
+
+{productnameshort} does not manage the external endpoint.
+Configure health checks, endpoint failover, certificate renewal, and DNS availability with the {ingress} or load-balancer provider.
+
+When `expose.type` is `ingress`, the chart does not deploy its own {nginx} proxy, and increasing `nginx.replicas` has no effect.
+Endpoint redundancy then comes entirely from the {ingress} controller.
+Increase `nginx.replicas` only when `expose.type` is `clusterIP`, `nodePort`, or `loadBalancer`.
 
 [#pr-deployment-ha-prerequisites]
 === Prerequisites
-* A {kube} cluster in version 1.33, 1.34 and 1.35
-* {helm} version 3.2.0 or higher
-* HA {ingress} controller ({productnameshort} does not manage the external endpoint)
-* HA {postgresql} 9.6+ ({productnameshort} does not handle the deployment of HA database)
-* HA {valkey} or {redis} ({productnameshort} does not handle the deployment of HA {valkey} or {redis})
-* Persistent Volume Claim (PVC) that can be shared across nodes or external object storage
-* An active subscription for {productname}
+
+An HA deployment has the same base prerequisites as a standard deployment.
+For the supported {kube} versions, the required {helm} version, and the subscription requirement, see xref:pr-deployment-prerequisites[].
+
+An HA deployment additionally requires the following:
+
+* Enough worker nodes and spare capacity to distribute the replicas and to keep the registry running while one node is unavailable
+* A highly available {ingress} controller or load balancer with stable DNS and TLS
+* HA {postgresql} 9.6+; {productnameshort} does not deploy or manage the HA database
+* HA {valkey} or {redis}; {productnameshort} does not deploy or manage HA {valkey} or {redis}
+* Persistent storage that remains available after a worker-node failure, or supported external object storage
+* {scc} ({scca}) mirroring credentials stored as a {kube} pull secret, as described in xref:pr-deployment-kube-secrets[]
+
+[#pr-deployment-ha-dependencies]
+=== Choosing resilient dependencies and storage
+
+The following table summarizes the main dependency choices:
+
+[cols="1,2,2,2",options="header"]
+|===
+| Dependency | What it stores or provides | Recommended production choice | Failure consideration
+
+| {postgresql}
+| Registry metadata, users, projects, and configuration.
+| Use an HA external service or a database platform with tested failover and backups.
+| A database outage affects registry operations even when all registry pods are healthy. After a failover, verify that the components reconnect to the new primary; restart the affected deployments if they do not.
+
+| {valkey} or {redis}
+| Sessions, queues, and cache data.
+| Use an HA external service. Configure a supported direct or Sentinel connection in the chart. Cluster mode is not supported.
+| Users may lose sessions during recovery. Queued or in-progress tasks may need review.
+
+| Image and chart storage
+| Container images and Helm charts.
+| Use supported durable object storage or storage that survives node failure.
+| If image storage is unavailable, users cannot reliably push or pull artifacts.
+
+| {ingress} and DNS
+| The external connection to the registry.
+| Use a redundant controller or load balancer with stable DNS and TLS.
+| An unavailable endpoint prevents access even when the application is running.
+|===
+
+External managed services reduce the operational work inside the {kube} cluster, but introduce network, credential, and provider dependencies.
+In-cluster stateful services keep the deployment self-contained, but you must design their replication, storage, upgrades, monitoring, and backups.
+{productnameshort} does not provide those HA implementations.
+
+For the supported connection and storage values, see <<pr-ha-helm-chart-example>> and <<pr-helm-chart-override>>.
+
+When you use file system storage, confirm that the storage class can make the volume available after a node failure.
+Shared `ReadWriteMany` access is not automatically required for every deployment, but the access mode must match the selected chart configuration and storage implementation.
+When you use object storage, protect the object store with its own availability, access-control, retention, and backup policies.
+
+To configure file system storage, set the storage class and access mode in the values file. For example:
+
+[source,yaml]
+----
+persistence:
+  enabled: true
+  persistentVolumeClaim:
+    registry:
+      storageClass: <STORAGE_CLASS_NAME>
+      accessMode: ReadWriteMany
+      size: 500Gi
+----
+
+Use `ReadWriteMany` only when the storage implementation supports simultaneous access from the nodes that run the registry pods.
+Verify that the `StorageClass` supports the requested access mode and provides the required durability and failure behavior before using it in production.
+
+When the storage implementation does not support `ReadWriteMany`, you must set `updateStrategy.type` to `Recreate`.
+That strategy stops the running pods before it starts the new ones, which causes downtime during an upgrade and prevents the registry components from running more than one replica per volume.
+This applies even to a component that runs a single replica.
+With the default `RollingUpdate` strategy, the replacement pod is created before the running pod stops, and it stays `Pending` indefinitely: the `ReadWriteOnce` volume ties it to one node, and the `topologySpreadConstraints` of the component keep it off that node while the running pod is still there.
+Use object storage or a `ReadWriteMany` volume when the deployment must stay available during upgrades.
+
+Select the storage class and the access mode before the first installation.
+The specification of a `PersistentVolumeClaim` cannot be changed afterwards, so an upgrade that modifies `storageClass` or `accessMode` for an existing release fails with `spec is immutable after creation` and leaves the release in a `failed` state.
+Recover from it with `helm rollback`.
+Only the size can be increased, and only when the storage class allows volume expansion.
+To move the registry to a different storage class or access mode, copy the data to the new volume, delete the claim, and let the chart create it again.
+Note that a claim created with `persistence.resourcePolicy` set to `keep` also survives `helm uninstall` and must be deleted explicitly.
+Installing the chart again with the same release name in the same namespace reuses the surviving claims and preserves their data.
+
+Use the sizing recommendations in xref:pr-requirements[] as a starting point.
+Increase capacity based on artifact growth, scan activity, job logs, retention, and replication traffic.
 
 [#pr-deployment-ha-procedure]
 === Deploying {productnameshort} with HA
 
-Replace `<APP_VERSION>` with the desired application version (for example, `1.2`).
+. Complete the {scca} mirroring credential and {kube} secret steps described in xref:pr-deployment-kube-secrets[].
 
-. Download the {productnameshort} {helm} chart.
-[source]
-  $ helm pull oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm --untar
-. Update the deployment parameters to match your requirements.
-Refer to <<pr-ha-helm-chart-example>> for an example {helm} chart for {productnameshort} HA setup.
+. Log in to {sregistry} using the {scca} mirroring credentials.
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}head -1 ./password.txt | helm registry login registry.suse.com \
+  --username <SUSE_REGISTRY_USERNAME> --password-stdin
+----
+
+. Create a `suse_registry_override.yaml` values file that matches your requirements.
+Refer to <<pr-ha-helm-chart-example>> for an example values file for a {productnameshort} HA setup.
 Refer to <<pr-helm-chart-override>> for a complete list of values to specify or override.
-. Install the {productnameshort} {helm} chart.
+
+. Install the {productnameshort} {helm} chart with your values file.
+Replace `<APP_VERSION>` with the application version to install, for example, `1.2`.
 Replace `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
-[source]
-  $ helm install <RELEASE_NAME> private-registry-helm/
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm install <RELEASE_NAME> \
+  oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
+  --namespace <PRIVATE_REGISTRY_NAMESPACE> \
+  -f suse_registry_override.yaml
+----
+
+[#pr-deployment-ha-operations]
+=== Performing maintenance and upgrades
+
+Follow this procedure for planned maintenance, such as a node drain or a rolling upgrade:
+
+. Verify that the registry has enough available capacity to run during a node drain.
+. Upgrade one failure domain at a time.
+. After each change, verify pod readiness, registry API health, and image pulls and pushes.
+For example, log in and push and pull a test image to confirm that the registry serves traffic correctly:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}docker login <SUSE_PRIVATE_REGISTRY_URL> -u <REGISTRY_USERNAME>
+{prompt_user}docker pull <SUSE_PRIVATE_REGISTRY_URL>/library/<TEST_IMAGE>:<TAG>
+{prompt_user}docker push <SUSE_PRIVATE_REGISTRY_URL>/library/<TEST_IMAGE>:<TAG>
+----
+
+Set `persistence.resourcePolicy` to `keep` when PVCs must remain after a {helm} release is deleted, for example when a release is reinstalled as part of maintenance.
+This setting does not replace backups and does not protect PVCs from deletion outside {helm}.
+
+Before placing the deployment into production, test the failure of one pod and one worker node, and test the documented recovery procedure with a non-production backup.
+
+[#pr-deployment-ha-retention]
+=== Configuring retention and garbage collection
+
+Retention and garbage-collection settings are standing configuration, not steps in the maintenance procedure in <<pr-deployment-ha-operations>>.
+Set them up once, independently of any planned maintenance, and let them run on their own schedule.
+
+Configure image retention policies and schedule garbage collection in the {productnameshort} administrator interface.
+Garbage collection removes unreferenced image data after retention policies or artifact deletions run.
+Review the reclaimable storage before a production garbage-collection run and monitor storage growth afterward.
+The registry upload-purging settings also remove leftover data from incomplete or interrupted image uploads (as opposed to garbage collection, which removes unreferenced but otherwise complete image data); see <<pr-helm-chart-override>> for the available `registry.upload_purging` values.
+
+[#pr-deployment-ha-monitoring]
+=== Monitoring the deployment
+
+Monitor the following conditions:
+
+* Available replicas for each {productnameshort} deployment.
+* Pending or restarting pods and PVCs that are not bound.
+* Database, cache, object-storage, and {ingress} health.
+* Artifact storage growth, job queues, scan failures, and replication failures.
+
+Enable the chart's Prometheus metrics and configure a `ServiceMonitor` when your cluster runs the Prometheus Operator:
+
+[source,yaml]
+----
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+----
+
+Create alerts for unavailable replicas, repeated pod restarts, storage capacity, failed scans, failed jobs, and dependency health.
+Use `metrics.serviceMonitor.additionalLabels` when your monitoring stack requires a label to discover the `ServiceMonitor`.
+
+[#pr-deployment-ha-network]
+=== Managing network traffic
+
+Ensure that the worker-node and load-balancer networks provide enough bandwidth for peak image pushes, pulls, replication, and vulnerability database updates.
+Monitor network throughput and connection errors during normal and peak workloads.
+
+If the registry requires a corporate proxy, configure the proxy URL, excluded addresses, and affected components in the Helm values:
+
+[source,yaml]
+----
+proxy:
+  httpProxy: <HTTP_PROXY_URL>
+  httpsProxy: <HTTPS_PROXY_URL>
+  noProxy: 127.0.0.1,localhost,.local,.internal
+  components:
+    - core
+    - jobservice
+    - trivy
+----
+
+Include the registry services, database, cache, object storage, Kubernetes API, and monitoring endpoints in `noProxy` when they must not use the proxy.
+Verify proxy access for each component that downloads external content or connects to an external service.
+
+[#pr-deployment-ha-recovery]
+=== Planning backup and recovery
+
+HA reduces downtime during selected failures.
+It does not replace backups or protect against accidental deletion, data corruption, or loss of the entire cluster.
+Define the required recovery point objective (RPO) and recovery time objective (RTO) before selecting backup schedules and storage.
+
+For a complete recovery plan:
+
+* Back up {postgresql} with an application-consistent database method.
+* Protect external image and chart storage with the provider's backup and retention features.
+* Store {kube} resource and volume backups outside the primary cluster.
+* Preserve the chart version, application version, Helm values, connection information, and required secret references.
+* Prepare a recovery cluster with compatible {kube} versions, `StorageClass` names, networking, and {ingress} configuration.
+
+For the detailed Velero procedure, see xref:backup-restore-velero[].
+The procedure also describes expected recovery behavior, including lost {valkey} or {redis} sessions, interrupted tasks, internal {postgresql} consistency requirements, and the need to preserve chart-generated secrets.
+
+[#pr-deployment-ha-checklist]
+=== Reviewing the deployment before production
+
+Confirm the following items before you rely on the deployment for production workloads:
+
+* Replicas are distributed across worker nodes or failure domains.
+* Worker nodes have enough reserved capacity for a node failure.
+* The {ingress} endpoint is redundant, and DNS reliably resolves to it.
+* The TLS certificate is valid on every endpoint instance and renews automatically before it expires.
+* {postgresql} and {valkey} or {redis} have tested failover and backup procedures.
+* Image and chart storage remains available during a worker-node failure.
+* Monitoring detects unavailable replicas, dependency failures, storage exhaustion, and failed jobs.
+* A Velero backup, together with the external database and object-storage backups, has been restored successfully in a test environment. See xref:backup-restore-velero[].

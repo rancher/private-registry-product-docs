@@ -141,7 +141,7 @@ The digest is only possible with {helm} 4.
 
 [source,bash,subs="+attributes"]
 ----
-{prompt_user}helm update <RELEASE_NAME> \
+{prompt_user}helm upgrade <RELEASE_NAME> \
   oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm@sha256:<DIAGEST_OF_CHART_TO_INSTALL> \
   --namespace <PRIVATE_REGISTRY_NAMESPACE> \
 ----
