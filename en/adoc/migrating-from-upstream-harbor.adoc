@@ -54,7 +54,7 @@ SRC_NAMESPACE=<harbor-namespace>
 SRC_HOST=<harbor-external-hostname>
 SRC_ADMIN_PASSWORD=<harbor-admin-password>
 EXPORT_PATH=./harbor-export-$(date +%Y%m%d-%H%M%S)
-{prompt_user}mkdir -p "$EXPORT_PATH"
+{prompt_user}install -d -m 0700 "$EXPORT_PATH"
 
 SRC_DB_POD=$(kubectl -n "$SRC_NAMESPACE" get pod -l component=database -o jsonpath='{.items[0].metadata.name}')
 SRC_REGISTRY_POD=$(kubectl -n "$SRC_NAMESPACE" get pod -l component=registry -o jsonpath='{.items[0].metadata.name}')
