@@ -1,9 +1,9 @@
 <!-- History -->
 <revhistory xml:id="rh-article-private-registry">
-  <revision><date>2026-09-11</date>
+  <revision><date>2026-09-22</date>
     <revdescription>
       <para>
-        Added a new section on importing data from Harbor
+        Added a new section on migrating data from Harbor
       </para>
     </revdescription>
   </revision>
@@ -79,7 +79,7 @@
   </revision>
 </revhistory>
 <meta name="maintainer" content="tbazant@suse.com" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
-<meta name="updated" content="2026-09-07" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
+<meta name="updated" content="2026-09-22" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
 <meta name="architecture"><phrase>{x86-64}</phrase><phrase>{power}</phrase></meta>
 <meta name="productname" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"><productname>{productname}</productname>
 </meta>
