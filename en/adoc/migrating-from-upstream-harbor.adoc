@@ -55,7 +55,7 @@ Take a full backup or storage snapshot of both the source {harbor} and destinati
 * xref:pro-migrating-from-harbor-restore[]
 * xref:pro-migrating-from-harbor-verify[]
 
-[#migrating-from-harbor-export]
+[#pro-migrating-from-harbor-export]
 === Step 1: Export data from {harbor}
 
 Set variables for your environment:
