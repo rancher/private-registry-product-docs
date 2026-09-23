@@ -56,7 +56,7 @@ Before using the following example, replace the placeholders:
 
 * `<APP_VERSION>` with the desired application version (for example, `1.2`), as in <<pr-deployment-installing-and-running>>.
 * `<CHART_VERSION>` with the exact chart version you want to pull (for example, `1.2.19`).
-* `<RKE2_VERSION_URLENCODED>` with the {rke2a} release you want to install, found on the https://github.com/rancher/rke2/releases[{rke2a} releases page] (for example, `v1.34.5+rke2r1` written as `v1.34.5%2Brke2r1`, since a literal `+` is not valid in a URL).
+* `<RKE2_VERSION_URLENCODED>` with the {rke2a} release you want to install, found on the https://github.com/rancher/rke2/releases[{rke2a} releases page] (for example, `v1.34.5+rke2r1` written as `v1.34.5%2Brke2r1`, the percent-encoded form used in the download URL).
 * `<HELM_VERSION>` with the {helm} release you want to install, found on the https://github.com/helm/helm/releases[{helm} releases page] (for example, `v3.18.0`).
 
 [IMPORTANT]
