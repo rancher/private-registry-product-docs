@@ -219,9 +219,8 @@ The `hauler store save` command creates a compressed tarball containing all coll
 {prompt_user}hauler store load -f hauler-store.tar.zst
 
 # Log in to your target SUSE Private Registry
-{prompt_user}hauler login <SUSE_PRIVATE_REGISTRY_URL> \ <.>
-  -u <REGISTRY_USERNAME> \
-  -p <REGISTRY_PASSWORD> <.>
+{prompt_user}head -1 ./registry-password.txt | hauler login <SUSE_PRIVATE_REGISTRY_URL> \ <.>
+  -u <REGISTRY_USERNAME> --password-stdin <.>
 
 # Push the loaded store's content into your SUSE Private Registry project
 {prompt_user}hauler store copy registry://<SUSE_PRIVATE_REGISTRY_URL>/<PROJECT_NAME>
