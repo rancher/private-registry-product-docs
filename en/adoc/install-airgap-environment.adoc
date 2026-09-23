@@ -3,7 +3,7 @@ include::../common/generic-attributes.adoc[]
 [#pr-install-airgap]
 == Installing in air-gapped environment
 
-:revdate: 2026-09-18
+:revdate: 2026-09-23
 :page-revdate: {revdate}
 
 {productname} and Hauler provide a robust solution for managing content in disconnected environments while significantly simplifying the air-gapping workflow for {kube} distributions like {rke2a} and K3s.
@@ -218,18 +218,22 @@ The `hauler store save` command creates a compressed tarball containing all coll
 # reads the .tar.zst directly)
 {prompt_user}hauler store load -f hauler-store.tar.zst
 
+# Create a file containing the password configured with `harborAdminPassword`
+# during the SUSE Private Registry installation
+{prompt_user}read -r -s -p "Enter the registry administrator password: " REGISTRY_PASSWORD; printf '\n'; printf '%s\n' "$REGISTRY_PASSWORD" > ./registry-password.txt
+
 # Log in to your target SUSE Private Registry
-{prompt_user}head -1 ./registry-password.txt | hauler login <SUSE_PRIVATE_REGISTRY_URL> \ <.>
+{prompt_user}head -1 ./registry-password.txt | hauler login <SUSE_PRIVATE_REGISTRY_HOST> \\ <.>
   -u <REGISTRY_USERNAME> --password-stdin <.>
 
 # Push the loaded store's content into your SUSE Private Registry project
-{prompt_user}hauler store copy registry://<SUSE_PRIVATE_REGISTRY_URL>/<PROJECT_NAME>
+{prompt_user}hauler store copy registry://<SUSE_PRIVATE_REGISTRY_HOST>/<PROJECT_NAME>
 
 # If your SUSE Private Registry is served over unencrypted HTTP, add --plain-http:
-# hauler store copy registry://<SUSE_PRIVATE_REGISTRY_URL>/<PROJECT_NAME> --plain-http
+# hauler store copy registry://<SUSE_PRIVATE_REGISTRY_HOST>/<PROJECT_NAME> --plain-http
 ----
-<.> Replace `<SUSE_PRIVATE_REGISTRY_URL>` with your {productname} URL (e.g., `\https://registry.example.com`)
-<.> Replace `<REGISTRY_USERNAME>` and `<REGISTRY_PASSWORD>` with your {productname} credentials
+<.> Replace `<SUSE_PRIVATE_REGISTRY_HOST>` with the host name of your {productname} instance, without `https://` or `http://` (for example, `registry.example.com`).
+<.> Replace `<REGISTRY_USERNAME>` with your {productname} administrator user name. The password in `registry-password.txt` must match the password configured with `harborAdminPassword`.
 
 . Alternatively, use Hauler's ephemeral local registry for immediate deployment:
 +
@@ -259,6 +263,7 @@ EOF
   --version <CHART_VERSION> \
   --plain-http \
   --set global.imageRegistry=localhost:5000 \
+  --set-file harborAdminPassword=./registry-password.txt \
   --set-json 'imagePullSecrets=[]'
 ----
 +
@@ -291,6 +296,6 @@ After completing the deployment:
 # Verify that you can log in and pull images from the registry.
 # Note: Hauler uses Docker credentials. If you completed the previous steps
 # and pushed images, you are already authenticated.
-{prompt_user}docker login <SUSE_PRIVATE_REGISTRY_URL> -u <REGISTRY_USERNAME>
+{prompt_user}docker login <SUSE_PRIVATE_REGISTRY_HOST> -u <REGISTRY_USERNAME>
 {prompt_user}docker pull <REGISTRY_URL>/library/image:tag
 ----
