@@ -2,7 +2,7 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == {ha} setup
-:revdate: 2026-09-07
+:revdate: 2026-09-22
 :page-revdate: {revdate}
 
 You can use {helm} to deploy the highly available (HA) {productnameshort} on a {kube} cluster.
@@ -185,6 +185,187 @@ Installing the chart again with the same release name in the same namespace reus
 
 Use the sizing recommendations in xref:pr-requirements[] as a starting point.
 Increase capacity based on artifact growth, scan activity, job logs, retention, and replication traffic.
+
+[#pr-deployment-ha-cnpg]
+=== Using CloudNativePG with {productnameshort}
+
+{productnameshort} supports connecting to an external {postgresql} database.
+You can deploy https://cloudnative-pg.io/[CloudNativePG] (CNPG) to provide a Kubernetes-native, highly available {postgresql} cluster.
+CloudNativePG runs one primary instance and one or more streaming standbys.
+It manages failover, rolling updates and backups declaratively through a `Cluster` custom resource.
+
+Using CloudNativePG for the external database provides several advantages:
+
+* Dedicated primary and standby topology independent of the {productnameshort} release lifecycle.
+* Kubernetes-native failover using Lease-based leader election and {postgresql} WAL streaming without external HA proxies.
+* Dedicated Kubernetes services for read-write, read-only and any-instance traffic.
+* Declarative backup, restore and upgrade operations managed through custom resources.
+
+==== Prerequisites and version selection
+
+Before deploying CloudNativePG, verify the following prerequisites:
+
+* A {kube} cluster with a storage class that supports dynamic volume provisioning.
+* `kubectl` and {helm} installed and configured for the cluster.
+* The https://cloudnative-pg.io/documentation/current/kubectl-plugin/[`kubectl cnpg` plugin] for status inspection and maintenance tasks.
+* Access to the CloudNativePG Helm chart, such as the Rancher Prime https://docs.apps.rancher.io/get-started/first-steps#what-is-application-collection[Application Collection] (`oci://dp.apps.rancher.io/charts/cloudnative-pg`) or upstream.
+* Sufficient node capacity for at least three {postgresql} instances (one primary and two standbys), each with dedicated storage.
+
+Verify supported versions before deploying:
+
+* *Operator chart version*: Check available chart versions from your repository. Cross-reference the version against the https://cloudnative-pg.io/documentation/current/supported_releases/[CloudNativePG release compatibility table] for your {kube} version.
+* *{postgresql} container image*: Review available container images in the https://github.com/cloudnative-pg/postgres-containers/pkgs/container/postgresql[CloudNativePG container repository]. Choose a version supported by the https://www.postgresql.org/support/versioning/[PostgreSQL versioning policy].
+
+Set environment variables for the selected versions:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}export CNPG_VERSION=<chart-version>
+{prompt_user}export CNPG_IMAGE=ghcr.io/cloudnative-pg/postgresql:<tag>
+----
+
+==== Installing the CloudNativePG operator
+
+Deploy the operator using {helm}:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm upgrade --install cnpg oci://dp.apps.rancher.io/charts/cloudnative-pg \
+  --version "$CNPG_VERSION" \
+  --namespace cnpg-system --create-namespace \
+  --set config.clusterWide=true \
+  --set crds.create=true \
+  --wait
+----
+
+When your registry requires authentication, configure image pull secrets and specify `global.imagePullSecrets` in your Helm values.
+For example, create an image pull secret if you use the Rancher Prime Application Collection.
+To generate credentials and create the secret, see the https://docs.apps.rancher.io/get-started/authentication[Application Collection authentication documentation].
+
+
+Verify that the operator deployment and custom resource definitions (CRDs) are ready:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n cnpg-system rollout status deployment -l app.kubernetes.io/name=cloudnative-pg
+{prompt_user}kubectl wait --for=condition=Established crd/clusters.postgresql.cnpg.io --timeout=5m
+----
+
+==== Creating a PostgreSQL cluster
+
+Deploy a `Cluster` custom resource in the {productnameshort} namespace or in a reachable namespace.
+The following example configures a three-instance cluster with anti-affinity across nodes:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl apply -f - <<EOF
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: spr-postgres
+  namespace: <PRIVATE_REGISTRY_NAMESPACE>
+spec:
+  instances: 3
+  imageName: ${CNPG_IMAGE}
+  postgresUID: 26
+  postgresGID: 26
+  enableSuperuserAccess: false
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+  bootstrap:
+    initdb:
+      database: registry
+      owner: harbor
+  postgresql:
+    parameters:
+      max_connections: "300"
+  storage:
+    size: 8Gi
+    storageClass: <STORAGE_CLASS_NAME>
+EOF
+----
+
+Wait for the cluster to become ready:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n <PRIVATE_REGISTRY_NAMESPACE> wait --for=condition=Ready cluster.postgresql.cnpg.io/spr-postgres --timeout=15m
+{prompt_user}kubectl cnpg status spr-postgres -n <PRIVATE_REGISTRY_NAMESPACE>
+----
+
+The operator automatically creates the following resources:
+
+* A Secret named `spr-postgres-app` containing the database credentials and connection parameters.
+* Three Services: `spr-postgres-rw` (read-write for the primary), `spr-postgres-ro` (read-only for standbys) and `spr-postgres-r` (read-only across any instance).
+
+==== Configuring {productnameshort} to use CloudNativePG
+
+Configure {productnameshort} to connect to the `spr-postgres-rw` Service and reuse the generated application Secret in `suse_registry_override.yaml`:
+
+[source,yaml]
+----
+database:
+  type: external
+  maxIdleConns: 5
+  maxOpenConns: 20
+  external:
+    host: spr-postgres-rw.<PRIVATE_REGISTRY_NAMESPACE>.svc.cluster.local
+    port: 5432
+    username: harbor
+    coreDatabase: registry
+    existingSecret: spr-postgres-app
+    sslmode: require
+----
+
+Always point `database.external.host` to the `-rw` Service.
+The `-rw` Service automatically directs traffic to the active primary pod during switchover and failover.
+
+==== Best practices and recommendations
+
+Follow these recommendations when running CloudNativePG with {productnameshort}:
+
+* *Always route writes through the `-rw` Service.* Do not configure the `core` component to use `-ro` Services, because it requires immediate read-after-write consistency.
+* *Distribute instances across failure domains.* Enable `affinity.enablePodAntiAffinity` with `podAntiAffinityType: required` so that a node failure does not affect multiple {postgresql} pods.
+* *Run at least three instances.* Deploying three instances ensures that a standby remains available even if one node fails.
+* *Size connection pools appropriately.* Sum `maxOpenConns` across all component replicas and ensure the total remains well below `max_connections` in the database configuration.
+* *Restrict database privileges.* Keep `enableSuperuserAccess: false` to reduce the blast radius if application credentials leak.
+* *Preserve user IDs and image repositories.* Keep `postgresUID` and `postgresGID` set to `26` for upstream images and avoid major-version image changes without proper migration.
+* *Enforce TLS encryption.* Use `sslmode: require` or `verify-full` with trusted certificates.
+* *Configure disruption budgets.* Ensure pod disruption budgets prevent multiple instances from being evicted simultaneously during maintenance.
+* *Test switchover and failover.* Run `kubectl cnpg promote spr-postgres <CLUSTER_INSTANCE> -n <PRIVATE_REGISTRY_NAMESPACE>` during testing to verify that {productnameshort} recovers cleanly from a primary change.
+* *Monitor database metrics.* Export Prometheus metrics and create alerts for replication lag, degraded instance counts and backup failures.
+
+==== Backing up and restoring with Velero
+
+When backing up {productnameshort} with Velero, manage the CloudNativePG database as an external database:
+
+* *Exclude database volumes from Velero backups.* Generic file-system or CSI snapshots do not coordinate with {postgresql} replication states. Label the {postgresql} pods and claims to exclude them:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n <PRIVATE_REGISTRY_NAMESPACE> label pod -l cnpg.io/cluster=spr-postgres velero.io/exclude-from-backup=true
+{prompt_user}kubectl -n <PRIVATE_REGISTRY_NAMESPACE> label pvc -l cnpg.io/cluster=spr-postgres velero.io/exclude-from-backup=true
+----
+* *Use native CloudNativePG backups.* Configure WAL archiving and scheduled base backups to object storage using CloudNativePG `Backup` resources. For more information, see the https://cloudnative-pg.io/docs/devel/backup/[CloudNativePG backup documentation].
+* *Follow the correct recovery sequence.* During disaster recovery:
+. Reinstall the CloudNativePG operator on the destination cluster.
+. Restore the `Cluster` resource using CloudNativePG recovery mechanisms.
+. Restore the {productnameshort} Velero backup into the namespace.
+. Verify that the generated database Secret matches the restored deployment settings before starting {productnameshort}.
+
+For more information on Velero procedures, see xref:backup-restore-velero[].
+
+==== Limitations
+
+Keep the following limitations in mind:
+
+* Replication protects against node or pod failure, but does not protect against accidental data deletion or table corruption.
+* Standard asynchronous replication can lose unreplicated in-flight transactions during an unplanned primary failure.
+* Node-local storage classes bind each {postgresql} instance to a single node. Standbys on other nodes are necessary to survive node loss.
+* Reducing the instance count does not reduce `max_connections` or resource requests automatically.
+
 
 [#pr-deployment-ha-procedure]
 === Deploying {productnameshort} with HA
