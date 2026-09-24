@@ -3,7 +3,7 @@ include::../common/generic-attributes.adoc[]
 [#pr-install-airgap]
 == Installing in air-gapped environment
 
-:revdate: 2026-06-23
+:revdate: 2026-09-23
 :page-revdate: {revdate}
 
 {productname} and Hauler provide a robust solution for managing content in disconnected environments while significantly simplifying the air-gapping workflow for {kube} distributions like {rke2a} and K3s.
@@ -52,7 +52,46 @@ Each section in the manifest is independent and can be organized logically based
 
 ===== Example of hauler-manifest.yaml
 
-[source,yaml]
+Before using the following example, replace the placeholders:
+
+* `<APP_VERSION>` with the desired application version (for example, `1.2`), as in <<pr-deployment-installing-and-running>>.
+* `<CHART_VERSION>` with the exact chart version you want to pull (for example, `1.2.19`).
+* `<RKE2_VERSION_URLENCODED>` with the {rke2a} release you want to install, found on the https://github.com/rancher/rke2/releases[{rke2a} releases page] (for example, `v1.34.5+rke2r1` written as `v1.34.5%2Brke2r1`, the percent-encoded form used in the download URL).
+* `<HELM_VERSION>` with the {helm} release you want to install, found on the https://github.com/helm/helm/releases[{helm} releases page] (for example, `v3.18.0`).
+
+[IMPORTANT]
+====
+The `Images` list must use the *exact* image tags the chart's own `values.yaml` defaults expect, not a hand-copied or simplified list. Get the authoritative list, already formatted as ready-to-use image references, by running:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm show values oci://registry.suse.com/private-registry/<APP_VERSION>/private-registry-helm \
+  --version <CHART_VERSION> \
+  | grep -E "repository:|tag:" | paste - - | awk '{print "registry.suse.com/"$2":"$4}'
+----
+
+For example, against chart version `1.2.19`, this prints:
+
+[source,bash]
+----
+registry.suse.com/suse/nginx:1.27-21.8
+registry.suse.com/private-registry/1.2/harbor-portal:1.2.1-1.118
+registry.suse.com/private-registry/1.2/harbor-core:1.2.1-1.109
+registry.suse.com/private-registry/1.2/harbor-jobservice:1.2.1-1.107
+registry.suse.com/private-registry/1.2/harbor-registry:1.2.1-1.109
+registry.suse.com/private-registry/1.2/harbor-registryctl:1.2.1-1.109
+registry.suse.com/private-registry/1.2/harbor-trivy-adapter:1.2.1-1.118
+registry.suse.com/suse/postgres:17.10-83.19
+registry.suse.com/suse/valkey:8.0.10-17.8
+registry.suse.com/private-registry/1.2/harbor-exporter:1.2.1-1.109
+----
+
+Copy each line as-is into the manifest's `Images.spec.images[].name` field.
+
+A manifest built from the wrong tags still lets `hauler store sync` and `helm install` succeed, but every pod fails `ImagePullBackOff` once you are air-gapped, with no route back to the internet to self-correct.
+====
+
+[source,yaml,subs="+attributes"]
 ----
 apiVersion: content.hauler.cattle.io/v1
 kind: Charts
@@ -61,8 +100,8 @@ metadata:
 spec:
   charts:
     - name: private-registry-helm
-      repoURL: oci://registry.suse.com/private-registry/1.2
-      version: 1.2.1 # IMPORTANT: Update this to the exact version of the chart you want to pull
+      repoURL: oci://registry.suse.com/private-registry/<APP_VERSION>
+      version: <CHART_VERSION>
 ---
 apiVersion: content.hauler.cattle.io/v1
 kind: Files
@@ -72,37 +111,36 @@ spec:
   files:
     - path: https://get.rke2.io
       name: install-rke2.sh
-    - path: https://get.helm.sh/helm-v3.18.0-linux-amd64.tar.gz
-      name: helm-v3.18.0-linux-amd64.tar.gz
-    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2.linux-amd64.tar.gz
+    - path: https://get.helm.sh/helm-<HELM_VERSION>-linux-amd64.tar.gz
+      name: helm-<HELM_VERSION>-linux-amd64.tar.gz
+    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/rke2.linux-amd64.tar.gz
       name: rke2.linux-amd64.tar.gz
-    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/rke2-images.linux-amd64.tar.zst
+    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/rke2-images.linux-amd64.tar.zst
       name: rke2-images.linux-amd64.tar.zst
-    - path: https://github.com/rancher/rke2/releases/download/v1.34.5%2Brke2r1/sha256sum-amd64.txt
+    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/sha256sum-amd64.txt
       name: sha256sum-amd64.txt
 ---
 apiVersion: content.hauler.cattle.io/v1
 kind: Images
 metadata:
-  name: spr-and-rke2-images
+  name: spr-images
 spec:
-  # Add required RKE2 system images (adjust version as needed)
   images:
-    - name: rancher/rke2-runtime:v1.34.5-rke2r1
-    - name: rancher/mirrored-pause:3.8
-    - name: rancher/mirrored-coredns-coredns:1.10.1
-    # SUSE Private Registry (Harbor) images
-    - name: registry.suse.com/private-registry/1.2/harbor-core:1.2.0-1.15
-    - name: registry.suse.com/private-registry/1.2/harbor-portal:1.2.0-1.17
-    - name: registry.suse.com/private-registry/1.2/harbor-registry:1.2.0-1.14
-    - name: registry.suse.com/private-registry/1.2/harbor-registryctl:1.2.0-1.14
-    - name: registry.suse.com/private-registry/1.2/harbor-jobservice:1.2.0-1.14
-    - name: registry.suse.com/private-registry/1.2/harbor-exporter:1.2.0-1.15
-    - name: registry.suse.com/private-registry/1.2/harbor-trivy-adapter:1.2.0-1.17
-    - name: registry.suse.com/suse/valkey:8.0.7-71.24
-    - name: registry.suse.com/suse/postgres:17.9-77.1
-    - name: registry.suse.com/suse/nginx:1.21-72.2
+    # SUSE Private Registry (Harbor) images -- get the full, exact list with
+    # the `helm show values` command above; do not hand-copy the example below
+    - name: registry.suse.com/private-registry/<APP_VERSION>/harbor-core:<IMAGE_TAG>
+    - name: registry.suse.com/private-registry/<APP_VERSION>/harbor-portal:<IMAGE_TAG>
+    - name: registry.suse.com/private-registry/<APP_VERSION>/harbor-registry:<IMAGE_TAG>
+    - name: registry.suse.com/private-registry/<APP_VERSION>/harbor-registryctl:<IMAGE_TAG>
+    - name: registry.suse.com/private-registry/<APP_VERSION>/harbor-jobservice:<IMAGE_TAG>
+    - name: registry.suse.com/private-registry/<APP_VERSION>/harbor-exporter:<IMAGE_TAG>
+    - name: registry.suse.com/private-registry/<APP_VERSION>/harbor-trivy-adapter:<IMAGE_TAG>
+    - name: registry.suse.com/suse/valkey:<IMAGE_TAG>
+    - name: registry.suse.com/suse/postgres:<IMAGE_TAG>
+    - name: registry.suse.com/suse/nginx:<IMAGE_TAG>
 ----
+
+NOTE: The manifest's `Images` kind only needs to list {productname}'s own images. {rke2a}'s own required images are already covered by the `rke2-images.linux-amd64.tar.zst` file downloaded above and are loaded separately (see the https://docs.rke2.io/install/airgap[{rke2a} air-gap installation documentation] for the load methods and for the correct tarball to use with a non-default CNI plugin).
 
 ==== Synergy: Orchestrating Hauler with {productname}
 
@@ -172,39 +210,60 @@ The `hauler store save` command creates a compressed tarball containing all coll
 * Sneakernet (physical transport)
 * Direct file transfer if there's a one-way network connection to the air-gapped environment
 
-. In the air-gapped environment, load the artifacts into your {productname}:
+. In the air-gapped environment, load the artifacts into your {productname}. Loading the store and pushing it to a registry are two separate steps:
 +
 [source,bash,subs="+attributes"]
 ----
-# Extract and load the Hauler store
-# First, extract the tarball (adjust filename if different)
-{prompt_user}tar -xf hauler-store.tar.zst
+# Load the Hauler store archive (no manual extraction needed; `store load`
+# reads the .tar.zst directly)
+{prompt_user}hauler store load -f hauler-store.tar.zst
 
-# Load artifacts from the store into your SUSE Private Registry
-{prompt_user}hauler store load \
-  --registry <SUSE_PRIVATE_REGISTRY_URL> \ <.>
-  -u <REGISTRY_USERNAME> \
-  -p <REGISTRY_PASSWORD> <.>
+# Create a file containing the password configured with `harborAdminPassword`
+# during the SUSE Private Registry installation
+{prompt_user}read -r -s -p "Enter the registry administrator password: " REGISTRY_PASSWORD; printf '\n'; printf '%s\n' "$REGISTRY_PASSWORD" > ./registry-password.txt
+
+# Log in to your target SUSE Private Registry
+{prompt_user}head -1 ./registry-password.txt | hauler login <SUSE_PRIVATE_REGISTRY_HOST> \\ <.>
+  -u <REGISTRY_USERNAME> --password-stdin <.>
+
+# Push the loaded store's content into your SUSE Private Registry project
+{prompt_user}hauler store copy registry://<SUSE_PRIVATE_REGISTRY_HOST>/<PROJECT_NAME>
+
+# If your SUSE Private Registry is served over unencrypted HTTP, add --plain-http:
+# hauler store copy registry://<SUSE_PRIVATE_REGISTRY_HOST>/<PROJECT_NAME> --plain-http
 ----
-<.> Replace `<SUSE_PRIVATE_REGISTRY_URL>` with your {productname} URL (e.g., `\https://registry.example.com`)
-<.> Replace `<REGISTRY_USERNAME>` and `<REGISTRY_PASSWORD>` with your {productname} credentials
+<.> Replace `<SUSE_PRIVATE_REGISTRY_HOST>` with the host name of your {productname} instance, without `https://` or `http://` (for example, `registry.example.com`).
+<.> Replace `<REGISTRY_USERNAME>` with your {productname} administrator user name. The password in `registry-password.txt` must match the password configured with `harborAdminPassword`.
 
 . Alternatively, use Hauler's ephemeral local registry for immediate deployment:
 +
-To deploy directly without waiting for a full {productname} setup, you can use Hauler's local registry:
+To deploy directly without waiting for a full {productname} setup, you can use Hauler's local registry. Hauler's registry serves plain, unencrypted HTTP, so {kube} needs to be told to trust it before you deploy, and the chart itself is served under a path based on its own `Chart.yaml` name (`suse-private-registry`), not the manifest's chart alias or its original registry path:
 +
 [source,bash,subs="+attributes"]
 ----
+# On the air-gapped host, add a plain-HTTP mirror for the Hauler registry so
+# containerd does not attempt an HTTPS handshake against it, then restart
+# {rke2a} (or K3s) to pick up the change:
+{prompt_user}cat <<EOF | sudo tee /etc/rancher/rke2/registries.yaml
+mirrors:
+  "localhost:5000":
+    endpoint:
+      - "http://localhost:5000"
+EOF
+{prompt_user}sudo systemctl restart rke2-server
+
 # Start Hauler's ephemeral registry (runs on localhost:5000)
 {prompt_user}hauler store serve registry --port 5000 &
 
 # Deploy SUSE Private Registry using the local Hauler registry
 # Note: This registry is temporary and will be removed after the process ends
 {prompt_user}helm install <RELEASE_NAME> \
-  oci://localhost:5000/private-registry/1.2/private-registry-helm \
-  --create-namespace  <PRIVATE_REGISTRY_NAMESPACE> \
-  --version 1.2.1 \
+  oci://localhost:5000/hauler/suse-private-registry \
+  --namespace <PRIVATE_REGISTRY_NAMESPACE> --create-namespace \
+  --version <CHART_VERSION> \
+  --plain-http \
   --set global.imageRegistry=localhost:5000 \
+  --set-file harborAdminPassword=./registry-password.txt \
   --set-json 'imagePullSecrets=[]'
 ----
 +
@@ -237,6 +296,6 @@ After completing the deployment:
 # Verify that you can log in and pull images from the registry.
 # Note: Hauler uses Docker credentials. If you completed the previous steps
 # and pushed images, you are already authenticated.
-{prompt_user}docker login <SUSE_PRIVATE_REGISTRY_URL> -u <REGISTRY_USERNAME>
+{prompt_user}docker login <SUSE_PRIVATE_REGISTRY_HOST> -u <REGISTRY_USERNAME>
 {prompt_user}docker pull <REGISTRY_URL>/library/image:tag
 ----
