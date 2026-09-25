@@ -316,7 +316,7 @@ database:
     username: harbor
     coreDatabase: registry
     existingSecret: spr-postgres-app
-    sslmode: require
+    sslmode: verify-full
 ----
 
 Always point `database.external.host` to the `-rw` Service.
@@ -332,7 +332,7 @@ Follow these recommendations when running CloudNativePG with {productnameshort}:
 * *Size connection pools appropriately.* Sum `maxOpenConns` across all component replicas and ensure the total remains well below `max_connections` in the database configuration.
 * *Restrict database privileges.* Keep `enableSuperuserAccess: false` to reduce the blast radius if application credentials leak.
 * *Preserve user IDs and image repositories.* Keep `postgresUID` and `postgresGID` set to `26` for upstream images and avoid major-version image changes without proper migration.
-* *Enforce TLS encryption.* Use `sslmode: require` or `verify-full` with trusted certificates.
+* *Enforce TLS encryption.* Use `sslmode: verify-full` with trusted certificates. If you configure `require`, understand that it encrypts traffic without validating the server certificate.
 * *Configure disruption budgets.* Ensure pod disruption budgets prevent multiple instances from being evicted simultaneously during maintenance.
 * *Test switchover and failover.* Run `kubectl cnpg promote spr-postgres <CLUSTER_INSTANCE> -n <PRIVATE_REGISTRY_NAMESPACE>` during testing to verify that {productnameshort} recovers cleanly from a primary change.
 * *Monitor database metrics.* Export Prometheus metrics and create alerts for replication lag, degraded instance counts and backup failures.
