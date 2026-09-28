@@ -1,3 +1,4 @@
+:description: Create a high-availability setup by using this example values file with three replicas and nodeSelector configuration settings
 include::../common/generic-attributes.adoc[]
 
 [#pr-ha-helm-chart-example]

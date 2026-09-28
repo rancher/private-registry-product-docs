@@ -1,3 +1,4 @@
+:description: Find important updates, changes, and known issues for the on-premises container registry in this release notes document
 include::../common/generic-attributes.adoc[]
 
 :revdate: 2026-07-16
