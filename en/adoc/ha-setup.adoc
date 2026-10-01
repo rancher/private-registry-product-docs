@@ -266,7 +266,7 @@ metadata:
   namespace: <PRIVATE_REGISTRY_NAMESPACE>
 spec:
   instances: 3
-  imageName: ${CNPG_IMAGE}
+  imageName: $\{CNPG_IMAGE}
   postgresUID: 26
   postgresGID: 26
   enableSuperuserAccess: false
