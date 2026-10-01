@@ -251,7 +251,7 @@ Verify that the operator deployment and custom resource definitions (CRDs) are r
 {prompt_user}kubectl wait --for=condition=Established crd/clusters.postgresql.cnpg.io --timeout=5m
 ----
 
-==== Creating a PostgreSQL cluster
+==== Creating a {postgresql} cluster
 
 Deploy a `Cluster` custom resource in the {productnameshort} namespace or in a reachable namespace.
 The following example configures a three-instance cluster with anti-affinity across nodes:
