@@ -1,3 +1,4 @@
+:description: How to change default settings when installing a chart to set up a private registry with specific configurations
 include::../common/generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
