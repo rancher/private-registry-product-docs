@@ -1,4 +1,4 @@
-:description: Install the application on a cluster using the command line by obtaining mirroring credentials from the subscription portal creating a namespace and storing
+:description: Install the application on a cluster using the command line
 include::../common/generic-attributes.adoc[]
 
 [#pr-deployment]
