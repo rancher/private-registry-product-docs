@@ -1,3 +1,4 @@
+:description: Configure to act as an OIDC Identity Provider and allow users to authenticate into external applications using their credentials
 include::../common/generic-attributes.adoc[]
 
 [#pr-configure-rancher-oidc]

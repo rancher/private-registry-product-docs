@@ -1,3 +1,4 @@
+:description: Create a high-availability setup by using an example custom values file
 include::../common/generic-attributes.adoc[]
 
 [#pr-ha-helm-chart-example]

@@ -1,3 +1,4 @@
+:description: Back up registry resources and persistent data with Velero to protect against accidental deletion or cluster failure
 include::../common/generic-attributes.adoc[]
 
 [#backup-restore-velero]

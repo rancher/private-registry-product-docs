@@ -1,3 +1,4 @@
+:description: Find answers to common questions about subscription requirements, product features, deployment options, and security scanning
 include::../common/generic-attributes.adoc[]
 
 [#pr-faq]
