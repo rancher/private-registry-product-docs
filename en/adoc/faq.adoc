@@ -4,7 +4,7 @@ include::../common/generic-attributes.adoc[]
 [#pr-faq]
 == Frequently asked questions
 
-:revdate: 2026-05-28
+:revdate: 2026-10-05
 :page-revdate: {revdate}
 
 [#product-overview-and-differentiators]
@@ -113,6 +113,12 @@ cosign verify --key container-key.pem registry.suse.com/private-registry/harbor-
 [.qanda]
 Is there a plan for a plug-in to sync with {sregistry} and {sappco}?::
 Yes, such a feature is planned.
+
+Can I use {sappco} through a proxy-cache project now?::
+Yes. Configure an upstream service account and a private proxy-cache project, then use a robot account for client access.
+See xref:robot-accounts-application-collection[].
++
+Proxy caching retrieves requested artifacts on demand; it does not synchronize the full catalog or require the planned synchronization plug-in.
 
 // When replicating from {sappco}, are SBOMs also replicated?::
 // TBD.

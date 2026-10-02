@@ -1,0 +1,567 @@
+:description: Configure robot accounts and an Application Collection proxy cache to pull containers and charts through Private Registry with Terraform.
+include::../common/generic-attributes.adoc[]
+
+[#robot-accounts-application-collection]
+== How do you automate access to a proxy-cache project?
+
+:revdate: 2026-10-06
+:page-revdate: {revdate}
+
+A proxy-cache project in {productname} retrieves container images and Open Container Initiative (OCI) {helm} charts from {sappco} on demand.
+An {sappco} service account authenticates upstream requests, while a {productname} robot account authenticates downstream clients.
+This separation lets administrators retain upstream credentials in the registry and give automation project-scoped access through command-line tools or Terraform.
+
+[#proxy-cache-prerequisites]
+=== What do you need before configuring the proxy?
+
+* A running {productname} instance and system administrator access to configure registry endpoints and projects.
+* Project administrator access to create a project robot account.
+* An {sappco} organization administrator who can create a service account, with subscriptions covering the artifacts you need.
+* Network access from {productname} to {sappco}, including its authentication and artifact download services.
+* Trusted Transport Layer Security (TLS) certificates and working Domain Name System (DNS) resolution for both registries.
+* Docker and {helm} clients for testing pulls.
+* Terraform and cluster credentials if you follow the infrastructure-as-code examples.
+
+Project robot accounts act within one project.
+System robot accounts can have system permissions and permissions across selected projects.
+Robot accounts authenticate OCI clients and application programming interface (API) requests, not interactive web sessions.
+An {sappco} service account belongs to one organization and inherits that organization's subscriptions.
+
+[#application-collection-catalog]
+=== How do you find available components?
+
+Use the upstream catalog to discover applications, container images and {helm} charts.
+A proxy-cache project does not automatically list or download the upstream catalog.
+Its repository list contains artifacts cached after clients request them.
+
+[#pro-browse-application-collection]
+.Browsing the catalog
+. Open the link:https://apps.rancher.io/applications[{sappco} application catalog].
+. Filter by container images or {helm} charts, or search for an application.
+. Open the application and select an artifact version.
++
+[#fig-application-collection-artifact-details]
+.Application Collection artifact details and available versions
+image::application-collection-artifact-details.png[Application Collection NGINX application page showing artifact versions,width=100%]
++
+. Record its repository path and tag from the artifact details or pull command.
+For example, container paths start with `containers/` and chart paths start with `charts/`.
+. Check that your service account's organization has the subscription required to pull the selected artifact.
+
+Catalog visibility does not grant download access.
+For an example of viewing an application and its available artifact versions, see the {sappco} documentation on link:https://docs.apps.rancher.io/get-started/first-steps#hello-world[reviewing application details].
+For programmatic discovery, see the link:https://api.apps.rancher.io/swagger-ui/index.html?urls.primaryName=metadata[Metadata Service API].
+Follow each endpoint's pagination and filtering rules rather than treating one response as the complete catalog.
+
+[#application-collection-service-account]
+=== How do you create upstream credentials?
+
+Create an {sappco} service account for registry-to-registry access.
+Keep its credentials separate from the {productname} robot credentials distributed to clients.
+
+[#pro-create-collection-service-account]
+.Creating a service account
+. Sign in to link:https://apps.rancher.io/[{sappco}] with an organization administrator account.
+. Open your profile menu and select *Settings*.
+. Select *Service accounts*.
+. Enter a description and select the organization that provides the required subscriptions.
+. Click *Create*.
+. Save the generated username and secret in your approved secret store.
+
+For account requirements, see the link:https://docs.apps.rancher.io/get-started/authentication#create-a-service-account[{sappco} authentication documentation].
+
+[#application-collection-proxy-project]
+=== How do you configure the registry endpoint and proxy project?
+
+Register {sappco} as an upstream Docker Registry endpoint, then select that endpoint in a new proxy-cache project.
+
+[#pro-configure-collection-proxy]
+.Configuring the proxy
+. Sign in to {productname} as a system administrator.
+. Go to *Registries* and click *New endpoint*.
+. Configure the endpoint with the following values:
++
+[#tab-collection-endpoint]
+[cols="1,2",options="header"]
+|===
+|Field |Value
+|*Provider* |*Docker Registry*
+|*Name* |`application-collection`
+|*Endpoint URL* |`https://dp.apps.rancher.io`
+|*Access ID* |The {sappco} service account username
+|*Access Secret* |The {sappco} service account secret
+|*Verify Remote Cert* |Enabled
+|===
++
+[#fig-application-collection-endpoint-form]
+.Application Collection registry endpoint form in Harbor
+image::new-registry-endpoint.png[Harbor registry endpoint form for Application Collection,width=100%]
++
+. Click *Test Connection* and resolve authentication or connectivity errors before continuing.
+. Click *OK* to save the endpoint.
+. Go to *Projects* and click *New Project*.
+. Set *Project Name* to `application-collection` and keep the project private.
+. Enable *Proxy Cache* and select the `application-collection` registry endpoint.
+. Click *OK*.
+
+[WARNING]
+====
+Clients with pull access to this project can request upstream artifacts accessible to the configured {sappco} service account.
+Restrict project membership and robot permissions to authorized consumers.
+====
+
+Proxy-cache projects do not accept pushes.
+The first pull of an uncached artifact requires upstream connectivity.
+Review the project's retention policy because cached artifacts can expire.
+Proxy caching does not replace a complete mirror for an air-gapped environment.
+
+For upstream configuration details, see link:https://docs.apps.rancher.io/howto-guides/mirror-with-harbor[Mirror with Harbor].
+
+[#proxy-project-robot-account]
+=== How do you create a pull-only robot account?
+
+Use a project robot account for clients that only consume artifacts from the proxy.
+Do not grant registry administration permissions to this account.
+
+[#pro-create-proxy-pull-robot]
+.Creating a pull-only account
+. Open *Projects*, select `application-collection` and select *Robot Accounts*.
+. Click *New Robot Account*.
+. Enter a name, such as `proxy-reader`, and a description.
+. Set an expiration time that matches your credential rotation policy.
+. Continue to the permissions step and select only *Pull Repository*.
+. Click *FINISH*.
+. Use *Export to File* or the copy control to save the generated credentials securely.
+
+Use the full generated username, including the configured prefix and project name.
+With the configured `robot@` prefix, an example is `robot@application-collection+proxy-reader`.
+The secret is not retrievable after creation; refresh it if you lose it.
+
+[#robot-account-prefix]
+=== How do you replace the dollar sign in robot usernames?
+
+If a client or automation system has trouble with the default `robot$` prefix, a system administrator can change the robot name prefix to `robot@`.
+The configured prefix applies to existing and new system and project robot accounts.
+Robot accounts created with Harbor 2.1 or earlier keep the `robot$` prefix.
+
+[#pro-change-robot-prefix]
+.Changing the robot name prefix
+. Sign in to {productname} as a system administrator.
+. Go to *Configuration* and select *System Settings*.
+. Find *Robot Name Prefix* and replace `robot$` with `robot@`.
+. Save the change.
+. Update stored robot usernames in Docker and {helm} clients, Terraform variables, automation systems and {kube} image-pull secrets.
+. Test authentication with the updated username before removing the old client configuration.
+
+The account name and secret do not change when you update the prefix.
+For example, `robot$application-collection+proxy-reader` becomes `robot@application-collection+proxy-reader`.
+The change is global, so coordinate it with every team and automation system that uses robot accounts.
+
+[#fig-robot-name-prefix]
+.Robot Name Prefix setting in {productname}
+image::configuration-robot-account.png[{productname} Configuration page showing the Robot Name Prefix field,width=100%]
+
+For more information, see link:https://goharbor.io/docs/2.15.0/administration/robot-accounts/#configure-robot-account-prefix[Configure Robot Account Prefix].
+
+[#proxy-client-pulls]
+=== How do you pull images and charts through the proxy?
+
+Replace the upstream host with your registry host and proxy project, while preserving the artifact repository path.
+For example, `dp.apps.rancher.io/containers/IMAGE:TAG` becomes `REGISTRY_HOST/application-collection/containers/IMAGE:TAG`.
+
+[#pro-pull-proxy-artifacts]
+.Authenticating and pulling artifacts
+. In Bash, enter the registry host and the pull-only robot credentials:
++
+[source,bash]
+----
+read -r -p 'Private Registry host, without https://: ' REGISTRY_HOST
+read -r -p 'Full pull-only robot username: ' ROBOT_USERNAME
+read -r -s -p 'Robot secret: ' ROBOT_SECRET
+printf '\n'
+printf '%s' "$ROBOT_SECRET" | docker login "$REGISTRY_HOST" \
+  --username "$ROBOT_USERNAME" --password-stdin
+printf '%s' "$ROBOT_SECRET" | helm registry login "$REGISTRY_HOST" \
+  --username "$ROBOT_USERNAME" --password-stdin
+unset ROBOT_SECRET
+----
++
+Use a trusted certificate rather than disabling TLS verification.
+Client login stores credentials locally; protect the client credential files or use a credential helper.
+For more {sappco} Docker, {helm} and {kube} authentication examples, see the link:https://docs.apps.rancher.io/get-started/authentication#use-cli-tools[authentication documentation].
+. Enter the image name and tag selected from the catalog, then pull through the proxy:
++
+[source,bash]
+----
+read -r -p 'Container name, without containers/: ' IMAGE_NAME
+read -r -p 'Container tag: ' IMAGE_TAG
+docker pull "$REGISTRY_HOST/application-collection/containers/$IMAGE_NAME:$IMAGE_TAG"
+----
+. Enter the chart name and version selected from the catalog, then pull the chart:
++
+[source,bash]
+----
+read -r -p 'Chart name, without charts/: ' CHART_NAME
+read -r -p 'Chart version: ' CHART_VERSION
+helm pull "oci://$REGISTRY_HOST/application-collection/charts/$CHART_NAME" \
+  --version "$CHART_VERSION"
+----
+. Open the project's *Repositories* view and confirm that the requested artifacts appear.
+
+Downloading a chart through the proxy does not rewrite the container image references inside that chart.
+Configure chart-specific registry values and namespace-local image-pull secrets before deploying its workloads.
+
+[#terraform-registry-management]
+=== How do you manage registry resources with infrastructure as code?
+
+Terraform's `goharbor/harbor` provider authenticates to the {productname} API with a robot username and secret.
+Use a separate management robot, not the pull-only account distributed to workloads.
+The following example adopts the endpoint and project created in xref:application-collection-proxy-project[].
+
+The example pins provider version `3.12.5` and requires Terraform `1.14.0` or later.
+For Terraform language and command-line guidance, see the link:https://developer.hashicorp.com/terraform/docs[Terraform documentation].
+The upstream provider lists {harbor} `2.15` in its compatibility tests; this does not establish {suse} certification of the provider.
+
+[WARNING]
+====
+Terraform's `sensitive = true` hides values in normal output but does not encrypt them or exclude resource secrets from state.
+The endpoint's `access_secret` and ordinary {kube} Secret data remain in Terraform state.
+Use encrypted, access-restricted state storage and protect saved plans, backups and automation logs.
+Do not commit credentials, state files or secret-bearing variable files.
+====
+
+[#pro-bootstrap-terraform-management-robot]
+.Preparing the management account
+. As a system administrator, go to menu:Administration[Robot Accounts] and click *New Robot Account*.
+. Enter an account name, such as `terraform-registry`, a description and an expiration time.
+. Grant the system permissions required by the following table.
+. Associate the account with the existing `application-collection` project and grant the listed project permissions.
+Do not enable *Cover all projects* for this example.
+. Click *FINISH* and save the full username and secret securely.
+
+[#tab-terraform-management-permissions]
+[cols="1,1,2",options="header"]
+|===
+|Scope |Permission |Purpose in this example
+|System |*List Project* |Look up the project by name with `data.harbor_project`.
+|System |*Read Registry* |Read the imported registry endpoint.
+|System |*Update Registry* |Update endpoint settings or upstream credentials.
+|Project |*Read Scanner* |Read the project's scanner during the data-source lookup.
+|Project |*Read Project* |Read the imported project's settings.
+|Project |*Update Project* |Apply changes to project settings.
+|===
+
+These permissions follow the provider's API calls for this example.
+Additional resources can require different permissions; *Pull Repository* alone does not grant registry management access.
+Configuration-related APIs are not generally available to robot accounts.
+This example leaves scanner assignment and storage quota management to the administrator.
+
+[#pro-configure-terraform-harbor]
+.Configuring the provider
+. In a dedicated Terraform working directory, create `main.tf` with the following configuration:
++
+[source,hcl]
+----
+terraform {
+  required_version = ">= 1.14.0"
+
+  required_providers {
+    harbor = {
+      source  = "goharbor/harbor"
+      version = "3.12.5"
+    }
+  }
+}
+
+provider "harbor" {
+  insecure = false
+}
+
+data "harbor_project" "application_collection" {
+  name = "application-collection"
+}
+
+output "proxy_project_id" {
+  value = data.harbor_project.application_collection.project_id
+}
+----
+. Set the registry URL and management credentials in Bash:
++
+[source,bash]
+----
+read -r -p 'Private Registry URL, including https://: ' HARBOR_URL
+read -r -p 'Full management robot username: ' HARBOR_USERNAME
+read -r -s -p 'Management robot secret: ' HARBOR_PASSWORD
+printf '\n'
+export HARBOR_URL HARBOR_USERNAME HARBOR_PASSWORD
+unset HARBOR_SESSION_ID HARBOR_BEARER_TOKEN
+terraform init
+terraform validate
+terraform plan
+----
++
+`HARBOR_URL` is the registry's base URL, without `/api/v2.0`.
+Explicit `insecure = false` enables certificate verification despite the provider's default.
+Supply a trusted certificate authority for privately signed certificates.
+In automation, inject credentials from your protected secret store instead of using interactive input.
+. Confirm that the plan reads the intended project before adding managed resources.
+
+[#pro-manage-terraform-proxy-resources]
+.Adopting the endpoint and project
+. Add the following configuration to `main.tf`:
++
+[source,hcl]
+----
+variable "collection_username" {
+  type = string
+}
+
+variable "collection_secret" {
+  type      = string
+  sensitive = true
+}
+
+resource "harbor_registry" "application_collection" {
+  name          = "application-collection"
+  provider_name = "docker-registry"
+  endpoint_url  = "https://dp.apps.rancher.io"
+  access_id     = var.collection_username
+  access_secret = var.collection_secret
+  insecure      = false
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "harbor_project" "application_collection" {
+  name        = "application-collection"
+  public      = false
+  registry_id = harbor_registry.application_collection.registry_id
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+----
++
+The numeric `registry_id` enables proxy caching.
+The `access_id` and `access_secret` are upstream {sappco} credentials, not the management robot credentials.
+. Enter the upstream credentials and the existing resource IDs:
++
+[source,bash]
+----
+read -r -p 'Application Collection service account username: ' TF_VAR_collection_username
+read -r -s -p 'Application Collection service account secret: ' TF_VAR_collection_secret
+printf '\n'
+export TF_VAR_collection_username TF_VAR_collection_secret
+read -r -p 'Existing registry endpoint ID: ' ENDPOINT_ID
+read -r -p 'Existing proxy project ID: ' PROJECT_ID
+terraform import harbor_registry.application_collection "/registries/$ENDPOINT_ID"
+terraform import harbor_project.application_collection "/projects/$PROJECT_ID"
+terraform plan
+----
++
+Use the numeric IDs from the {productname} API.
+Import existing resources before applying; otherwise Terraform attempts to create resources with names that already exist.
+. Review differences against the existing project settings.
+Match settings you need to preserve, including scanning and content-trust policies, before applying.
+. Run `terraform apply` only after reviewing the plan in an isolated test environment.
+. Remove credentials from the shell environment when finished:
++
+[source,bash]
+----
+unset HARBOR_PASSWORD TF_VAR_collection_secret
+----
+
+Creating a new endpoint requires *Create Registry*; creating a new project requires *Create Project*.
+A system administrator must arrange the management robot's project permissions for subsequent reads and updates of a new project.
+Do not assume that project creation grants those permissions automatically.
+Use an administrator-assisted setup when the new project cannot yet be associated with the robot.
+Deletion requires additional permissions; the example blocks destruction with `prevent_destroy` and does not enable `force_destroy`.
+
+For resource schemas, see the link:https://registry.terraform.io/providers/goharbor/harbor/3.12.5/docs[Harbor provider documentation].
+
+[#terraform-proxy-workloads]
+=== How do you deploy workloads through the proxy with infrastructure as code?
+
+Use the pull-only robot account for both chart downloads and container image pulls.
+The Helm provider's registry credentials authenticate chart downloads; a namespace-local image-pull secret authenticates the workload images.
+Your kubeconfig authenticates Terraform to the cluster separately and needs permission to manage the deployment resources.
+
+This example uses the {sappco} `etcd` chart and its `global.imageRegistry` and `global.imagePullSecrets` values.
+Confirm these values in the selected chart version before applying.
+Other charts can use different value names.
+The providers are pinned to `hashicorp/helm` `3.3.0` and `hashicorp/kubernetes` `3.3.0`.
+
+[#pro-deploy-terraform-proxy-chart]
+.Deploying a chart
+. Create a separate Terraform working directory and a `main.tf` file with the following configuration:
++
+[source,hcl]
+----
+terraform {
+  required_version = ">= 1.14.0"
+
+  required_providers {
+    helm = {
+      source  = "hashicorp/helm"
+      version = "3.3.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "3.3.0"
+    }
+  }
+}
+
+variable "registry_host" {
+  type = string
+}
+
+variable "robot_username" {
+  type = string
+}
+
+variable "robot_secret" {
+  type      = string
+  sensitive = true
+}
+
+variable "chart_version" {
+  type = string
+}
+
+variable "kubeconfig_path" {
+  type    = string
+  default = "~/.kube/config"
+}
+
+provider "kubernetes" {
+  config_path = pathexpand(var.kubeconfig_path)
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = pathexpand(var.kubeconfig_path)
+  }
+
+  registries = [
+    {
+      url      = "oci://${var.registry_host}"
+      username = var.robot_username
+      password = var.robot_secret
+    }
+  ]
+}
+
+resource "kubernetes_namespace_v1" "application_collection" {
+  metadata {
+    name = "application-collection"
+  }
+}
+
+resource "kubernetes_secret_v1" "proxy_pull" {
+  metadata {
+    name      = "proxy-pull"
+    namespace = kubernetes_namespace_v1.application_collection.metadata[0].name
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+
+  data = {
+    ".dockerconfigjson" = jsonencode({
+      auths = {
+        (var.registry_host) = {
+          username = var.robot_username
+          password = var.robot_secret
+          auth     = base64encode("${var.robot_username}:${var.robot_secret}")
+        }
+      }
+    })
+  }
+}
+
+resource "helm_release" "etcd" {
+  name       = "collection-etcd"
+  namespace  = kubernetes_namespace_v1.application_collection.metadata[0].name
+  repository = "oci://${var.registry_host}/application-collection/charts"
+  chart      = "etcd"
+  version    = var.chart_version
+
+  values = [yamlencode({
+    global = {
+      imageRegistry    = "${var.registry_host}/application-collection"
+      imagePullSecrets = [kubernetes_secret_v1.proxy_pull.metadata[0].name]
+    }
+  })]
+}
+----
++
+Set `registry_host` to the hostname and optional port, without a scheme or project path.
+The Secret uses that host as its authentication key.
+The provider encodes the `data` values for {kube}; do not base64-encode the complete JSON value again.
+The release references the Secret, ensuring that Terraform creates the Secret before installing the chart.
+. In Bash, enter your pull-only robot credentials and the chart version selected from the catalog:
++
+[source,bash]
+----
+read -r -p 'Private Registry host, without https://: ' TF_VAR_registry_host
+read -r -p 'Full pull-only robot username: ' TF_VAR_robot_username
+read -r -s -p 'Pull-only robot secret: ' TF_VAR_robot_secret
+printf '\n'
+read -r -p 'Application Collection etcd chart version: ' TF_VAR_chart_version
+export TF_VAR_registry_host TF_VAR_robot_username TF_VAR_robot_secret TF_VAR_chart_version
+terraform init
+terraform validate
+terraform plan
+----
+. Confirm the kubeconfig context targets your test cluster and review the planned resources.
+The example creates a namespace; select an unused namespace or import an existing namespace before applying.
+. Run `terraform apply` in the test environment.
+. Check the workload with your configured kubeconfig:
++
+[source,bash]
+----
+kubectl --kubeconfig "$HOME/.kube/config" -n application-collection get pods
+kubectl --kubeconfig "$HOME/.kube/config" -n application-collection get pods \
+  -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{.spec.containers[*].image}{"\n"}{.spec.imagePullSecrets[*].name}{"\n"}{end}'
+unset TF_VAR_robot_secret
+----
++
+If you set `kubeconfig_path`, use that same path for `kubectl`.
+Confirm that container image paths include your registry and proxy project and that Pods reference `proxy-pull`.
+Investigate `ImagePullBackOff` events before treating the deployment as verified.
+. Run `terraform plan` again and check for unexpected changes.
+
+The Secret's ordinary `data` attribute stores credentials in state even though `robot_secret` is sensitive.
+The providers offer additional secret-handling options; evaluate their version requirements before changing this example.
+For schemas, see the link:https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs[Helm provider] and
+link:https://registry.terraform.io/providers/hashicorp/kubernetes/3.3.0/docs/resources/secret_v1[Kubernetes Secret resource] documentation.
+
+[#robot-credentials-troubleshooting]
+=== How do you rotate credentials and troubleshoot access?
+
+To refresh a robot secret, select the account under *Robot Accounts* and choose menu:Action[Refresh Secret].
+Store the new secret and update client credentials, automation secrets and {kube} image-pull secrets.
+For Terraform, update protected `HARBOR_PASSWORD` or `TF_VAR_robot_secret` values for the corresponding account.
+Apply the workload configuration to update the image-pull secret after rotation.
+Do not rotate the management credential during an active Terraform run.
+Test a new pull before retiring the previous configuration.
+Deactivate or delete accounts that no longer need access.
+Rotate upstream service-account credentials separately and update the registry endpoint when they change.
+
+* For a downstream `401` or `403` response, check the full robot username, secret, expiration, enabled status and project permissions.
+* For upstream authentication failures, check the endpoint credentials and the service account's organization subscriptions.
+* For missing repositories in a new project, pull an artifact first; the project is not an upstream catalog browser.
+* For a missing tag, confirm the selected version in the upstream catalog.
+* For TLS or connection failures, check certificate trust, DNS resolution and network access from the registry.
+* For upstream `429` responses, review link:https://docs.apps.rancher.io/get-started/rate-limits[{sappco} rate limits] and reduce concurrent requests.
+* For Terraform API `403` responses, check the management robot's permissions for each provider API call.
+* For {kube} authorization failures, check kubeconfig credentials and role-based access control (RBAC), not the registry robot credentials.
+
+For account permissions and cache behavior, see the upstream documentation:
+
+* link:https://goharbor.io/docs/2.15.0/working-with-projects/project-configuration/create-robot-accounts/[Project robot accounts].
+* link:https://goharbor.io/docs/2.15.0/administration/robot-accounts/[System robot accounts and permission references].
+* link:https://goharbor.io/docs/2.15.0/administration/configure-proxy-cache/[Proxy-cache behavior].
