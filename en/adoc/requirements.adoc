@@ -1,4 +1,4 @@
-:description: Check the minimum platform requirements and recommended production sizing for your deployment to ensure compatibility and performance with supported
+:description: Check the minimum platform requirements and recommended production sizing for your deployment to ensure compatibility and performance
 include::../common/generic-attributes.adoc[]
 
 [#pr-requirements]
