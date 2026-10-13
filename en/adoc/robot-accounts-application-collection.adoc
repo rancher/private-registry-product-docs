@@ -1,4 +1,3 @@
-:description: Configure robot accounts and an Application Collection proxy cache to pull containers and charts through Private Registry with Terraform.
 include::../common/generic-attributes.adoc[]
 
 [#robot-accounts-application-collection]

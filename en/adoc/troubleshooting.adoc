@@ -1,4 +1,3 @@
-:description: Troubleshooting helps you find and fix problems that happen when you deploy or use the product
 include::../common/generic-attributes.adoc[]
 
 [#pr-troubleshooting]
