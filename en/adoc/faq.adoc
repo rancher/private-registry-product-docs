@@ -4,7 +4,7 @@ include::../common/generic-attributes.adoc[]
 [#pr-faq]
 == Frequently asked questions
 
-:revdate: 2026-05-28
+:revdate: 2026-10-16
 :page-revdate: {revdate}
 
 [#product-overview-and-differentiators]
@@ -111,8 +111,19 @@ cosign verify --key container-key.pem registry.suse.com/private-registry/harbor-
 === Replication and sync
 
 [.qanda]
-Is there a plan for a plug-in to sync with {sregistry} and {sappco}?::
-Yes, such a feature is planned.
+Can I use a robot account to synchronize users between {productname} instances?:
+Yes. The link:https://registry.terraform.io/providers/goharbor/harbor/latest/docs/resources/user[`goharbor/harbor` provider] includes the `harbor_user` and `harbor_project_member_user` resources. Configure a provider instance for each {productname} deployment and apply the same user and project-membership definitions to both. This manages desired state in Terraform; it does not automatically copy changes made directly in one registry.
+
+Authenticate each provider instance with a system robot account that has the required user-management and project-member API permissions. SPR 1.0 and later supports these permissions for system robot accounts, subject to the permissions of the account creator. These Terraform resources manage database-authenticated users. For OpenID Connect (OIDC) or Lightweight Directory Access Protocol (LDAP) authentication, manage identities in a shared identity provider. Each {productname} instance still maintains its own project memberships and roles.
+
+Protect Terraform state and password inputs. Where supported by your provider version, use its write-only password argument. See the provider documentation for link:https://registry.terraform.io/providers/goharbor/harbor/latest/docs/resources/user[user resources] and link:https://registry.terraform.io/providers/goharbor/harbor/latest/docs/resources/project_member_user[project-member resources].
+
+
+Can I use {sappco} through a proxy-cache project now?::
+Yes. Configure an upstream service account and a private proxy-cache project, then use a robot account for client access.
+See xref:robot-accounts-application-collection[].
++
+Proxy caching retrieves requested artifacts on demand; it does not synchronize the full catalog or require the planned synchronization plug-in.
 
 // When replicating from {sappco}, are SBOMs also replicated?::
 // TBD.
