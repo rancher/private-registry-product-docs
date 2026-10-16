@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-deployment]
 == Installation über die Kommandozeile
 
-:revdate: 2026-05-04
-:page-revdate: {revdate}
 
 Die folgenden Verfahren beschreiben, wie man {productname} ({productnameshort}) auf einem {kube} Cluster bereitstellt.
 

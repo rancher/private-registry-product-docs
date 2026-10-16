@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-ha-helm-chart-example]
 == Ejemplo de un gráfico de {productnameshort} configuración de HA {helm}
-:revdate: 2025-09-01
-:page-revdate: {revdate}
 
 El siguiente archivo de valores de ejemplo ilustra los parámetros que son necesarios para la configuración mínima de {productnameshort} HA.
 

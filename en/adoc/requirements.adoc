@@ -1,11 +1,8 @@
-:description: Check the minimum platform requirements and recommended production sizing for your deployment to ensure compatibility and performance
 include::../common/generic-attributes.adoc[]
 
 [#pr-requirements]
 == Requirements
 
-:revdate: 2026-09-07
-:page-revdate: {revdate}
 
 
 This section describes the minimum platform prerequisites and recommended production sizing for {productname}.

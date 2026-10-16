@@ -4,8 +4,6 @@
 include::generic-attributes.adoc[]
 
 == Lei de direito autoral
-:revdate: 2025-05-19
-:page-revdate: {revdate}
 
 Copyright (C) {copyrightstart}{ndash}{localdate} {copyrightholder} e colaboradores.
 Todos os direitos reservados.

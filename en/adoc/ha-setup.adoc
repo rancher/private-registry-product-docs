@@ -1,10 +1,7 @@
-:description: Deploy a highly available registry on a cluster by choosing resilience options, distributing components, and setting up a reliable endpoint
 include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == {ha} setup
-:revdate: 2026-09-22
-:page-revdate: {revdate}
 
 You can use {helm} to deploy the highly available (HA) {productnameshort} on a {kube} cluster.
 An HA deployment reduces interruptions when a pod or worker node becomes unavailable.

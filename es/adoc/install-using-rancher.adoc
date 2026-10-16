@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-install-rancher]
 == Instalación utilizando la interfaz {ranchera}
 
-:revdate: 2026-05-05
-:page-revdate: {revdate}
 
 Para instalar {productname} utilizando la interfaz {ranchera}, debes cumplir con los siguientes requisitos y seguir los pasos a continuación.
 

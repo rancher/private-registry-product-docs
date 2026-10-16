@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-install-rancher]
 == Installation à l'aide de l'interface utilisateur {ranchera}
 
-:revdate: 2026-05-05
-:page-revdate: {revdate}
 
 Pour installer {productname} en utilisant l'interface utilisateur {ranchera}, vous devez répondre aux exigences suivantes et suivre les étapes ci-dessous.
 

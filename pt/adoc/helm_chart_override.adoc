@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
 == Substituindo o gráfico {productname} {helm}
-:revdate: 2025-10-15
-:page-revdate: {revdate}
 
 O gráfico {productname} ({productnameshort}) {helm} é entregue com valores padrão.
 Você pode ajustar a instalação do gráfico {helm} de uma das seguintes maneiras:

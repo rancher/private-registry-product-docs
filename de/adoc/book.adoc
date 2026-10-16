@@ -5,8 +5,6 @@
 
 include::../common/generic-attributes.adoc[]
 
-:revdate: 2026-05-04
-:page-revdate: {revdate}
 
 = Erste Schritte mit {productname}
 

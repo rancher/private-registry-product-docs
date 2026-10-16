@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == Configuration requise
 
-:revdate: 2026-07-01
-:page-revdate: {revdate}
 
 
 Cette section décrit les prérequis minimaux de la plateforme et la taille de production recommandée pour {productname}.

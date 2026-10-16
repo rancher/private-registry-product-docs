@@ -4,8 +4,6 @@
 include::generic-attributes.adoc[]
 
 == 著作権
-:revdate: 2025-05-19
-:page-revdate: {revdate}
 
 著作権表示 (C) {copyrightstart}{ndash}{localdate} {copyrightholder} および貢献者。
 All rights reserved.

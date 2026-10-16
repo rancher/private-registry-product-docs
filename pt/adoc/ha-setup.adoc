@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == {ha} configuração
-:revdate: 2026-08-17
-:page-revdate: {revdate}
 
 Você pode usar {helm} para implantar o altamente disponível (HA) {productnameshort} em um cluster {kube}.
 O {hasetup} garante que os usuários não experimentem interrupções de serviço se um dos nós em que {productnameshort} está sendo executado se tornar indisponível.

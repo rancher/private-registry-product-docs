@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-install-rancher]
 == {ranchera} UIを使用したインストール
 
-:revdate: 2026-05-05
-:page-revdate: {revdate}
 
 {productname} UIを使用して{ranchera}をインストールするには、以下の要件を満たし、手順に従う必要があります。
 

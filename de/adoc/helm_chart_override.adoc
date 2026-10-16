@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
 == Überschreiben des {productname} {helm} Charts
-:revdate: 2025-10-15
-:page-revdate: {revdate}
 
 Das {productname} ({productnameshort}) {helm} Chart wird mit Standardwerten geliefert.
 Sie können die Installation des {helm} Charts auf eine der folgenden Arten anpassen:

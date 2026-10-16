@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == 要求
 
-:revdate: 2026-07-01
-:page-revdate: {revdate}
 
 
 本节描述了 {productname} 的最低平台前提条件和推荐的生产规模。

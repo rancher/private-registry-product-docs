@@ -1,10 +1,7 @@
-:description: Troubleshooting helps you find and fix problems that happen when you deploy or use the product
 include::../common/generic-attributes.adoc[]
 
 [#pr-troubleshooting]
 == Troubleshooting
-:revdate: 2026-02-23
-:page-revdate: {revdate}
 
 This section provides solutions to problems that you may encounter when deploying or using {productname}.
 

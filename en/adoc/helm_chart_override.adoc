@@ -1,10 +1,7 @@
-:description: How to change default settings when installing a chart to set up a private registry with specific configurations
 include::../common/generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
 == Overriding the {productname} {helm} chart
-:revdate: 2025-10-15
-:page-revdate: {revdate}
 
 The {productname} ({productnameshort}) {helm} chart is delivered with default values.
 For guidance about using replicas, scheduling, exposure, and persistence values in a resilient deployment, see xref:pr-deployment-ha[].

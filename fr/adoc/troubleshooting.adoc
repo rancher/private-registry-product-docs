@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-troubleshooting]
 == Dépannage
-:revdate: 2026-02-23
-:page-revdate: {revdate}
 
 Cette section fournit des solutions aux problèmes que vous pourriez rencontrer lors du déploiement ou de l'utilisation de {productname}.
 

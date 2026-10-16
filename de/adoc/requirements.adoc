@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == Anforderungen
 
-:revdate: 2026-07-01
-:page-revdate: {revdate}
 
 
 Dieser Abschnitt beschreibt die minimalen Plattformvoraussetzungen und die empfohlenen Produktionsgrößen für {productname}.

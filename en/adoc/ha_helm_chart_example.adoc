@@ -1,10 +1,7 @@
-:description: Create a high-availability setup by using an example custom values file
 include::../common/generic-attributes.adoc[]
 
 [#pr-ha-helm-chart-example]
 == Example of a {productnameshort} HA setup {helm} chart
-:revdate: 2026-09-07
-:page-revdate: {revdate}
 
 The following example values file illustrates a starting point for a {productnameshort} HA setup.
 It uses external {postgresql} and external {valkey} or {redis} services.

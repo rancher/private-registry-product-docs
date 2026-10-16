@@ -4,8 +4,6 @@
 include::generic-attributes.adoc[]
 
 == Copyright
-:revdate: 2025-05-19
-:page-revdate: {revdate}
 
 Mention de copyright (C) {copyrightstart}{ndash}{localdate} {copyrightholder} et contributeurs.
 Tous droits réservés.

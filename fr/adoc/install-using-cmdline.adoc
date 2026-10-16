@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-deployment]
 == Installation à l'aide de la ligne de commande
 
-:revdate: 2026-05-04
-:page-revdate: {revdate}
 
 Les procédures suivantes décrivent comment déployer {productname} ({productnameshort}) sur un cluster {kube}.
 

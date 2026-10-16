@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-configure-rancher-oidc]
 == 将 {ranchera} 配置为 OIDC 身份提供者
 
-:revdate: 2026-05-20
-:page-revdate: {revdate}
 
 本指南解释了如何配置 {ranchera} 以充当 OIDC 身份提供者，使用户能够使用他们的 {productname} 凭据登录外部应用程序，例如 {ranchera}。
 
