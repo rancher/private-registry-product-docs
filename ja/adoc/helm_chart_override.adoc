@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
 == {productname} {helm} チャートを上書きする
-:revdate: 2025-10-15
-:page-revdate: {revdate}
 
 {productname} ({productnameshort}) {helm} チャートはデフォルト値で配信されます。
 次のいずれかの方法で {helm} チャートのインストールを調整できます：

@@ -1,11 +1,8 @@
-:description: Configure to act as an OIDC Identity Provider and allow users to authenticate into external applications using their credentials
 include::../common/generic-attributes.adoc[]
 
 [#pr-configure-rancher-oidc]
 == Configure {ranchera} as an OIDC Identity Provider
 
-:revdate: 2026-05-20
-:page-revdate: {revdate}
 
 This guide explains how to configure {ranchera} to act as an OIDC Identity Provider, allowing users to authenticate into external applications such as {productname} using their {ranchera} credentials.
 

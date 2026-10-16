@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == {ha} セットアップ
-:revdate: 2026-08-17
-:page-revdate: {revdate}
 
 {helm} を使用して、高可用性 (HA) の {productnameshort} を {kube} クラスターにデプロイできます。
 {hasetup} は、{productnameshort} が実行されているノードの1つが利用できなくなった場合でも、ユーザーがサービスの中断を経験しないことを保証します。

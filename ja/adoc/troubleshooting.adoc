@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-troubleshooting]
 == トラブルシューティング
-:revdate: 2026-02-23
-:page-revdate: {revdate}
 
 このセクションでは、{productname}をデプロイする際や使用する際に遭遇する可能性のある問題に対する解決策を提供します。
 

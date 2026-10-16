@@ -4,8 +4,6 @@
 include::generic-attributes.adoc[]
 
 == Urheberrecht
-:revdate: 2025-05-19
-:page-revdate: {revdate}
 
 Copyright-Hinweis (C) {copyrightstart}{ndash}{localdate} {copyrightholder} und Mitwirkende.
 Alle Rechte vorbehalten.

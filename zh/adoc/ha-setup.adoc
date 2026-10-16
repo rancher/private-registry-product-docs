@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]
 == {ha} 设置
-:revdate: 2026-08-17
-:page-revdate: {revdate}
 
 您可以使用 {helm} 在 {productnameshort} 集群上部署高度可用（HA）的 {kube}。
 {hasetup} 确保用户在运行 {productnameshort} 的节点变得不可用时不会经历服务中断。

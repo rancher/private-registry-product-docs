@@ -5,11 +5,8 @@
 
 include::../common/generic-attributes.adoc[]
 
-:revdate: 2026-09-22
-:page-revdate: {revdate}
 
 = Getting started with {productname}
-:description: Basic information to set up and use the main parts of the system, including installing, configuring, and managing the server
 
 // Release Notes
 [preface]

@@ -1,10 +1,7 @@
-:description: Back up registry resources and persistent data with Velero to protect against accidental deletion or cluster failure
 include::../common/generic-attributes.adoc[]
 
 [#backup-restore-velero]
 == Backing up and restoring with Velero
-:revdate: 2026-09-07
-:page-revdate: {revdate}
 
 https://velero.io/docs/main/[Velero] provides a framework for backing up and restoring {productname} deployments on supported {kube} clusters.
 It captures the {kube} API objects of the registry and the data in the persistent volumes that the registry uses.

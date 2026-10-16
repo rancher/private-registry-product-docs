@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
 == 覆盖 {productname} {helm} 图表
-:revdate: 2025-10-15
-:page-revdate: {revdate}
 
 {productname} ({productnameshort}) {helm} 图表以默认值交付。
 您可以通过以下方式之一调整 {helm} 图表安装：
