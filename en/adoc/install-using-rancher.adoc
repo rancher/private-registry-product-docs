@@ -3,8 +3,8 @@ include::../common/generic-attributes.adoc[]
 [#pr-install-rancher]
 == Installing {productname} using the {ranchera} UI
 
-You can install {productname} from the {ranchera} UI by adding the {productname} OCI repository, creating a registry secret and installing the {helm} chart from the Apps catalog.
-The procedure consists of five tasks: create a namespace, add the repository, create the secrets, install the chart and verify the deployment.
+
+To install {productname} using the {ranchera} UI, you must meet the following requirements and follow the steps below.
 
 [#pr-install-rancher-requirements]
 === What requirements must I meet?
