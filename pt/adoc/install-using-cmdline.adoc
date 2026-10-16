@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-deployment]
 == Instalação usando a linha de comando
 
-:revdate: 2026-05-04
-:page-revdate: {revdate}
 
 Os seguintes procedimentos descrevem como implantar {productname} ({productnameshort}) em um cluster {kube}.
 

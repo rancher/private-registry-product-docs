@@ -1,11 +1,8 @@
-:description: Install using the UI by meeting requirements and following steps to add a repository, create a secret, and install a chart
 include::../common/generic-attributes.adoc[]
 
 [#pr-install-rancher]
 == Installation using the {ranchera} UI
 
-:revdate: 2026-05-05
-:page-revdate: {revdate}
 
 To install {productname} using the {ranchera} UI, you must meet the following requirements and follow the steps below.
 

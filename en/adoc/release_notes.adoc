@@ -1,8 +1,5 @@
-:description: Find important updates, changes, and known issues for individual product releases
 include::../common/generic-attributes.adoc[]
 
-:revdate: 2026-07-16
-:page-revdate: {revdate}
 
 [#pr-relnotes]
 == Release notes

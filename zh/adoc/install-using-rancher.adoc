@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-install-rancher]
 == 使用 {ranchera} 用户界面进行安装
 
-:revdate: 2026-05-05
-:page-revdate: {revdate}
 
 要使用 {productname} 用户界面安装 {ranchera}，您必须满足以下要求并按照以下步骤进行。
 

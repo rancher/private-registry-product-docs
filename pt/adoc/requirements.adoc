@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == Requisitos
 
-:revdate: 2026-07-01
-:page-revdate: {revdate}
 
 
 Esta seção descreve os pré-requisitos mínimos da plataforma e o dimensionamento de produção recomendado para {productname}.

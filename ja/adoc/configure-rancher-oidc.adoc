@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-configure-rancher-oidc]
 == {ranchera}をOIDCアイデンティティプロバイダーとして構成します。
 
-:revdate: 2026-05-20
-:page-revdate: {revdate}
 
 このガイドでは、{ranchera}をOIDCアイデンティティプロバイダーとして機能させる方法を説明します。これにより、ユーザーは{productname}の資格情報を使用して、{ranchera}などの外部アプリケーションに認証できます。
 

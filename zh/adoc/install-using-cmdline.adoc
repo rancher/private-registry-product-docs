@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-deployment]
 == 使用命令行进行安装
 
-:revdate: 2026-05-04
-:page-revdate: {revdate}
 
 以下步骤描述了如何在 {kube} 集群上部署 {productname} ({productnameshort})。
 

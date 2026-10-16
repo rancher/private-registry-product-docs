@@ -4,8 +4,6 @@
 include::generic-attributes.adoc[]
 
 == Licence de Documentation Libre GNU
-:revdate: 2025-03-19
-:page-revdate: {revdate}
 
 Mention de copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc. 51 Franklin St,
 Cinquième étage, Boston, MA 02110-1301 USA. Toute personne est autorisée à copier et à distribuer des copies exactes de ce document de licence, mais toute modification est interdite.
