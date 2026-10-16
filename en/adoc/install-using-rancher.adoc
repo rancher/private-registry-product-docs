@@ -1,3 +1,4 @@
+:description: Install using the UI by meeting requirements and following steps to add a repository, create a secret, and install a chart
 include::../common/generic-attributes.adoc[]
 
 [#pr-install-rancher]

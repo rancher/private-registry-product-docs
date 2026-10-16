@@ -1,3 +1,4 @@
+:description: Deploy a highly available registry on a cluster by choosing resilience options, distributing components, and setting up a reliable endpoint
 include::../common/generic-attributes.adoc[]
 
 [#pr-deployment-ha]

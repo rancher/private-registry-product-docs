@@ -1,3 +1,4 @@
+:description: Learn what the product it is and how it works as an on-premises container registry with features such as security and user management
 include::../common/generic-attributes.adoc[]
 
 [#pr-introduction]

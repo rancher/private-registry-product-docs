@@ -1,3 +1,4 @@
+:description: Migrate data from an existing installation to a new one by exporting and restoring the database and copying the registry blob storage
 include::../common/generic-attributes.adoc[]
 
 [#migrating-from-harbor]

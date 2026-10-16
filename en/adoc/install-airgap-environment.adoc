@@ -1,3 +1,4 @@
+:description: Install Hauler on a connected system and an air-gapped environment to transfer charts, container images, and other OCI artifacts into isolated networks
 include::../common/generic-attributes.adoc[]
 
 [#pr-install-airgap]
