@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-requirements]
 == 要件
 
-:revdate: 2026-07-01
-:page-revdate: {revdate}
 
 
 このセクションでは、{productname}の最小プラットフォーム要件と推奨される本番環境のサイジングについて説明します。

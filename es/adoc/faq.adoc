@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-faq]
 == Preguntas frecuentes
 
-:revdate: 2026-05-28
-:page-revdate: {revdate}
 
 [#product-overview-and-differentiators]
 === Descripción del producto y diferenciadores

@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-helm-chart-override]
 == Surcharge du graphique {productname} {helm}
-:revdate: 2025-10-15
-:page-revdate: {revdate}
 
 Le graphique {productname} ({productnameshort}) {helm} est livré avec des valeurs par défaut.
 Vous pouvez ajuster {helm} l'installation du graphique de l'une des manières suivantes{nbsp}:

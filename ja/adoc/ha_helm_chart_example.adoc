@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-ha-helm-chart-example]
 == {productnameshort} HAセットアップ{helm}チャートの例
-:revdate: 2025-09-01
-:page-revdate: {revdate}
 
 次の例値ファイルは、最小限の{productnameshort} HAセットアップに必要なパラメータを示しています。
 

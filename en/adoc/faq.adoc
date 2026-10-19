@@ -1,11 +1,8 @@
-:description: Find answers to common questions about subscription requirements, product features, deployment options, and security scanning
 include::../common/generic-attributes.adoc[]
 
 [#pr-faq]
 == Frequently asked questions
 
-:revdate: 2026-10-16
-:page-revdate: {revdate}
 
 [#product-overview-and-differentiators]
 === Product overview and differentiators

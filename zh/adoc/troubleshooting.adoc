@@ -2,8 +2,6 @@ include::../common/generic-attributes.adoc[]
 
 [#pr-troubleshooting]
 == 查错
-:revdate: 2026-02-23
-:page-revdate: {revdate}
 
 本节提供您在部署或使用{productname}时可能遇到的问题的解决方案。
 

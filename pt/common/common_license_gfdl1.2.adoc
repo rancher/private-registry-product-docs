@@ -4,8 +4,6 @@
 include::generic-attributes.adoc[]
 
 == Licença GFDL (GNU Free Documentation License)
-:revdate: 2025-03-19
-:page-revdate: {revdate}
 
 Copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc. 51 Franklin St,
 quinto andar, Boston, MA 02110-1301 EUA. Qualquer pessoa está autorizada a reproduzir e distribuir cópias literais deste documento de licença, mas não é permitido alterá-lo.

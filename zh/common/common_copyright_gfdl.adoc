@@ -4,8 +4,6 @@
 include::generic-attributes.adoc[]
 
 == 版权
-:revdate: 2025-05-19
-:page-revdate: {revdate}
 
 版权声明 (C) {copyrightstart}{ndash}{localdate} {copyrightholder} 和贡献者。
 保留所有权利。

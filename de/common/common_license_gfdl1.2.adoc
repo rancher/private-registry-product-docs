@@ -4,8 +4,6 @@
 include::generic-attributes.adoc[]
 
 == Freie GNU-Dokumentationslizenz (GNU Free Documentation License)
-:revdate: 2025-03-19
-:page-revdate: {revdate}
 
 Copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc. 51 Franklin St,
 Fifth Floor, Boston, MA 02110-1301 USA. Es ist jedermann gestattet, diese Lizenzurkunde zu vervielfältigen und unveränderte Kopien zu verbreiten; Änderungen sind jedoch nicht erlaubt.

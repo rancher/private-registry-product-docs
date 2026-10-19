@@ -3,8 +3,6 @@ include::../common/generic-attributes.adoc[]
 [#pr-configure-rancher-oidc]
 == Configure {ranchera} como um Provedor de Identidade OIDC
 
-:revdate: 2026-05-20
-:page-revdate: {revdate}
 
 Este guia explica como configurar {ranchera} para atuar como um Provedor de Identidade OIDC, permitindo que os usuários se autentiquem em aplicativos externos como {productname} usando suas credenciais {ranchera}.
 
