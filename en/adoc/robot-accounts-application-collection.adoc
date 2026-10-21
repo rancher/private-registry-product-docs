@@ -1,11 +1,7 @@
-:description: Configure robot accounts and an Application Collection proxy cache to pull containers and charts through Private Registry with Terraform.
 include::../common/generic-attributes.adoc[]
 
 [#robot-accounts-application-collection]
 == How do I automate access to a proxy-cache project?
-
-:revdate: 2026-10-16
-:page-revdate: {revdate}
 
 A proxy-cache project in {productname} retrieves container images and Open Container Initiative (OCI) {helm} charts from {sappco} on demand.
 A {sappco} service account authenticates upstream requests, while a {productname} robot account authenticates downstream clients.
@@ -19,7 +15,7 @@ This separation lets administrators retain upstream credentials in the registry 
 * A {sappco} organization administrator who can create a service account, with subscriptions covering the artifacts you need.
 * Network access from {productname} to {sappco}, including its authentication and artifact download services.
 * Trusted Transport Layer Security (TLS) certificates and working Domain Name System (DNS) resolution for both registries.
-* Docker and {helm} clients for testing pulls.
+* {docker} and {helm} clients for testing pulls.
 * Terraform and cluster credentials if you follow the infrastructure-as-code examples.
 
 Project robot accounts act within one project.
@@ -42,7 +38,7 @@ Its repository list contains artifacts cached after clients request them.
 +
 [#fig-application-collection-artifact-details]
 .Application Collection artifact details and available versions
-image::application-collection-artifact-details.png[Application Collection NGINX application page showing artifact versions,width=100%]
+image::application-collection-artifact-details.png[Application Collection {nginx} application page showing artifact versions,width=100%]
 +
 . Record its repository path and tag from the artifact details or pull command.
 For example, container paths start with `containers/` and chart paths start with `charts/`.
@@ -73,7 +69,7 @@ For account requirements, see the link:https://docs.apps.rancher.io/get-started/
 [#application-collection-proxy-project]
 === How do I configure the registry endpoint and proxy project?
 
-Register {sappco} as an upstream Docker Registry endpoint, then select that endpoint in a new proxy-cache project.
+Register {sappco} as an upstream {dreg} endpoint, then select that endpoint in a new proxy-cache project.
 
 [#pro-configure-collection-proxy]
 .Configuring the proxy
@@ -138,11 +134,11 @@ With the configured `robot@` prefix, an example is `robot@application-collection
 The secret is not retrievable after creation; refresh it if you lose it.
 
 [#robot-account-prefix]
-=== How do I replace the dollar sign in robot usernames?
+=== How do I replace the dollar sign in robot user names?
 
 If a client or automation system has trouble with the default `robot$` prefix, a system administrator can change the robot name prefix to `robot@`.
 The configured prefix applies to existing and new system and project robot accounts.
-Robot accounts created with Harbor 2.1 or earlier keep the `robot$` prefix.
+Robot accounts created with {harbor} 2.1 or earlier keep the `robot$` prefix.
 
 [#pro-change-robot-prefix]
 .Changing the robot name prefix
@@ -150,7 +146,7 @@ Robot accounts created with Harbor 2.1 or earlier keep the `robot$` prefix.
 . Go to *Configuration* and select *System Settings*.
 . Find *Robot Name Prefix* and replace `robot$` with `robot@`.
 . Save the change.
-. Update stored robot usernames in Docker and {helm} clients, Terraform variables, automation systems and {kube} image-pull secrets.
+. Update stored robot user names in {docker} and {helm} clients, Terraform variables, automation systems and {kube} image-pull secrets.
 . Test authentication with the updated username before removing the old client configuration.
 
 The account name and secret do not change when you update the prefix.
@@ -213,7 +209,7 @@ Configure chart-specific registry values and namespace-local image-pull secrets 
 [#terraform-registry-management]
 === How do I manage registry resources with infrastructure as code?
 
-Terraform's `goharbor/harbor` provider authenticates to the {productname} API with a robot username and secret.
+The `goharbor/harbor` Terraform provider authenticates to the {productname} API with a robot username and secret.
 Use a separate management robot, not the pull-only account distributed to workloads.
 The following example manages the upstream registry endpoint and proxy-cache project configured in xref:application-collection-proxy-project[].
 The endpoint must point directly to {sappco} so {productname} can retrieve artifacts to cache.
@@ -225,7 +221,7 @@ The upstream provider lists {harbor} `2.15` in its compatibility tests; this doe
 
 [WARNING]
 ====
-Terraform's `sensitive = true` hides values in normal output but does not encrypt them or exclude resource secrets from state.
+In Terraform, setting `sensitive = true` hides values in normal output but does not encrypt them or exclude resource secrets from state.
 The endpoint's `access_secret` and ordinary {kube} Secret data remain in Terraform state.
 Use encrypted, access-restricted state storage and protect saved plans, backups and automation logs.
 Do not commit credentials, state files or secret-bearing variable files.
@@ -387,7 +383,7 @@ For resource schemas, see the link:https://registry.terraform.io/providers/gohar
 === How do I deploy workloads through the proxy with infrastructure as code?
 
 Use the pull-only robot account for both chart downloads and container image pulls.
-The Helm provider's registry credentials authenticate chart downloads; a namespace-local image-pull secret authenticates the workload images.
+The registry credentials in the {helm} provider authenticate chart downloads; a namespace-local image-pull secret authenticates the workload images.
 Your kubeconfig authenticates Terraform to the cluster separately and needs permission to manage the deployment resources.
 
 This example uses the {sappco} `etcd` chart and its `global.imageRegistry` and `global.imagePullSecrets` values.
@@ -499,7 +495,7 @@ resource "helm_release" "etcd" {
 }
 ----
 +
-Set `registry_host` to the hostname and optional port, without a scheme or project path.
+Set `registry_host` to the host name and optional port, without a scheme or project path.
 The Secret uses that host as its authentication key.
 The provider encodes the `data` values for {kube}; do not base64-encode the complete JSON value again.
 The release references the Secret, ensuring that Terraform creates the Secret before installing the chart.

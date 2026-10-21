@@ -31,7 +31,7 @@ Yes, just like other add-ons such as {suse} Security. An additional advantage of
 How does the release cycle align with upstream {harbor}?::
 The release cycle of {productname} is independent of the release cycle of upstream {harbor}.
 +
-When releasing new versions of {productname}, {suse} aims to include the latest version of the upstream {harbor} project that meets SUSE quality assurance and maintenance requirements.
+When releasing new versions of {productname}, {suse} aims to include the latest version of the upstream {harbor} project that meets {suse} quality assurance and maintenance requirements.
 
 Will you publish migration considerations for customers running {harbor} from other sources?::
 Yes. Migration instructions are available in xref:migrating-from-harbor[].
@@ -51,13 +51,13 @@ For HA, do not deploy {productname} on the {ranchera} Management cluster to avoi
 +
 You can deploy {productname} on a dedicated cluster, or on one or more of your application clusters.
 +
-For instructions, see xref:pr-deployment-ha[]. Note that you must provide your own HA components for the Postgres database, Valkey or Redis server, and {ingress} controller. These components are not deployed by the {productname} {helm} chart and are not supported by {suse}.
+For instructions, see xref:pr-deployment-ha[]. Note that you must provide your own HA components for the Postgres database, {valkey} or Redis server, and {ingress} controller. These components are not deployed by the {productname} {helm} chart and are not supported by {suse}.
 
 // Will there be guidance for Edge deployments?::
 // TBD.
 
 Is the {productname} {helm} chart going to be added to the Application Collection eventually?::
-Yes, SUSE plans to publish the chart there in the future.
+Yes, {suse} plans to publish the chart there in the future.
 
 Do you ship a {kube} operator?::
 {productname} does not ship with a dedicated operator. It is installed and managed using its {helm} chart, which can be integrated with GitOps. {suse} continues to evaluate operator-based management for future releases.
@@ -80,11 +80,11 @@ Is it possible to sign images with Notary or Cosign for approval during the depl
 +
 Notary is not included or supported with {productname}.
 
-Are images scanned for Common Vulnerabilities and Exposures (CVEs) only with Trivy, or can it use {suse} Security (NeuVector) as well?::
-Images are scanned with Trivy, which comes out of the box. {suse} Security can be added in addition to or as a replacement for Trivy.
+Are images scanned for Common Vulnerabilities and Exposures (CVEs) only with {trivy}, or can it use {suse} Security ({neuvector}) as well?::
+Images are scanned with {trivy}, which comes out of the box. {suse} Security can be added in addition to or as a replacement for {trivy}.
 
-Is it possible to run ClamAV or similar malware scans?::
-By default, {productname} scans images using Trivy. You can also configure {suse} Security (NeuVector) as a scanner.
+Is it possible to run {clamav} or similar malware scans?::
+By default, {productname} scans images using {trivy}. You can also configure {suse} Security ({neuvector}) as a scanner.
 
 In the pull-through cache scenario, will the vulnerability criteria be enforced?::
 Yes, but with a known limitation. Due to upstream {harbor} link:https://github.com/goharbor/harbor/issues/16218[issues], vulnerability criteria are not enforced on the first pull of an image because the scan has not yet completed.
@@ -92,7 +92,7 @@ Yes, but with a known limitation. Due to upstream {harbor} link:https://github.c
 For complete coverage, pair {productname} with {suse} Security link:https://open-docs.neuvector.com/policy/admission#admission-control-criteria[admission controls].
 
 Are the images of {productname} hardened?::
-Yes. The container images for {productname} are hardened. They are based on SUSE Linux Enterprise Base Container Images (SLE BCI) and built in the same enterprise-grade SUSE Build Service used for SUSE Linux Enterprise. This ensures a secure supply chain. The images are also signed, and SUSE publishes their Supply-chain Levels for Software Artifacts (SLSA) attestations.
+Yes. The container images for {productname} are hardened. They are based on {suselinux} Enterprise Base Container Images ({bcia}) and built in the same enterprise-grade {suse} Build Service used for {sls}. This ensures a secure supply chain. The images are also signed, and {suse} publishes their Supply-chain Levels for Software Artifacts (SLSA) attestations.
 
 Are the images of {productname} signed? How?::
 The images are signed with `cosign`. You can verify them by saving the PEM-formatted signing key published at link:https://www.suse.com/support/kb/doc/?id=000021411[KB 000021411].
@@ -108,10 +108,10 @@ cosign verify --key container-key.pem registry.suse.com/private-registry/harbor-
 === Replication and sync
 
 [.qanda]
-Can I use a robot account to synchronize users between {productname} instances?:
+Can I use a robot account to synchronize users between {productname} instances?::
 Yes. The link:https://registry.terraform.io/providers/goharbor/harbor/latest/docs/resources/user[`goharbor/harbor` provider] includes the `harbor_user` and `harbor_project_member_user` resources. Configure a provider instance for each {productname} deployment and apply the same user and project-membership definitions to both. This manages desired state in Terraform; it does not automatically copy changes made directly in one registry.
 
-Authenticate each provider instance with a system robot account that has the required user-management and project-member API permissions. SPR 1.0 and later supports these permissions for system robot accounts, subject to the permissions of the account creator. These Terraform resources manage database-authenticated users. For OpenID Connect (OIDC) or Lightweight Directory Access Protocol (LDAP) authentication, manage identities in a shared identity provider. Each {productname} instance still maintains its own project memberships and roles.
+Authenticate each provider instance with a system robot account that has the required user-management and project-member API permissions. {productname} 1.0 and later supports these permissions for system robot accounts, subject to the permissions of the account creator. These Terraform resources manage database-authenticated users. For OpenID Connect (OIDC) or Lightweight Directory Access Protocol (LDAP) authentication, manage identities in a shared identity provider. Each {productname} instance still maintains its own project memberships and roles.
 
 Protect Terraform state and password inputs. Where supported by your provider version, use its write-only password argument. See the provider documentation for link:https://registry.terraform.io/providers/goharbor/harbor/latest/docs/resources/user[user resources] and link:https://registry.terraform.io/providers/goharbor/harbor/latest/docs/resources/project_member_user[project-member resources].
 
@@ -146,6 +146,6 @@ Is there a support policy for {productname}?::
 Yes. The support policy of {productname} is the same as any other {ranchera} Prime add-on.
 
 If the {productname} documentation lacks information, can I refer to the official {harbor} documentation?::
-Yes. Since {productname} is based on {harbor}, the official {harbor} documentation is a useful resource. For features specific to the SUSE version, refer to the {productname} documentation.
+Yes. Since {productname} is based on {harbor}, the official {harbor} documentation is a useful resource. For features specific to the {suse} version, refer to the {productname} documentation.
 +
 The xref:pr-relnotes[] specify which upstream {harbor} version corresponds to your {productname} version.

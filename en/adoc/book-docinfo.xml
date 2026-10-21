@@ -3,7 +3,7 @@
   <revision><date>2026-10-16</date>
     <revdescription>
       <para>
-        Documented user synchronization with robot accounts
+        Documented user synchronization with robot accounts and automated access to proxy-cache projects
       </para>
     </revdescription>
   </revision>
