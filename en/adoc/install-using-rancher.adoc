@@ -1,57 +1,169 @@
 include::../common/generic-attributes.adoc[]
 
 [#pr-install-rancher]
-== Installation using the {ranchera} UI
+== Installing {productname} using the {ranchera} UI
 
-
-To install {productname} using the {ranchera} UI, you must meet the following requirements and follow the steps below.
+You can install {productname} from the {ranchera} UI by adding the {productname} OCI repository, creating a registry secret, and installing the {helm} chart from the Apps catalog.
+The procedure consists of five tasks: create a namespace, add the repository, create the secrets, install the chart, and verify the deployment.
 
 [#pr-install-rancher-requirements]
-=== What requirements do I need to meet?
+=== What requirements must I meet?
 
-* An environment with a running supported {kube} cluster(s) and {ranchera} deployed.
-Refer to link:https://documentation.suse.com/cloudnative/rancher-manager/latest/en/installation-and-upgrade/requirements/requirements.html[{ranchera} installation requirements] for more details.
-* {sregistry} credentials for an account with a {productname} subscription (a username and a password/token).
-Refer to link:https://documentation.suse.com/en-us/cloudnative/suse-private-registry/html/private-registry/pr-deployment.html#pr-deployment-kube-secrets[Obtaining {kube} secrets from {scca}] for more details.
+* A running supported {kube} cluster that {ranchera} manages.
+For details, see link:https://documentation.suse.com/cloudnative/rancher-manager/latest/en/installation-and-upgrade/requirements/requirements.html[{ranchera} installation requirements].
+* {scca} mirroring credentials (a user name and a password) for an organization with a {productname} subscription.
+For details, see xref:pr-deployment-kube-secrets[].
+* If you expose the registry with {ingress}, a fully qualified domain name (FQDN) for {productnameshort} and an {ingress} controller in the cluster.
+* Optional: a TLS certificate and private key for the FQDN.
 
+[#pr-install-rancher-namespace]
+=== Creating a namespace
 
-[#pr-install-rancher-procedure]
-=== What are the steps to install {productname} using the {ranchera} UI?
-
-.*STEP 1*: Tell {ranchera} where the {productname} repository is located to look for the installation chart.
 . Log in to {ranchera}.
-. Click the three-line menu (☰) in the top-left corner, select menu:Cluster Management[], and click your cluster's name, usually `local`.
-. From the left-hand menu, select menu:Apps[Repositories].
-. Click the btn:[Create] button in the top right and complete the form that opens:
-  .. *Target*: Select btn:[OCI Repository].
-  .. *Name*: Enter a name for the repository, such as  `SUSE Private Registry`.
-  .. *Description*: Optionally, add a description of the repository.
-  .. *OCI Repository Host URL*: Enter \`oci://registry.suse.com/private-registry/private-registry-helm`.
-  .. *Authentication*: Change to `Create an HTTP Basic Auth Secret` and enter the user name and password of the registry's credentials.
-. Confirm with btn:[Create].
+. Click the menu:☰[] menu and select menu:Cluster Management[].
+. Click btn:[Explore] next to your cluster, usually `local`.
+. Select menu:Cluster[Projects/Namespaces].
+. Click btn:[Create Namespace] in a project or under *Not in a Project*.
+. Enter `suse-registry` as the name and click btn:[Create].
+
+[#pr-install-rancher-repository]
+=== Adding the {productname} repository
+
+. In the cluster view, select menu:Apps[Repositories] and click btn:[Add Repository].
+. Select btn:[OCI Repository] as the target.
+. Enter a name, such as `suse-private-registry`.
+. In *OCI Repository Host URL*, enter `oci://registry.suse.com/private-registry/private-registry-helm`.
+. In *Authentication*, select `Create an HTTP Basic Auth Secret` and enter the {scca} user name and password.
+. Click btn:[Add Repository].
+. Wait until the repository state changes to `Active`.
 
 .Adding a {productname} repository
 image::spr-rancher-add-repo.png[A screenshot showing how to add a {productname} repository to {ranchera}, width=100%]
 
-.*STEP 2*: Create a secret to access the images in the \`registry.suse.com`.
-. Click the three-line menu (☰) in the top-left corner and select menu:Cluster Management[].
-. Switch to the cluster to which you want to add the secret and click btn:[Explore].
-. To navigate to secrets management, select menu:Storage[Secrets] and click btn:[Create] in the top right.
-. Select the btn:[HTTP Basic Auth] secret and then the `private-registry` namespace.
-. Enter `suse-registry` as the name for the secret.
-. Fill the `username` and the `password` fields with the {suse} credentials obtained in xref:pr-install-rancher-requirements[].
+[#pr-install-rancher-secrets]
+=== Creating the registry and TLS secrets
+
+The cluster needs a secret to pull the {productnameshort} images from `registry.suse.com`.
+
+. Select menu:Storage[Secrets] and click btn:[Create].
+. Select btn:[Registry] as the secret type.
+. In the *Namespace* list, select the `suse-registry` namespace, and enter `suse-registry` as the secret name.
+The chart expects this secret name by default.
+. From the registry list, select `Custom`, then enter `registry.suse.com` as the domain.
+. Enter the {scca} user name and password and click btn:[Create].
+. Optional: To use your own certificate, click btn:[Create] again, select btn:[TLS Certificate], enter `suse-registry-tls` as the name, and paste the certificate and private key.
 
 .Adding {productname} secrets
 image::spr-rancher-add-secrets.png[A screenshot showing how to add {productname} secrets to {ranchera}, width=100%]
 
-.*STEP 3*: Install the {helm} chart.
-. From the main left menu, select menu:Apps[Charts].
-. Enter the name of the assigned {productname} repository in the search box. For example, `SUSE Private Registry`.
-If it does not appear in the list, click btn:[Refresh all repositories].
-. Click the chart and view the `README.md`.
-. Optionally, you can customize the installation values.
-Either click through the sections on the left side of the `Edit Options` panel to view all the values you can configure, or edit the values directly in the chart's YAML file.
-. In the top right corner, click btn:[Install this version].
+[#pr-install-rancher-chart]
+=== Installing the {helm} chart
+
+. Select menu:Apps[Charts].
+. Search for `suse-private-registry`. If the chart is missing, select menu:Apps[Repositories], select the repository, and click btn:[Refresh].
++
+NOTE: The catalog can show two entries. Select `suse-private-registry`, which has the description and the latest version.
+
+. Click the chart and review the `README.md`.
+. Click btn:[Install this version].
+. On the *Metadata* step, select the `suse-registry` namespace and enter `spr` as the release name.
+. Click btn:[Next].
+. On the *Values* step, configure the chart as described in xref:pr-install-rancher-configure[].
+. Click btn:[Install].
 
 .Installing {productname}
 image::spr-rancher-install.png[A screenshot showing the installation screen of {productname} in {ranchera}, width=100%]
+
+[#pr-install-rancher-configure]
+=== How do I configure {productnameshort} during the installation?
+
+The *Values* step of the installation wizard offers two ways to configure the chart: a guided form and a YAML editor.
+Both change the same values, and you can switch between them at any time.
+
+*Method 1: Using the guided form*
+
+. On the *Values* step, select *Edit Options*.
+The form groups the settings into tabs.
+. On the *Expose* tab, enter the FQDN in *Ingress Host* and the controller in *Ingress Class Name*, such as `traefik`.
+. On the *General* tab, enter `\https://<PRIVATE_REGISTRY_FQDN>` in *External URL* and set *Harbor Admin Password*.
+. Optional: Use the *External Services*, *Deployment*, and *Storage* tabs to use external Redis or database services, set replica counts, and set volume sizes and the storage class.
+. Select *Compare Changes* to review the differences from the defaults.
+
+.Setting the ingress values
+image::spr-rancher-values-expose.png[A screenshot showing the Expose tab of the installation form, width=100%]
+
+IMPORTANT: Do not edit *Image Pull Secrets* in the form. It can display `[object Object]`.
+To change it, use *Edit YAML*.
+
+*Method 2: Using Edit YAML*
+
+. On the *Values* step, select *Edit YAML* next to *Edit Options*.
+The editor shows all chart values with their defaults.
++
+.Editing the chart values as YAML
+image::spr-rancher-values-yaml.png[A screenshot showing the Edit YAML view of the installation wizard, width=100%]
+
+. Change the values that you need, for example:
++
+[source,yaml]
+----
+externalURL: https://<PRIVATE_REGISTRY_FQDN>
+harborAdminPassword: "<MY_PASSWORD>"
+imagePullSecrets:
+  - name: suse-registry
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: auto
+  ingress:
+    className: <INGRESS_CLASS>
+    hosts:
+      core: <PRIVATE_REGISTRY_FQDN>
+persistence:
+  enabled: true
+----
++
+To use your own certificate, create a TLS secret first, set `certSource` to `secret`, and set `expose.tls.secret.secretName`.
+For all values, see xref:pr-helm-chart-override[].
+
+[IMPORTANT]
+====
+If you do not set `harborAdminPassword`, the default password is `Harbor12345`.
+Change it after the first login.
+====
+
+[#pr-install-rancher-verify]
+=== How do I verify the installation?
+
+. Select menu:Apps[Installed Apps] and check that the release status is `Deployed`.
++
+.Installed release
+image::spr-rancher-installed.png[A screenshot showing the deployed release in Installed Apps, width=100%]
+
+. Select menu:Workloads[Pods] and check that all pods in the `suse-registry` namespace are `Running`.
+. Open `\https://<PRIVATE_REGISTRY_FQDN>` and log in as `admin`.
+
+If you did not set a password, read it from the `HARBOR_ADMIN_PASSWORD` key of the `spr-harbor-core` secret in menu:Storage[Secrets].
+
+[#pr-install-rancher-upgrade]
+=== Upgrading {productnameshort} using the {ranchera} UI
+
+. Select menu:Apps[Installed Apps].
+. Click the menu:⋮[] menu of the release and select btn:[Edit / Change Version].
+. Select the new chart version and review the values.
+. Click btn:[Upgrade].
+
+[#pr-install-rancher-troubleshooting]
+=== What if the installation fails?
+
+The chart does not appear in the catalog::
+Check that the repository state is `Active`. Verify the {scca} credentials and refresh the repository.
+
+Pods show `ImagePullBackOff`::
+Check that the `suse-registry` secret exists in the release namespace and has valid credentials.
+
+The portal is not reachable::
+Check that `externalURL` and `expose.ingress.hosts.core` match the FQDN, and that the FQDN resolves to your {ingress} controller.
+
+For more problems, see xref:pr-troubleshooting[].
