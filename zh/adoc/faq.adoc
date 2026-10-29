@@ -89,7 +89,7 @@ Notary不包含在{productname}中，也不受支持。
 在拉取缓存场景中，是否会强制执行漏洞标准？::
 是的，但有已知的限制。由于上游{harbor}link:https://github.com/goharbor/harbor/issues/16218[问题]，在图像的第一次拉取时不会强制执行漏洞标准，因为扫描尚未完成。
 +
-为了全面覆盖，将{productname}与{suse}安全link:https://open-docs.neuvector.com/policy/admission#admission-control-criteria[准入控制]配对。
+为了全面覆盖，将{productname}与{suse}安全link:https://documentation.suse.com/cloudnative/security/latest/en/admission.html#_admission_control_criteria[准入控制]配对。
 
 {productname}的图像是否经过加固？::
 可以。{productname} 的容器镜像已被加固。它们基于 SUSE Linux Enterprise 基础容器镜像 (SLE BCI)，并在用于 SUSE Linux Enterprise 的同一企业级 SUSE 构建服务中构建。这确保了安全供应链。这些镜像也经过签名，SUSE 发布了其软件工件供应链级别 (SLSA) 的认证。

@@ -89,7 +89,7 @@ Por defecto, {productname} escanea imágenes utilizando Trivy. También podéis 
 En el escenario de caché de pull-through, ¿se aplicarán los criterios de vulnerabilidad?::
 Sí, pero con una limitación conocida. Debido a {harbor} link:https://github.com/goharbor/harbor/issues/16218[problemas] en upstream, los criterios de vulnerabilidad no se aplican en el primer pull de una imagen porque el escaneo aún no se ha completado.
 +
-Para una cobertura completa, emparejad {productname} con {suse} Security link:https://open-docs.neuvector.com/policy/admission#admission-control-criteria[controles de admisión].
+Para una cobertura completa, emparejad {productname} con {suse} Security link:https://documentation.suse.com/cloudnative/security/latest/en/admission.html#_admission_control_criteria[controles de admisión].
 
 ¿Están endurecidas las imágenes de {productname}?}}::
 Sí. Las imágenes de contenedor para {productname} están endurecidas. Se basan en las Imágenes de Contenedor Base de SUSE Linux Enterprise (SLE BCI) y se construyen en el mismo Servicio de Construcción de SUSE de nivel empresarial utilizado para SUSE Linux Enterprise. Esto asegura un sistema de suministro seguro. Las imágenes también están firmadas, y SUSE publica sus atestaciones de Niveles de Sistema de Suministro para Artefactos de Software (SLSA).
