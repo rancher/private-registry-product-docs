@@ -43,7 +43,7 @@ include::../common/generic-attributes.adoc[]
 |===
 
 これらの推奨事項は、RKE2 Kubernetes に関する Rancher のガイダンスと一致しています。
-詳細については、 https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/installation-requirements#rke2-kubernetes[RKE2 Kubernetes のインストール要件]を参照してください。
+詳細については、 https://documentation.suse.com/cloudnative/rancher-manager/latest/ja/installation-and-upgrade/requirements/requirements.html#__rke2_product_name_kubernetes[RKE2 Kubernetes のインストール要件]を参照してください。
 
 ==== 永続ストレージのベースライン
 
