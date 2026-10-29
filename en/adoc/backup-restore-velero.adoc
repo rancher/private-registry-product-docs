@@ -3,7 +3,7 @@ include::../common/generic-attributes.adoc[]
 [#backup-restore-velero]
 == Backing up and restoring with Velero
 
-https://velero.io/docs/main/[Velero] provides a framework for backing up and restoring {productname} deployments on supported {kube} clusters.
+https://docs.apps.rancher.io/reference-guides/velero[Velero] provides a framework for backing up and restoring {productname} deployments on supported {kube} clusters.
 It captures the {kube} API objects of the registry and the data in the persistent volumes that the registry uses.
 This approach protects the registry configuration and the container images stored in the cluster against accidental deletion or cluster failure.
 
@@ -35,11 +35,100 @@ Before starting the backup process, make sure you have the following:
 
 * A supported {kube} cluster and a {productnameshort} release that is compatible with both the cluster and the Velero version you use.
 * {helm}, `kubectl` and the https://velero.io/docs/main/basic-install/[Velero CLI] installed.
-* A Velero server with the storage-provider plugin that your object store requires. See the https://velero.io/docs/main/supported-providers/[supported providers].
+* A Velero server with the storage-provider plugin that your object store requires. You can install it from {sappco}, as described in <<pr-velero-install>>.
 * An off-cluster `BackupStorageLocation` for production use.
-* For File System Backup, the Velero node agent running in the cluster. Install it with `velero install --use-node-agent`, or enable it in the Velero {helm} chart.
+* For File System Backup, the Velero node agent running in the cluster. Enable it with `deployNodeAgent: true` in the Velero {helm} chart.
 * For CSI volume snapshots, a CSI driver that supports snapshots and a `VolumeSnapshotClass` that is labeled `velero.io/csi-volumesnapshot-class: "true"`.
 * A recovery cluster that provides the same `StorageClass` names as the source cluster, so that the restored PVCs can bind.
+
+[#pr-velero-install]
+=== Installing Velero from {sappco}
+
+The following procedure installs the Velero server, the node agent and the plugin for Amazon S3 and S3-compatible object stores from {sappco}.
+{sappco} also provides plugins for Google Cloud Storage and Azure Blob Storage.
+Before you begin, replace the following placeholders:
+
+* `<APPCO_USERNAME>` with your {sappco} user name or service account. To create the credentials, see the https://docs.apps.rancher.io/get-started/authentication[{sappco} authentication documentation].
+* `<BUCKET_NAME>` and `<REGION>` with the bucket and the region of your object store. For an S3-compatible object store that is not Amazon S3, also replace `<S3_URL>` with its URL. Otherwise, remove the `s3ForcePathStyle` and `s3Url` lines.
+* `<PLUGIN_TAG>` with a tag of the https://apps.rancher.io/applications/velero[Velero plugin for AWS] that is compatible with your Velero version.
+
+. Create an `appco-password.txt` file containing your {sappco} access token or service account secret.
+. Create the namespace and the image pull secret for {sappco}:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl create namespace velero
+{prompt_user}kubectl create secret docker-registry application-collection \
+  --namespace velero \
+  --docker-server=dp.apps.rancher.io \
+  --docker-username=<APPCO_USERNAME> \
+  --docker-password=$(head -1 ./appco-password.txt)
+----
+. Create a `credentials-velero` file containing the access key of your object store:
++
+[source,ini]
+----
+[default]
+aws_access_key_id=<ACCESS_KEY_ID>
+aws_secret_access_key=<SECRET_ACCESS_KEY>
+----
+. Store the access key as a {kube} secret:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl create secret generic velero-credentials \
+  --namespace velero \
+  --from-file=cloud=./credentials-velero
+----
+. Create a `velero-values.yaml` values file:
++
+[source,yaml]
+----
+global:
+  imagePullSecrets:
+    - application-collection
+deployNodeAgent: true
+snapshotsEnabled: false
+configuration:
+  extraEnvVars: //<1>
+    - name: HOME
+      value: /scratch
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: <BUCKET_NAME>
+      config:
+        region: <REGION>
+        s3ForcePathStyle: "true"
+        s3Url: <S3_URL>
+initContainers:
+  - name: velero-plugin-for-aws
+    image: dp.apps.rancher.io/containers/velero-plugin-for-aws:<PLUGIN_TAG>
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+credentials:
+  useSecret: true
+  existingSecret: velero-credentials
+----
++
+[callouts]
+<1> The Velero image from {sappco} runs as a user without a home directory. Without a writable `HOME`, File System Backup fails with the error `mkdir /udmrepo: permission denied`.
+. Install the Velero {helm} chart:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm install velero oci://dp.apps.rancher.io/charts/velero \
+  --namespace velero \
+  -f velero-values.yaml \
+  --wait
+----
+. Verify that the backup storage location is in the `Available` phase:
++
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl -n velero get backupstoragelocation
+----
 
 [#pr-velero-storage]
 === Recommended storage configuration
@@ -239,6 +328,24 @@ If you back up with CSI snapshots, replace `--default-volumes-to-fs-backup` with
 
 [#pr-velero-restore]
 === Restoring {productnameshort}
+
+[IMPORTANT]
+====
+During a File System Backup restore, Velero adds an init container that uses the Velero image from {sappco} to the restored pods in the registry namespace.
+That namespace does not contain the {sappco} pull secret, so the nodes of the recovery cluster must be able to pull the image themselves.
+Otherwise, the restored pods remain in the `ImagePullBackOff` state and the volume data is not restored.
+Before you restore, configure the {sappco} credentials in the container runtime of every node.
+For example, on {rke2a}, add the following to `/etc/rancher/rke2/registries.yaml` on every node, replacing `<APPCO_USERNAME>` and `<APPCO_PASSWORD>` with your {sappco} credentials, and restart the `rke2-server` or `rke2-agent` service:
+
+[source,yaml]
+----
+configs:
+  dp.apps.rancher.io:
+    auth:
+      username: <APPCO_USERNAME>
+      password: <APPCO_PASSWORD>
+----
+====
 
 [#pr-velero-restore-internal-db]
 ==== Restoring a deployment with an internal {postgresql} database
