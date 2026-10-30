@@ -3,8 +3,8 @@ include::../common/generic-attributes.adoc[]
 [#pr-install-rancher]
 == Installing {productname} using the {ranchera} UI
 
-You can install {productname} from the {ranchera} UI by adding the {productname} OCI repository, creating a registry secret, and installing the {helm} chart from the Apps catalog.
-The procedure consists of five tasks: create a namespace, add the repository, create the secrets, install the chart, and verify the deployment.
+You can install {productname} from the {ranchera} UI by adding the {productname} OCI repository, creating a registry secret and installing the {helm} chart from the Apps catalog.
+The procedure consists of five tasks: create a namespace, add the repository, create the secrets, install the chart and verify the deployment.
 
 [#pr-install-rancher-requirements]
 === What requirements must I meet?
@@ -20,7 +20,7 @@ For details, see xref:pr-deployment-kube-secrets[].
 === Creating a namespace
 
 . Log in to {ranchera}.
-. Click the menu:☰[] menu and select menu:Cluster Management[].
+. Click menu:☰[] and select menu:Cluster Management[].
 . Click btn:[Explore] next to your cluster, usually `local`.
 . Select menu:Cluster[Projects/Namespaces].
 . Click btn:[Create Namespace] in a project or under *Not in a Project*.
@@ -47,11 +47,11 @@ The cluster needs a secret to pull the {productnameshort} images from `registry.
 
 . Select menu:Storage[Secrets] and click btn:[Create].
 . Select btn:[Registry] as the secret type.
-. In the *Namespace* list, select the `suse-registry` namespace, and enter `suse-registry` as the secret name.
+. In the *Namespace* list, select the `suse-registry` namespace and enter `suse-registry` as the secret name.
 The chart expects this secret name by default.
 . From the registry list, select `Custom`, then enter `registry.suse.com` as the domain.
 . Enter the {scca} user name and password and click btn:[Create].
-. Optional: To use your own certificate, click btn:[Create] again, select btn:[TLS Certificate], enter `suse-registry-tls` as the name, and paste the certificate and private key.
+. Optional: To use your own certificate, click btn:[Create] again, select btn:[TLS Certificate], enter `suse-registry-tls` as the name and paste the certificate and private key.
 
 .Adding {productname} secrets
 image::spr-rancher-add-secrets.png[A screenshot showing how to add {productname} secrets to {ranchera}, width=100%]
@@ -60,7 +60,7 @@ image::spr-rancher-add-secrets.png[A screenshot showing how to add {productname}
 === Installing the {helm} chart
 
 . Select menu:Apps[Charts].
-. Search for `suse-private-registry`. If the chart is missing, select menu:Apps[Repositories], select the repository, and click btn:[Refresh].
+. Search for `suse-private-registry`. If the chart is missing, select menu:Apps[Repositories], select the repository and click btn:[Refresh].
 +
 NOTE: The catalog can show two entries. Select `suse-private-registry`, which has the description and the latest version.
 
@@ -86,7 +86,7 @@ Both change the same values, and you can switch between them at any time.
 The form groups the settings into tabs.
 . On the *Expose* tab, enter the FQDN in *Ingress Host* and the controller in *Ingress Class Name*, such as `traefik`.
 . On the *General* tab, enter `\https://<PRIVATE_REGISTRY_FQDN>` in *External URL* and set *Harbor Admin Password*.
-. Optional: Use the *External Services*, *Deployment*, and *Storage* tabs to use external Redis or database services, set replica counts, and set volume sizes and the storage class.
+. Optional: Use the *External Services*, *Deployment* and *Storage* tabs to use external Redis or database services, set replica counts and set volume sizes and the storage class.
 . Select *Compare Changes* to review the differences from the defaults.
 
 .Setting the ingress values
@@ -124,7 +124,7 @@ persistence:
   enabled: true
 ----
 +
-To use your own certificate, create a TLS secret first, set `certSource` to `secret`, and set `expose.tls.secret.secretName`.
+To use your own certificate, create a TLS secret first, set `certSource` to `secret` and set `expose.tls.secret.secretName`.
 For all values, see xref:pr-helm-chart-override[].
 
 [IMPORTANT]
@@ -150,7 +150,7 @@ If you did not set a password, read it from the `HARBOR_ADMIN_PASSWORD` key of t
 === Upgrading {productnameshort} using the {ranchera} UI
 
 . Select menu:Apps[Installed Apps].
-. Click the menu:⋮[] menu of the release and select btn:[Edit / Change Version].
+. Click menu:⋮[] for the release and select btn:[Edit / Change Version].
 . Select the new chart version and review the values.
 . Click btn:[Upgrade].
 
