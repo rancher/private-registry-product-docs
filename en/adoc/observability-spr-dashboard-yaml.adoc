@@ -1,0 +1,268 @@
+include::../common/generic-attributes.adoc[]
+
+[#pr-observability-spr-dashboard-yaml]
+== SPR Dashboard YAML definition
+
+The following YAML definition creates a dashboard in {sobservability} for monitoring {harbor} metrics.
+This dashboard displays eight key metrics for the registry health and operations.
+
+[source,yaml]
+----
+metadata:
+  project: '{"saveVariables":false}'
+spec:
+  panels:
+    QdMW0bIQL2P6RaQMSVcFG:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: false
+            thresholds:
+              defaultColor: "#33A02C"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: min(harbor_health{namespace="suse-registry"})
+        display:
+          name: Registry Health
+          description: "1 = healthy; 0 = unhealthy. Missing data is not healthy."
+    qJzTSNXd5mgiFP59Wz0-r:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: false
+            thresholds:
+              defaultColor: "#1F78B4"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum(harbor_project_total{namespace="suse-registry"})
+        display:
+          name: Projects
+          description: Public and private projects combined.
+    aGLousSs_ht50XkThRDah:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: false
+            thresholds:
+              defaultColor: "#1F78B4"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum(harbor_project_repo_total{namespace="suse-registry"})
+        display:
+          name: Repositories
+          description: Repositories across all projects.
+    HeR5b_9T7snHElL21o02m:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: false
+            thresholds:
+              defaultColor: "#1F78B4"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum(harbor_project_artifact_total{namespace="suse-registry"})
+        display:
+          name: Stored Artifacts
+          description: Artifacts across all projects and artifact types.
+    897liByk9Rou6dVfLTGrn:
+      spec:
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            yAxis:
+              show: true
+              label: MiB
+              format: {}
+            legend:
+              show: true
+              position: bottom
+              mode: list
+              values: []
+            thresholds:
+              mode: absolute
+              steps: []
+            visual:
+              connectNulls: false
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum by (project_name) (harbor_project_quota_usage_byte{namespace="suse-registry"}) / 1024 / 1024
+        display:
+          name: Storage Usage (MiB)
+          description: Project quota usage, not free space on the registry volume.
+    9KumJhys1d6wR6RJPMk60:
+      spec:
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            yAxis:
+              show: true
+              label: Pulls
+              format: {}
+            legend:
+              show: true
+              position: bottom
+              mode: list
+              values: []
+            thresholds:
+              mode: absolute
+              steps: []
+            visual:
+              connectNulls: false
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum by (project_name) (harbor_artifact_pulled{namespace="suse-registry"})
+        display:
+          name: Artifact Pulls by Project
+          description: Exporter-reported gauge; not a requests-per-second rate.
+    eJlNjoiGN9YK6WrQQ3P5D:
+      spec:
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            yAxis:
+              show: true
+              label: Projects
+              format: {}
+            legend:
+              show: true
+              position: bottom
+              mode: list
+              values: []
+            thresholds:
+              mode: absolute
+              steps: []
+            visual:
+              connectNulls: false
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum by (public) (harbor_project_total{namespace="suse-registry"})
+        display:
+          name: Projects by Visibility
+          description: Public and private project counts; public=true is public.
+    oUzIMUMfQNw1giOsd2cLE:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: true
+            thresholds:
+              defaultColor: "#1F78B4"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum(harbor_task_queue_size{namespace="suse-registry"})
+        display:
+          name: Pending Jobs
+          description: Queued jobs across all job types; zero is a valid result.
+  layouts:
+    - kind: Grid
+      spec:
+        items:
+          - x: 0
+            y: 0
+            width: 6
+            height: 1
+            content:
+              $ref: "#/spec/panels/QdMW0bIQL2P6RaQMSVcFG"
+          - x: 6
+            y: 0
+            width: 6
+            height: 1
+            content:
+              $ref: "#/spec/panels/qJzTSNXd5mgiFP59Wz0-r"
+          - x: 12
+            y: 0
+            width: 6
+            height: 1
+            content:
+              $ref: "#/spec/panels/aGLousSs_ht50XkThRDah"
+          - x: 18
+            y: 0
+            width: 6
+            height: 1
+            content:
+              $ref: "#/spec/panels/HeR5b_9T7snHElL21o02m"
+          - x: 0
+            y: 1
+            width: 12
+            height: 2
+            content:
+              $ref: "#/spec/panels/897liByk9Rou6dVfLTGrn"
+          - x: 12
+            y: 1
+            width: 12
+            height: 2
+            content:
+              $ref: "#/spec/panels/9KumJhys1d6wR6RJPMk60"
+          - x: 0
+            y: 3
+            width: 18
+            height: 2
+            content:
+              $ref: "#/spec/panels/eJlNjoiGN9YK6WrQQ3P5D"
+          - x: 18
+            y: 3
+            width: 6
+            height: 2
+            content:
+              $ref: "#/spec/panels/oUzIMUMfQNw1giOsd2cLE"
+  variables: []
+----
