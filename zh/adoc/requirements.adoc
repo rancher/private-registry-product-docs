@@ -43,7 +43,7 @@ include::../common/generic-attributes.adoc[]
 |===
 
 这些建议与 Rancher 对 RKE2 Kubernetes 的指导一致。
-有关详细信息，请参见 https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/installation-requirements#rke2-kubernetes[RKE2 Kubernetes 安装要求]。
+有关详细信息，请参见 https://documentation.suse.com/cloudnative/rancher-manager/latest/zh/installation-and-upgrade/requirements/requirements.html#__rke2_product_name_kubernetes[RKE2 Kubernetes 安装要求]。
 
 ==== 持久存储基线。
 

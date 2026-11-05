@@ -43,7 +43,7 @@ Utilisez ces valeurs comme point de départ pour la production. Ajustez en fonct
 |===
 
 Ces recommandations sont conformes aux directives de Rancher pour RKE2 Kubernetes.
-Pour plus de détails, voir https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/installation-requirements#rke2-kubernetes[exigences d'installation de RKE2 Kubernetes].
+Pour plus de détails, voir https://documentation.suse.com/cloudnative/rancher-manager/latest/fr/installation-and-upgrade/requirements/requirements.html#__rke2_product_name_kubernetes[exigences d'installation de RKE2 Kubernetes].
 
 ==== Base de référence de stockage persistant :
 

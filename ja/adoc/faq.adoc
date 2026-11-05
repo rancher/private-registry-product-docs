@@ -89,7 +89,7 @@ ClamAVや同様のマルウェアスキャンを実行することは可能で�
 プルスルーキャッシュシナリオでは、脆弱性基準は適用されますか？::
 はい、ただし既知の制限があります。アップストリームの{harbor} link:https://github.com/goharbor/harbor/issues/16218[問題]のため、スキャンが完了していないため、画像の最初のプル時には脆弱性基準は適用されません。
 +
-完全なカバレッジのために、{productname}を{suse} Security link:https://open-docs.neuvector.com/policy/admission#admission-control-criteria[アドミッションコントロール]と組み合わせてください。
+完全なカバレッジのために、{productname}を{suse} Security link:https://documentation.suse.com/cloudnative/security/latest/en/admission.html#_admission_control_criteria[アドミッションコントロール]と組み合わせてください。
 
 {productname}のコンテナイメージは強化されていますか？::
 はい。{productname}のコンテナイメージは強化されています。それらはSUSE Linux Enterprise Base Container Images (SLE BCI)に基づいており、SUSE Linux Enterpriseに使用される同じエンタープライズグレードのSUSE Build Serviceで構築されています。これにより、安全なサプライチェーンが確保されます。イメージは署名されており、SUSEはSupply-chain Levels for Software Artifacts (SLSA)のアテステーションを公開しています。
