@@ -1,0 +1,1201 @@
+include::../common/generic-attributes.adoc[]
+
+[#observability-integration]
+== Integrating {sobservability} with {productname}
+
+This chapter installs {productname} and {sobservability} on an existing {kube} cluster, then connects {productname} through the agent telemetry gateway.
+
+For a fresh installation, follow xref:pr-observability-preflight[], xref:pr-observability-https-ingress[], and xref:pr-observability-fresh-install[], then continue with the numbered integration steps.
+If {productname} is already installed, start with xref:pr-observability-existing-install[] instead.
+
+[#pr-observability-quick-overview]
+=== What will this chapter accomplish? (5-minute read)
+
+By the end, you will have:
+
+. *{sobservability} backend installed* — Dashboards, alerting, telemetry storage
+. *Agent deployed* — Collects {kube} cluster telemetry
+. *{productname} tracing enabled* — {harbor} sends traces to {sobservability}
+. *Observability dashboard created* — View {productname} metrics and traces
+
+This chapter does *not* cover:
+* Production-grade high-availability setup (see {sobservability} documentation)
+* Using {sobservability} for non-{harbor} workloads
+* Custom dashboard creation (template provided; modify as needed)
+
+.Choose your path:
+[cols="1,2,1",options="header"]
+|===
+|Your Scenario |Jump To Section |Estimated Time
+|{productname} already running |xref:pr-observability-existing-install[] |30 minutes
+|Fresh install on new cluster |xref:pr-observability-fresh-install[] |90 minutes
+|Local testing (port-forward only) |xref:pr-observability-local-access[] |30 minutes
+|===
+
+[#pr-observability-checklist]
+=== Before you start: Quick checklist
+
+Verify you have all these items ready before proceeding.
+
+* ✅ Valid {sobservability} trial or subscription license (contact SUSE)
+* ✅ {kube} cluster with version supported by {sobservability} charts
+* ✅ Administrator access to create namespaces, {kube} secrets, and cluster roles
+* ✅ Persistent volume provisioner enabled in your cluster
+* ✅ {helm} 3.x installed locally
+* ✅ `kubectl` configured with cluster credentials
+* ✅ 7.2 CPU cores and 23.4 GiB RAM available (for backend)
+* ✅ Network access from {harbor} to telemetry gateway
+
+If you are missing any items, see xref:pr-observability-prerequisites[] for details.
+
+[TIP]
+====
+Experienced users: Jump to xref:pr-observability-existing-install[] if {productname} is already running.
+====
+
+The examples in this chapter assume an existing k3d cluster using Traefik as the ingress controller.
+Substitute your own cluster name and storage class wherever this chapter sets `CLUSTER_NAME` or uses `REPLACE_WITH_STORAGE_CLASS`.
+They also use these local test host names, not public DNS records:
+
+* {productname}: `core.harbor.domain`
+* {sobservability}: `observability.example.com`
+
+[#pr-observability-versions]
+=== Versions and architecture
+
+This chapter uses {productname} chart `1.1.29` (application `1.1.3`), {sobservability} backend `2.12.0`, and agent `1.7.19`, deployed on a two-node k3d cluster.
+{productname} uses Traefik and chart-generated TLS (`expose.tls.certSource: auto`); {sobservability} uses a certificate signed by a local test CA.
+They therefore have different certificate trust requirements, and no host trust settings need to change.
+
+Counters, timestamps, IDs, and graph values shown in this chapter's screenshots are examples, not fixed values you should expect to reproduce exactly.
+xref:pr-observability-existing-install[] only covers a same-chart integration update, not a production chart migration.
+This procedure does not cover every {kube} version, and does not guarantee long-term process-agent stability on shared-kernel k3d nodes; see xref:pr-observability-busy-kprobes[] for a known limitation.
+
+For the alternative standalone OpenTelemetry Collector and Jaeger setup, see the `OpenTelemetry` example configuration kept alongside this chapter's working files.
+The {otelemetry} settings in this chapter remain here because they configure the {sobservability} integration, not the standalone collector.
+
+The commands in this chapter run from the repository root and use these component versions:
+
+[#tab-observability-tested-versions]
+[cols="1,1,1,1",options="header"]
+|===
+|Component |Release |Namespace |Chart version
+
+|{productname}
+|`spr`
+|`suse-registry`
+|`1.1.29`
+
+|{sobservability} backend
+|`suse-observability`
+|`suse-observability`
+|`2.12.0`
+
+|{sobservability} agent
+|`suse-observability-agent`
+|`suse-observability-agent`
+|`1.7.19`
+|===
+
+[#pr-observability-data-flow]
+=== Data flow
+
+[source,text]
+----
+Harbor core, jobservice, and registryctl
+  -> OTLP/HTTP gateway on port 4318, path /v1/traces
+  -> SUSE Observability backend
+  -> Trace Explorer
+----
+
+This enables traces for these {harbor} components, not automatic instrumentation of every container.
+The agent separately collects {kube} telemetry.
+Installing the backend alone does not enable {productname} tracing.
+
+[#pr-observability-prerequisites]
+=== Prerequisites
+
+* A valid {sobservability} trial or subscription license.
+* {kube} and {helm} versions supported by the selected {sobservability} charts.
+* Permissions to create namespaces, workloads, Secrets, ClusterRoles, and ClusterRoleBindings. The node agent requires privileged workload permissions.
+* A working persistent volume provisioner and access to `registry.rancher.com`.
+* Access to the {productname} chart and SUSE registry images; for an existing release, access to the exact installed chart version.
+* Network access from {harbor} to the gateway and from the gateway to the backend.
+
+The documented trial backend requests approximately 7.2 CPU, 23.4 GiB RAM, and 154 GiB storage, in addition to existing workloads and agent resources.
+Confirm the requirements for the selected chart version.
+k3d nodes share host resources: do not count their reported CPU and memory as independent host capacity.
+
+The examples in this chapter use the `trial` sizing profile, your cluster's storage class, HTTPS UI access, and HTTP in-cluster telemetry.
+*This is an example configuration for testing, not production.*
+
+Production deployments require:
+
+* Appropriate cluster sizing (CPU, memory, persistent disk)
+* Durable persistent storage with backup
+* TLS certificates and access controls
+* Data retention and backup policies
+* High-availability configuration across multiple nodes
+
+[#pr-observability-preflight]
+=== Checking the existing cluster
+
+Run the Bash examples from the workspace root.
+Set the context explicitly in every terminal before using the remaining commands; {helm} and `kubectl` both honor `KUBECONFIG`.
+
+[source,bash,subs="+attributes"]
+----
+# Replace with your own k3d cluster name.
+CLUSTER_NAME=rancher-cluster
+export KUBE_CONTEXT="k3d-$CLUSTER_NAME"
+{prompt_user}kubectl --context "$KUBE_CONTEXT" get nodes
+{prompt_user}helm --kube-context "$KUBE_CONTEXT" list -A
+{prompt_user}kubectl --context "$KUBE_CONTEXT" get ingressclass,storageclass
+{prompt_user}kubectl --context "$KUBE_CONTEXT" get ingress -A
+{prompt_user}docker port "k3d-$CLUSTER_NAME-serverlb"
+{prompt_user}free -h
+{prompt_user}df -h /var/lib/docker
+----
+
+These commands show the cluster's node versions, {ingress} class, storage class, and host port mappings.
+For example, you might see two Ready nodes running `v1.35.5+k3s1`, the `traefik` {ingress} class, default `local-path` storage, and host ports 80/443 mapped to the k3d load balancer.
+Rancher and cert-manager may already be installed; check whether {productname} and {sobservability} releases already exist, and watch for old {productname} PVCs left over from a previous installation.
+
+[NOTE]
+====
+Absence of a {helm} release does not mean that its database is empty.
+Inspect `kubectl get pvc -n suse-registry` before a fresh install.
+Check the charts' supported {kube} versions before applying them to a newer cluster.
+====
+
+Use the context flags shown above with every cluster command in this chapter, or create a private, context-specific kubeconfig before proceeding:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}umask 077
+PRIVATE_DIR="$HOME/.config/spr-observability/$CLUSTER_NAME"
+{prompt_user}mkdir -p "$PRIVATE_DIR"
+{prompt_user}kubectl --context "$KUBE_CONTEXT" config view --minify --flatten --raw \
+  > "$PRIVATE_DIR/kubeconfig"
+export KUBECONFIG="$PRIVATE_DIR/kubeconfig"
+OBSERVABILITY_DIR="$PWD/observability"
+BACKEND_VALUES="$PRIVATE_DIR/backend-values.yaml"
+AGENT_VALUES="$PRIVATE_DIR/agent-values.yaml"
+SPR_INSTALL_VALUES="$PRIVATE_DIR/spr-install-values.yaml"
+SPR_VALUES="$OBSERVABILITY_DIR/spr-otel.yml"
+# Replace these with your own backend and agent release and namespace names.
+OBSERVABILITY_RELEASE=suse-observability
+OBSERVABILITY_NAMESPACE=suse-observability
+AGENT_RELEASE=suse-observability-agent
+AGENT_NAMESPACE=suse-observability-agent
+----
+
+[IMPORTANT]
+====
+Keep this directory private: the kubeconfig, {helm} value backups, and keys may contain credentials.
+Do not add it to version control.
+The commands in this chapter assume these variables and `KUBECONFIG` remain set; set them again in each new terminal.
+Do not sum node-reported memory: both k3d nodes share the same host.
+Stop if host capacity or {ingress} prerequisites fail; do not recreate the cluster or disturb its existing Rancher installation.
+====
+
+[#pr-observability-https-ingress]
+=== Preparing HTTPS ingress
+
+For an existing {productname} release, preserve its current host name and TLS configuration.
+The fresh-installation example in xref:pr-observability-fresh-install[] uses chart-generated TLS, so prepare only the {sobservability} certificate here.
+Its CA does not establish trust for {productname}'s separate, auto-generated certificate.
+
+Generate a local test CA and SAN-bearing certificates.
+Run this only once in a new private directory, and retain the CA for subsequent deployments rather than overwriting certificates that existing clients already trust.
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}if [[ -e "$PRIVATE_DIR/ca.key" || -e "$PRIVATE_DIR/ca.crt" ]]; then
+  printf 'Existing CA found: reuse it; do not run CA generation again.\n' >&2
+  exit 1
+fi
+{prompt_user}openssl req -x509 -newkey rsa:3072 -nodes -days 365 \
+  -keyout "$PRIVATE_DIR/ca.key" -out "$PRIVATE_DIR/ca.crt" \
+  -subj '/CN=SPR Observability Local Test CA' \
+  -addext 'basicConstraints=critical,CA:TRUE' \
+  -addext 'keyUsage=critical,keyCertSign,cRLSign'
+{prompt_user}for host in observability.example.com; do
+  openssl req -new -newkey rsa:2048 -nodes \
+    -keyout "$PRIVATE_DIR/$host.key" -out "$PRIVATE_DIR/$host.csr" \
+    -subj "/CN=$host"
+  openssl x509 -req -in "$PRIVATE_DIR/$host.csr" \
+    -CA "$PRIVATE_DIR/ca.crt" -CAkey "$PRIVATE_DIR/ca.key" -CAcreateserial \
+    -days 90 -out "$PRIVATE_DIR/$host.crt" \
+    -extfile <(printf 'subjectAltName=DNS:%s\nextendedKeyUsage=serverAuth\n' "$host")
+done
+{prompt_user}kubectl create namespace suse-registry --dry-run=client -o yaml | kubectl apply -f -
+{prompt_user}kubectl create namespace "$OBSERVABILITY_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+{prompt_user}kubectl create secret tls observability-ingress-tls -n "$OBSERVABILITY_NAMESPACE" \
+  --cert="$PRIVATE_DIR/observability.example.com.crt" \
+  --key="$PRIVATE_DIR/observability.example.com.key" \
+  --dry-run=client -o yaml | kubectl apply -f -
+----
+
+Add the following entry to the workstation's `/etc/hosts` using your normal administrative procedure.
+Use the actual {ingress} address instead of `127.0.0.1` if the browser runs on another machine:
+
+[source,text]
+----
+127.0.0.1 core.harbor.domain observability.example.com
+----
+
+[IMPORTANT]
+====
+Import *only* `ca.crt`, never `ca.key`, into the browser's trusted certificate authorities for {sobservability}.
+For its `curl` checks, use `--cacert "$PRIVATE_DIR/ca.crt"`.
+For {productname}, export its active public certificate after installation as shown in xref:pr-observability-fresh-install[].
+Docker clients require {productname}'s trust certificate at `/etc/docker/certs.d/core.harbor.domain/ca.crt`; node container runtimes need their own trust configuration if they pull images from {productname}.
+Host trust changes need administrator approval.
+Do not restart {docker} without planning for the disruption to all k3d nodes.
+Do not use `curl -k` or an insecure-registry exception as proof that HTTPS is configured correctly.
+====
+
+In the private backend values file used in xref:pr-observability-prepare-config[], use this {ingress} configuration (verified against chart `2.12.0` with `helm show values`):
+
+[source,yaml]
+----
+global:
+  imageRegistry: registry.rancher.com
+  storageClass: REPLACE_WITH_STORAGE_CLASS
+  suseObservability:
+    license: REPLACE_WITH_VALID_LICENSE
+    baseUrl: https://observability.example.com
+    sizing:
+      profile: trial
+    adminPassword: REPLACE_WITH_STRONG_OBSERVABILITY_ADMIN_PASSWORD
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  hosts:
+    - host: observability.example.com
+  tls:
+    - secretName: observability-ingress-tls
+      hosts:
+        - observability.example.com
+----
+
+Keep the agent receiver URL internal, as shown in xref:pr-observability-install-agent[].
+HTTPS {ingress} does not require changing the internal HTTP router or the OTLP gateway connection.
+
+[#pr-observability-fresh-install]
+=== Installing {productname} on a fresh cluster
+
+Skip this section if {productname} is already installed; continue instead with xref:pr-observability-existing-install[].
+Create the private file `$SPR_INSTALL_VALUES` in your editor with:
+
+[source,yaml]
+----
+externalURL: https://core.harbor.domain/
+harborAdminPassword: REPLACE_WITH_SEPARATE_SPR_ADMIN_PASSWORD
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: auto
+  ingress:
+    className: traefik
+    hosts:
+      core: core.harbor.domain
+persistence:
+  enabled: true
+trace:
+  enabled: false
+----
+
+Use your SCC mirroring credentials to authenticate the {helm} OCI registry and create the namespace-local image pull secret named `suse-registry`.
+{helm} login and {kube} image authentication are separate.
+A protected Docker auth file containing the credentials can be supplied without putting passwords on the command line:
+
+[source,bash,subs="+attributes"]
+----
+# Authenticate using your normal secret-management workflow first.
+# REGISTRY_AUTH_FILE must name a protected Docker-format auth JSON file.
+{prompt_user}test -s "${REGISTRY_AUTH_FILE:?Set the path to your private registry auth JSON}"
+{prompt_user}kubectl create secret generic suse-registry -n suse-registry \
+  --type=kubernetes.io/dockerconfigjson \
+  --from-file=.dockerconfigjson="$REGISTRY_AUTH_FILE" \
+  --dry-run=client -o yaml | kubectl apply -f -
+{prompt_user}helm show chart oci://registry.suse.com/private-registry/private-registry-helm \
+  --version 1.1.29
+{prompt_user}helm template spr oci://registry.suse.com/private-registry/private-registry-helm \
+  --version 1.1.29 --namespace suse-registry \
+  -f "$SPR_INSTALL_VALUES" > /dev/null
+{prompt_user}helm install spr oci://registry.suse.com/private-registry/private-registry-helm \
+  --version 1.1.29 --namespace suse-registry \
+  -f "$SPR_INSTALL_VALUES" --wait --timeout 15m
+{prompt_user}kubectl get pods,pvc,ingress -n suse-registry
+{prompt_user}mkdir -p "$PRIVATE_DIR/spr-trust"
+SPR_TLS_SECRET=$(kubectl get ingress spr-harbor-ingress -n suse-registry \
+  -o jsonpath='{.spec.tls[0].secretName}')
+{prompt_user}kubectl get secret "$SPR_TLS_SECRET" -n suse-registry \
+  -o go-template='{{index .data "tls.crt"}}' | base64 --decode \
+  > "$PRIVATE_DIR/spr-trust/ca.crt"
+{prompt_user}curl --fail --cacert "$PRIVATE_DIR/spr-trust/ca.crt" \
+  --resolve core.harbor.domain:443:127.0.0.1 \
+  https://core.harbor.domain/api/v2.0/ping
+----
+
+[NOTE]
+====
+A Docker config containing only credential-helper references cannot supply a {kube} image pull secret: use an auth JSON with usable registry credentials.
+Never display its contents in terminal captures.
+====
+
+Open {productname} over HTTPS and verify login before continuing to backend installation.
+Tracing stays disabled until the gateway is ready.
+Exporting the active public certificate does not export the private key.
+Refresh client trust if a reinstall or chart update generates a new certificate; browser trust must also match this certificate, not the {sobservability} CA.
+
+`spr-traefik-otel.yml` is the local combined tracing and Traefik override for a fresh installation.
+It sets `certSource: auto`, the core host name, and `externalURL: https://core.harbor.domain/`.
+
+[IMPORTANT]
+====
+`spr-traefik-otel.yml` may contain a local admin password: do not commit it or print it into screenshots.
+For a new deployment, use a protected deployment copy and your own password.
+For an existing release, use the tracing-only `spr-otel.yml` instead, unless you intentionally want to change its {ingress} and TLS too.
+====
+
+[#pr-observability-existing-install]
+=== Using an existing {productname} installation
+
+[WARNING]
+====
+Do not run the fresh-installation procedure in xref:pr-observability-fresh-install[] or overwrite {productname}'s {ingress} certificates.
+====
+
+Discover the actual release name, namespace, and chart version, then record its revision and private values before making any change:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm list -A
+# Replace these with the existing release's actual identifiers.
+SPR_RELEASE=spr
+SPR_NAMESPACE=suse-registry
+SPR_CHART_VERSION=1.1.29
+{prompt_user}helm history "$SPR_RELEASE" -n "$SPR_NAMESPACE"
+{prompt_user}helm get values "$SPR_RELEASE" -n "$SPR_NAMESPACE" \
+  > "$PRIVATE_DIR/spr-before-values.yaml"
+----
+
+Record the current revision separately for rollback.
+Verify that the exact installed chart supports `trace` and `metrics.serviceMonitor`; stop for a separately planned chart upgrade if it does not.
+Install {sobservability} and its agent using xref:pr-observability-prepare-config[] through xref:pr-observability-install-agent[], then use xref:pr-observability-enable-tracing[] and xref:pr-observability-harbor-metrics[] with *the existing release, namespace, and pinned chart version*.
+Preserve passwords, the external URL, certificates, PVCs, databases, and existing projects.
+`--reuse-values` keeps existing configuration, but it does not replace a database or artifact backup.
+
+Use integration-only overlays; do not pass fresh-install values to an existing release.
+If your namespace differs, adjust `trace.namespace` and the monitoring verification paths too.
+Verify existing image pull and push operations before and after the change.
+To revert a failed configuration rollout:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm rollback "$SPR_RELEASE" "${SPR_PREVIOUS_REVISION:?Set the recorded revision}" \
+  -n "$SPR_NAMESPACE" --wait --timeout 15m
+----
+
+Rollback restores release configuration, not deleted or changed registry data.
+
+[#pr-observability-clean-reinstall]
+==== Optional: Performing a clean reinstall that deletes data
+
+[WARNING]
+====
+This is *not* part of the existing-installation integration path.
+Uninstalling {helm} normally retains {productname} PVCs, including its database.
+Setting `harborAdminPassword` during reinstall does not reset an initialized database's administrator password; this was the cause of the failed login before the clean reset described here.
+====
+
+Use a supported password-recovery procedure if the data must be retained.
+Only for a disposable test installation, after backing up anything needed and explicitly accepting the loss of projects, users, images, jobs, and scanner cache, run the following.
+Inspect the exact claim names first; do not delete the namespace or unrelated claims.
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get pvc -n suse-registry
+# Set this only after explicitly approving deletion of this test registry's data.
+if [[ "${RESET_SPR_DATA:-}" != DELETE_SPR_DATA ]]; then
+  printf 'STOP: data deletion has not been explicitly enabled.\n' >&2
+  exit 1
+fi
+{prompt_user}helm uninstall spr -n suse-registry --wait --timeout 5m
+{prompt_user}kubectl delete pvc -n suse-registry \
+  data-spr-harbor-redis-0 data-spr-harbor-trivy-0 \
+  database-data-spr-harbor-database-0 \
+  spr-harbor-jobservice spr-harbor-registry --wait=true --timeout=5m
+{prompt_user}helm install spr oci://registry.suse.com/private-registry/private-registry-helm \
+  --version 1.1.29 -n suse-registry -f "$SPR_INSTALL_VALUES" \
+  --wait --timeout 15m
+----
+
+Do not delete {sobservability} storage or recreate the k3d cluster.
+A clean reinstall has fresh {helm} history, and old {helm} revisions cannot recover deleted data.
+After explicit approval, deleting the five {productname} claims and reinstalling resets administrator login to the password configured in `$SPR_INSTALL_VALUES`.
+
+[#pr-observability-prepare-config]
+=== Preparing the private configuration
+
+Shared examples are kept in `observability/`.
+Use private deployment copies at the paths set in xref:pr-observability-preflight[]; never replace the shared examples with live credentials.
+
+[#tab-observability-values-files]
+[cols="1,1",options="header"]
+|===
+|Component |Values file
+
+|Backend
+|`global-otel.yml`
+
+|Agent and telemetry gateway
+|`agent-values.yml`
+
+|{productname} tracing
+|`spr-otel.yml`
+|===
+
+[IMPORTANT]
+====
+These files may contain local credentials after configuration.
+Do not stage or commit files containing real license keys, passwords, or service tokens; keep shared versions sanitized with placeholders.
+Use separate passwords for {sobservability} and {productname}.
+Do not paste credentials into chat, commit them, or include them literally in shell history.
+Rotate credentials that have been exposed.
+{helm} release records can also contain sensitive values; restrict access to {kube} Secrets.
+====
+
+[source,bash,subs="+attributes"]
+----
+CLUSTER_NAME=rancher-cluster
+OBSERVABILITY_DIR="$PWD/observability"
+PRIVATE_DIR="$HOME/.config/spr-observability/$CLUSTER_NAME"
+BACKEND_VALUES="$PRIVATE_DIR/backend-values.yaml"
+AGENT_VALUES="$PRIVATE_DIR/agent-values.yaml"
+SPR_VALUES="$OBSERVABILITY_DIR/spr-otel.yml"
+----
+
+These variables only set file paths; they do not create the files.
+Set them again if you switch terminals.
+The backend and agent use different values files.
+
+Create the private backend values file at `$BACKEND_VALUES` using the {ingress} example in xref:pr-observability-https-ingress[], replacing its placeholders locally.
+The following is an alternative configuration only for localhost port-forward access:
+
+[source,yaml]
+----
+global:
+  imageRegistry: registry.rancher.com
+  storageClass: "REPLACE_WITH_STORAGE_CLASS"
+  suseObservability:
+    license: "REPLACE_WITH_VALID_LICENSE"
+    baseUrl: "http://localhost:8080"
+    sizing:
+      profile: trial
+    adminPassword: "REPLACE_WITH_STRONG_OBSERVABILITY_ADMIN_PASSWORD"
+ingress:
+  enabled: false
+----
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}chmod 600 "$BACKEND_VALUES"
+----
+
+Keep shared examples sanitized and private values outside the workspace.
+Do not pass backend credentials to the {productname} or agent chart.
+
+[#pr-observability-install-backend]
+=== Installing the backend
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm repo add suse-observability \
+  https://charts.rancher.com/server-charts/prime/suse-observability
+{prompt_user}helm repo update suse-observability
+{prompt_user}helm upgrade --install "$OBSERVABILITY_RELEASE" suse-observability/suse-observability \
+  --version 2.12.0 \
+  --namespace "$OBSERVABILITY_NAMESPACE" --create-namespace \
+  -f "$BACKEND_VALUES" \
+  --wait --timeout 45m
+{prompt_user}kubectl get pods -n "$OBSERVABILITY_NAMESPACE"
+{prompt_user}helm list -n "$OBSERVABILITY_NAMESPACE" -a
+----
+
+[NOTE]
+====
+These are {helm} values, not {kube} manifests.
+`kubectl apply -f` cannot install them because they do not define {kube} resources with `apiVersion` and `kind`.
+====
+
+Initial image downloads can take many minutes.
+All backend workloads should eventually become ready before proceeding.
+
+[#pr-observability-configure-integrations]
+=== Opening the UI and configuring integrations
+
+[#pr-observability-https-access]
+==== Accessing the UI through an HTTPS domain
+
+This matches the HTTPS {ingress} setup in xref:pr-observability-https-ingress[].
+With `baseUrl: "https://observability.example.com"`, open that URL.
+Replace the example domain with your actual host name, and configure DNS, a trusted TLS certificate, and an {ingress} or reverse proxy routing to the {sobservability} router.
+Setting `baseUrl` alone does not create any of those resources.
+With `ingress.enabled: false`, an external {ingress} or reverse proxy must be configured separately.
+
+[#pr-observability-local-access]
+==== Accessing the UI locally through port-forward
+
+For a quick local test instead of the HTTPS {ingress} setup, with `global.suseObservability.baseUrl: "http://localhost:8080"` and `ingress.enabled: false` in `global-otel.yml` as created in xref:pr-observability-prepare-config[], run this in a dedicated terminal:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl port-forward --address 127.0.0.1 -n "$OBSERVABILITY_NAMESPACE" \
+  "service/${OBSERVABILITY_RELEASE}-router" 8080:8080
+----
+
+Open `http://localhost:8080` and log in as `admin` using the {sobservability} password, keeping the port-forward running while using the UI.
+
+[NOTE]
+====
+A port-forward only forwards TCP traffic; it does not add HTTPS or work with an HTTPS-domain `baseUrl`. Do not use `https://localhost:8080` here, and release port 8080 first if it is occupied.
+====
+
+[#pr-observability-ui-configure-integrations]
+.Configuring integrations
+In the UI:
+
+. In *StackPacks*, open *Kubernetes*, enter your cluster name (`$CLUSTER_NAME` from xref:pr-observability-preflight[]) as the cluster name, and click *Install*. Expand the installed instance.
+. Under *Instance credentials*, select *Create New Service Token*. Store the generated token directly in your private agent values, and close the token dialog before taking screenshots. A service token is not the same as either administrator password.
+. Return to the StackPack page, open *Open Telemetry* (the UI uses a space), and click *Install*. This can also be done after deploying the agent, but complete it before validating traces. Wait for its instance to become Active.
++
+[#fig-observability-installed-stackpacks]
+.Installed Kubernetes and Open Telemetry StackPacks
+image::observability-installed-stackpacks.png[Installed Kubernetes and Open Telemetry StackPacks,width=100%]
++
+This includes Kubernetes, its agent and add-on dependencies, and Open Telemetry.
+The screenshot shows the final installed state, not the credential-creation dialog.
+
+[#pr-observability-install-agent]
+=== Installing the agent and telemetry gateway
+
+Use `agent-values.yml` as the structure for a private deployment copy.
+If using a new terminal, set its path again using the private directory from xref:pr-observability-prepare-config[]:
+
+[source,bash,subs="+attributes"]
+----
+AGENT_VALUES="$PRIVATE_DIR/agent-values.yaml"
+----
+
+Create the file at `$AGENT_VALUES` in your editor and replace `REPLACE_WITH_SERVICE_TOKEN` with the token from the integration, `REPLACE_WITH_CLUSTER_NAME` with the same cluster name used for `$CLUSTER_NAME` and entered in the UI, and `REPLACE_WITH_OBSERVABILITY_RELEASE`/`REPLACE_WITH_OBSERVABILITY_NAMESPACE` in the URL with the same values as `$OBSERVABILITY_RELEASE` and `$OBSERVABILITY_NAMESPACE`.
+Its structure must be:
+
+[source,yaml]
+----
+stackstate:
+  apiKey: "REPLACE_WITH_SERVICE_TOKEN"
+  cluster:
+    name: REPLACE_WITH_CLUSTER_NAME
+  url: http://REPLACE_WITH_OBSERVABILITY_RELEASE-router.REPLACE_WITH_OBSERVABILITY_NAMESPACE.svc.cluster.local:8080/receiver/stsAgent
+nodeAgent:
+  skipKubeletTLSVerify: true
+  protocolInspection:
+    enabled: false
+  httpTracing:
+    enabled: false
+otel:
+  enabled: true
+  prometheusScraping:
+    enabled: true
+    monitorCrds:
+      enabled: true
+      keep: true
+  integrations:
+    rancherAgent: false
+  telemetryGateway:
+    enabled: true
+----
+
+Prometheus scraping requires the `ServiceMonitor` and `PodMonitor` custom resource definitions (CRDs).
+Chart `1.7.19` supports installing them with `otel.prometheusScraping.monitorCrds.enabled`.
+
+[NOTE]
+====
+Enable `monitorCrds.enabled` only when the CRDs are absent; when another installation already manages them, omit that setting rather than taking ownership.
+`keep: true` retains chart-managed CRDs on uninstall.
+This does not install a Prometheus server.
+====
+
+The agent's Target Allocator selects monitors labeled `observability.suse.com/agent: scrape` by default.
+Keep the existing private service token in this file; never copy it into a public values file or log.
+
+`skipKubeletTLSVerify: true` is a local test accommodation.
+For production, configure valid kubelet certificates and retain TLS verification.
+The `rancherAgent` integration is disabled here by default; enable it separately if required by your monitoring scope.
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}chmod 600 "$AGENT_VALUES"
+{prompt_user}helm template "$AGENT_RELEASE" \
+  suse-observability/suse-observability-agent \
+  --version 1.7.19 \
+  --namespace "$AGENT_NAMESPACE" \
+  -f "$AGENT_VALUES" > /dev/null
+----
+
+This checks the values schema and renders the chart locally without changing the cluster.
+Continue only if it succeeds; it does not validate the token against the backend.
+Do not use the backend values file (`$BACKEND_VALUES` or `global-otel.yml`) for the agent.
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm upgrade --install "$AGENT_RELEASE" \
+  suse-observability/suse-observability-agent \
+  --version 1.7.19 \
+  --namespace "$AGENT_NAMESPACE" --create-namespace \
+  -f "$AGENT_VALUES" \
+  --wait --timeout 45m
+{prompt_user}kubectl get pods,services -n "$AGENT_NAMESPACE"
+----
+
+The gateway Service should be named `${AGENT_RELEASE}-otel-telemetry-gateway` and expose ports 4317 (gRPC) and 4318 (HTTP).
+Its gateway pod must be ready before enabling {productname} tracing.
+
+After ingestion begins, reopen the Kubernetes StackPack and confirm that your cluster's instance (`$CLUSTER_NAME`) becomes *Active* rather than *Waiting for data*.
+The following example shows the instance named `rancher-cluster`; yours shows the cluster name you entered.
+
+[#fig-observability-cluster-active]
+.Kubernetes integration rancher-cluster is Active
+image::observability-cluster-active.png[Kubernetes integration rancher-cluster is Active,width=100%]
+
+[NOTE]
+====
+Node-agent pods can initially report `2/2` Ready and then have their process-agent containers restart because tracefs and debugfs are unavailable.
+If that happens, apply the mount workaround in xref:pr-observability-tracefs-debugfs[] inside both k3d nodes, then restart only the node-agent DaemonSet.
+Do not equate initial readiness, or an Active cluster integration, with stable eBPF collection: check subsequent restart counts and logs, including the shared-kernel kprobe limitation in xref:pr-observability-busy-kprobes[].
+{productname} traces and {harbor} metric scraping use separate collectors; verify each independently.
+====
+
+Do not use `http://localhost:8080/receiver/stsAgent` as the agent URL: `localhost` inside a pod refers to that pod, not the backend or your workstation.
+
+If NetworkPolicies restrict traffic, allow {harbor} pods in `suse-registry` to reach the gateway on TCP 4318, and the agent namespace to reach the backend router on TCP 8080.
+Preserve required DNS and {kube} API access.
+
+[#pr-observability-enable-tracing]
+=== Enabling {productname} tracing
+
+The release-specific override is `spr-otel.yml`:
+
+[source,yaml]
+----
+trace:
+  enabled: true
+  provider: otel
+  namespace: suse-registry
+  otel:
+    endpoint: REPLACE_WITH_AGENT_RELEASE-otel-telemetry-gateway.REPLACE_WITH_AGENT_NAMESPACE.svc.cluster.local:4318
+    url_path: /v1/traces
+    compression: false
+    insecure: true
+    timeout: 10
+----
+
+Replace `REPLACE_WITH_AGENT_RELEASE` and `REPLACE_WITH_AGENT_NAMESPACE` with the same values as `$AGENT_RELEASE` and `$AGENT_NAMESPACE`.
+{harbor} expects the endpoint as `host:port`, without `http://` or the URL path.
+`insecure: true` selects plaintext HTTP for this in-cluster test connection.
+The namespace value identifies the {harbor} trace namespace; it is not a substitute for authoritative {kube} metadata enrichment by the gateway.
+
+Inspect the release and record its current revision for rollback:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm list -n suse-registry
+{prompt_user}helm history spr -n suse-registry
+----
+
+Obtain the exact installed chart artifact before upgrading.
+Do not replace existing release values with chart defaults.
+Use the tracing-only overlay for an existing registry; the combined Traefik overlay also changes {ingress} and TLS.
+
+[source,bash,subs="+attributes"]
+----
+SPR_RELEASE="${SPR_RELEASE:-spr}"
+SPR_NAMESPACE="${SPR_NAMESPACE:-suse-registry}"
+SPR_CHART_VERSION="${SPR_CHART_VERSION:-1.1.29}"
+SPR_VALUES="$PWD/observability/spr-otel.yml"
+{prompt_user}helm upgrade "$SPR_RELEASE" oci://registry.suse.com/private-registry/private-registry-helm \
+  --version "$SPR_CHART_VERSION" --namespace "$SPR_NAMESPACE" \
+  --reuse-values -f "$SPR_VALUES" \
+  --wait --timeout 10m
+{prompt_user}kubectl get pods -n suse-registry
+----
+
+The upgrade rolls out {harbor} core, jobservice, and the registry pod containing registryctl.
+By default, the release inherits a trace sample rate of 1 (100%).
+Tune `trace.sample_rate` if necessary to control telemetry volume.
+
+[#pr-observability-verify-e2e]
+=== Verifying the integration end to end
+
+Generate normal {harbor} traffic, such as browsing projects or pushing and pulling a test image.
+For example, create a private project named `observability-test`, then push and pull `busybox:1.37` with {skopeo} using a private auth file and {productname}'s active certificate.
+{skopeo} permits per-command CA trust, so this does not require restarting Docker or disabling TLS verification.
+
+Create the test project through the {productname} UI.
+Prepare a protected Docker-format `$PRIVATE_DIR/spr-auth.json` using your normal credential-management workflow; do not put a plaintext password into command arguments.
+Then, for example:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}skopeo copy --override-os linux --override-arch amd64 \
+  --dest-authfile "$PRIVATE_DIR/spr-auth.json" \
+  --dest-cert-dir "$PRIVATE_DIR/spr-trust" \
+  docker://docker.io/library/busybox:1.37 \
+  docker://core.harbor.domain/observability-test/busybox:1.37
+{prompt_user}skopeo copy --src-authfile "$PRIVATE_DIR/spr-auth.json" \
+  --src-cert-dir "$PRIVATE_DIR/spr-trust" \
+  docker://core.harbor.domain/observability-test/busybox:1.37 \
+  "dir:$PRIVATE_DIR/pulled-test-image"
+----
+
+[#fig-observability-test-artifact]
+.{productname} test repository containing the pushed busybox artifact
+image::spr-test-artifact.png[{productname} test repository containing the pushed busybox artifact,width=100%]
+
+The screenshot shows tag `1.37` in the test project after the push and pull.
+This does not include a vulnerability scan or SBOM generation.
+
+Check gateway counters without exposing authentication settings:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get --raw \
+  "/api/v1/namespaces/$AGENT_NAMESPACE/services/http:${AGENT_RELEASE}-otel-telemetry-gateway:8888/proxy/metrics" \
+  | grep -E '^otelcol_(receiver_(accepted|refused)_spans|exporter_(sent|send_failed)_spans)'
+----
+
+Accepted and sent span counters should increase, while refused spans and export failures should not.
+Counter names can include a `_total` suffix depending on the collector version.
+Some counters are absent until the first matching event, and export batching means accepted and sent counts need not match immediately.
+
+In the Trace Explorer, select a recent time range and look for:
+
+* `harbor-core`
+* `harbor-jobservice`
+* `harbor-registryctl`
+
+[#fig-observability-harbor-traces]
+.Trace Explorer showing Harbor core, jobservice, and registryctl spans
+image::observability-harbor-traces.png[Trace Explorer showing Harbor core jobservice and registryctl spans,width=100%]
+
+The Traces view should show all three {harbor} services with recent timestamps.
+Queryable backend traces, not just gateway acceptance, confirm the integration end to end.
+
+[#pr-observability-harbor-metrics]
+=== Enabling and verifying {harbor} metrics
+
+{harbor} metrics are separate from tracing.
+{harbor}'s chart defaults `metrics.enabled` to `false`; the {sobservability} agent also needs Prometheus scraping enabled.
+The agent Target Allocator selects `ServiceMonitor` resources with the label `observability.suse.com/agent: scrape`, so add that label to {harbor}'s monitor.
+The matching `ServiceMonitor` and `PodMonitor` CRDs must already be installed.
+
+First confirm the active release and chart versions; do not upgrade a release with unrelated chart defaults or replace its existing configuration:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm list -n suse-registry
+{prompt_user}helm list -n "$AGENT_NAMESPACE"
+{prompt_user}kubectl get crd servicemonitors.monitoring.coreos.com podmonitors.monitoring.coreos.com
+----
+
+Enable {harbor}'s metrics endpoints and create a labeled `ServiceMonitor`.
+The following command uses the exact installed chart version and `--reuse-values` to preserve the rest of the deployed release:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm upgrade "$SPR_RELEASE" oci://registry.suse.com/private-registry/private-registry-helm \
+  --version "$SPR_CHART_VERSION" --namespace "$SPR_NAMESPACE" --reuse-values \
+  --set metrics.enabled=true \
+  --set metrics.serviceMonitor.enabled=true \
+  --set-json 'metrics.serviceMonitor.additionalLabels={"observability.suse.com/agent":"scrape"}' \
+  --wait --timeout 10m
+----
+
+Use the exact installed chart artifact and version.
+Enable the scraper on the installed agent release while preserving its existing values and service token:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm upgrade "$AGENT_RELEASE" \
+  suse-observability/suse-observability-agent \
+  --version 1.7.19 --namespace "$AGENT_NAMESPACE" \
+  --reuse-values --set otel.prometheusScraping.enabled=true \
+  --wait --timeout 10m
+----
+
+The same scraper setting is enabled in `agent-values.yml` so that future upgrades from that values file keep the intended configuration.
+
+Confirm that {harbor}'s exporter is ready and returns metrics, and that the monitor has the selector label:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get pods,services -n suse-registry
+{prompt_user}kubectl get servicemonitor -n suse-registry spr-harbor --show-labels
+{prompt_user}kubectl get --raw \
+  /api/v1/namespaces/suse-registry/services/http:spr-harbor-exporter:8001/proxy/metrics \
+  | grep '^harbor_' | head
+{prompt_user}kubectl get pods -n "$AGENT_NAMESPACE"
+----
+
+The agent should run `otel-metrics-scraper` and `otel-target-allocator` pods.
+The Target Allocator's `/scrape_configs` endpoint should include `serviceMonitor/suse-registry/spr-harbor/0`:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl get --raw \
+  "/api/v1/namespaces/$AGENT_NAMESPACE/services/http:${AGENT_RELEASE}-otel-target-allocator:8080/proxy/scrape_configs" \
+  | grep 'serviceMonitor/suse-registry/spr-harbor/0'
+----
+
+After allowing at least one scrape interval, open Metrics and enter a metric name such as `harbor_project_total`, then click *Refresh*.
+To verify that any {harbor} series have arrived, use the PromQL query:
+
+[source,promql]
+----
+count({__name__=~".*harbor.*"})
+----
+
+The count query returns the number of matching {harbor} time series; it is not a {harbor} business metric.
+To graph a specific metric, query `harbor_project_total` or another `harbor_` name from the exporter's `/metrics` output.
+Check that the time range covers recent scrape times and refresh the query.
+A populated exporter endpoint and a discovered scrape job prove that scraping is configured, but the Metrics UI query is the end-to-end check that confirms the backend has ingested the data.
+
+The exporter serves metrics including `harbor_project_total` and `harbor_health`; the scraper discovers the {harbor} ServiceMonitor and exports metric points.
+
+[#fig-observability-harbor-metrics]
+.Metrics query harbor_project_total returning ingested Harbor series
+image::observability-harbor-metrics.png[Metrics query harbor_project_total returning ingested Harbor series,width=100%]
+
+The query should return populated series in the selected recent time range.
+Public and private projects produce separate series; do not interpret each series as the total across all project types.
+
+[#pr-observability-dashboard]
+=== Using the {productname} metrics dashboard
+
+Open the saved *SPR Registry Overview* dashboard, or select it under *Dashboards*.
+It is starred and private to the user who created it; sign in with that account to view it.
+Dashboard creation does not enable public access or change the {helm} releases.
+
+The reusable definition is `spr-dashboard.yaml`.
+It uses the native {sobservability} dashboard format, not a {kube} manifest or {helm} values file.
+All queries are scoped to `namespace="suse-registry"`.
+
+[#tab-observability-dashboard-panels]
+[cols="1,2",options="header"]
+|===
+|Panel |Meaning
+
+|Registry Health
+|Minimum {harbor} health: 1 is healthy, 0 is unhealthy; missing data is not healthy.
+
+|Projects
+|Public and private project counts combined.
+
+|Repositories
+|Repository count across all projects.
+
+|Stored Artifacts
+|Artifact count across projects and artifact types.
+
+|Storage Usage (MiB)
+|Project quota usage in MiB, not free disk space on the registry volume.
+
+|Artifact Pulls by Project
+|Exporter-reported pull gauge, not a requests-per-second rate.
+
+|Projects by Visibility
+|Project counts split by the `public` label; `true` is public.
+
+|Pending Jobs
+|Sum of queued jobs across job types; zero is a valid result.
+|===
+
+[#fig-observability-spr-dashboard]
+.SPR Registry Overview with eight populated Harbor metric panels
+image::observability-spr-dashboard.png[SPR Registry Overview with eight populated Harbor metric panels,width=100%]
+
+When reloaded, the saved dashboard should show data in all eight panels.
+
+[#pr-observability-import-dashboard]
+.Recreating the dashboard on another {sobservability} installation
+The following steps use a temporary private dashboard named `SPR Dashboard Import Walkthrough` for illustration; the working `SPR Registry Overview` dashboard is unaffected.
+Choose your own dashboard name when following these steps.
+The screenshots show example metric values, not fixed expected values.
+
+. Verify that {harbor} metrics are ingested using xref:pr-observability-harbor-metrics[].
+. Select *Dashboards*, *Add new dashboard*, enter `SPR Registry Overview`, optionally star it, and select *Create dashboard*. Leave *Make it public* disabled unless sharing is intended.
++
+[#fig-observability-dashboard-import-create]
+.Creating a private dashboard using the Add New Dashboard form
+image::spr-dashboard-import-01-create.png[Creating a private dashboard using the Add New Dashboard form,width=100%]
+. Open *Show more actions*, *Edit dashboard YAML*, and replace the editor contents with the full contents shown in xref:pr-observability-spr-dashboard-yaml[].
++
+[#fig-observability-dashboard-import-menu]
+.Opening Edit dashboard YAML from the dashboard actions menu
+image::spr-dashboard-import-02-menu.png[Opening Edit dashboard YAML from the dashboard actions menu,width=100%]
++
+Wait for the paste to finish, and confirm that `spec.panels` contains the panel definitions rather than the empty template `panels: {}` before continuing.
++
+[#fig-observability-dashboard-import-yaml]
+.Dashboard YAML editor populated with the SPR panel definitions
+image::spr-dashboard-import-03-yaml.png[Dashboard YAML editor populated with the SPR panel definitions,width=100%]
+. Select *Update dashboard definition*, then *Save dashboard*. Updating the YAML alone does not persist the change; the asterisk beside the dashboard name indicates unsaved changes.
++
+[#fig-observability-dashboard-import-save]
+.Saving the dashboard after applying the imported YAML definition
+image::spr-dashboard-import-04-save.png[Saving the dashboard after applying the imported YAML definition,width=100%]
+. Reload the page and check the values and charts over a recent time range. Adjust the namespace selector for a registry installed elsewhere. All eight panels should populate; investigate missing data rather than treating it as zero.
++
+[#fig-observability-dashboard-import-verify]
+.Saved and reloaded imported SPR dashboard with populated metric panels
+image::spr-dashboard-import-05-verify.png[Saved and reloaded imported SPR dashboard with populated metric panels,width=100%]
+
+The dashboard URL is installation-specific; a recreated dashboard receives a new ID.
+
+[NOTE]
+====
+If the backend receives multiple clusters or multiple registries in the same namespace, add the appropriate verified cluster and release labels to every query before interpreting aggregate values as one registry's totals.
+Empty charts must be investigated as missing data, not converted to zero with a fallback.
+====
+
+This installation's ingested `harbor_up` series reports `component="exporter"` rather than preserving the individual {harbor} component names.
+The dashboard therefore does not present that label as per-component health.
+Investigate label preservation separately before adding an individual-component health panel.
+
+[#pr-observability-troubleshooting]
+=== Troubleshooting
+
+[#pr-observability-null-agent-url]
+==== Helm reports a null agent URL or cluster name
+
+Errors such as `/stackstate/url: got null, want string` and `/stackstate/cluster/name: got null, want string` mean the effective agent values are missing these required strings.
+This happens before any agent pods are created; it is not a backend connectivity error.
+
+Confirm that `$AGENT_VALUES` points to the private agent deployment file from xref:pr-observability-install-agent[], not the backend values file or an empty file:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}printf 'Agent values file: %s\n' "${AGENT_VALUES:?Set AGENT_VALUES as shown in the agent installation section}"
+{prompt_user}test -s "$AGENT_VALUES" || { printf 'Agent values file is missing or empty\n' >&2; false; }
+----
+
+In your editor, verify that `stackstate` is at the YAML top level and contains `url`, `cluster.name`, and `apiKey` as shown in xref:pr-observability-install-agent[].
+Do not print the file into shared logs because it contains the service token.
+Run the `helm template` check in xref:pr-observability-install-agent[] again before retrying installation.
+
+The `global.url.fromSecret` schema message describes an alternative Secret-based configuration; you do not need it when providing `stackstate.url` directly.
+A message such as `Release "$AGENT_RELEASE" does not exist. Installing it now.` is normal on the first installation.
+
+[#pr-observability-missing-api-key]
+==== Helm reports "Please provide an api key"
+
+The agent token was missing or empty.
+Set `stackstate.apiKey` in the private agent values file.
+If using a shell variable instead, confirm it is nonempty without printing it; variables are not automatically shared between terminal sessions.
+
+[#pr-observability-tracefs-debugfs]
+==== Process agent crashes on k3d: tracefs or debugfs unavailable
+
+If a node-agent pod shows `1/2` and its `process-agent` logs report `eBPF based network tracer unsupported: tracefs or debugfs is not available`, check mounts inside the k3d nodes, not just on the Linux host.
+The chart mounts the node's `/sys/kernel/debug` into the privileged process-agent container.
+A host mount at `/sys/kernel/tracing` alone does not provide that path inside Docker-based k3d nodes.
+
+For the local cluster's nodes, install `k3d-entrypoint-observability.sh`:
+
+[source,bash,subs="+attributes"]
+----
+CLUSTER_NAME=rancher-cluster
+OBSERVABILITY_DIR="$PWD/observability"
+{prompt_user}(
+  set -eu
+  for node in "k3d-$CLUSTER_NAME-server-0" "k3d-$CLUSTER_NAME-agent-0"; do
+    docker cp "$OBSERVABILITY_DIR/k3d-entrypoint-observability.sh" \
+      "$node:/bin/k3d-entrypoint-observability.sh"
+    docker exec "$node" chmod 755 /bin/k3d-entrypoint-observability.sh
+    docker exec "$node" /bin/k3d-entrypoint-observability.sh
+  done
+)
+----
+
+Confirm that both nodes have `debugfs` at `/sys/kernel/debug` and `tracefs` at `/sys/kernel/debug/tracing` before continuing.
+This changes only the node containers' mount namespaces; it does not change host mount configuration.
+The script is idempotent and uses the installed k3d entrypoint's `/bin/k3d-entrypoint-*.sh` startup hook: it runs before k3s on subsequent node container starts, and it survives stops and restarts of these containers.
+It must be installed again if nodes are deleted, recreated, or added.
+Verify the startup-hook mechanism when changing k3d versions.
+
+Recreate only the agent pods so their existing hostPath binds pick up the mounts:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl rollout restart "daemonset/${AGENT_RELEASE}-node-agent" \
+  -n "$AGENT_NAMESPACE"
+{prompt_user}kubectl rollout status "daemonset/${AGENT_RELEASE}-node-agent" \
+  -n "$AGENT_NAMESPACE" --timeout=5m
+{prompt_user}kubectl get pods -n "$AGENT_NAMESPACE" -o wide
+----
+
+Keep the process agent enabled.
+Confirm that both containers are ready, restart counts remain stable, and the process-agent logs show a running network tracer, not repeated eBPF initialization errors.
+Mount availability fixes this specific failure; ingestion credentials and other kernel compatibility issues must still be checked separately.
+
+[IMPORTANT]
+====
+Debugfs exposes sensitive kernel interfaces: use this workaround only for the intended privileged agent in this local test cluster.
+====
+
+[#pr-observability-busy-kprobes]
+===== Busy kprobes after the mount fix
+
+For this local k3d installation, protocol inspection and node-agent HTTP tracing were disabled with the following same-version upgrade:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm --kube-context "$KUBE_CONTEXT" upgrade "$AGENT_RELEASE" \
+  suse-observability/suse-observability-agent \
+  -n "$AGENT_NAMESPACE" --version 1.7.19 --reuse-values \
+  --set nodeAgent.protocolInspection.enabled=false \
+  --set nodeAgent.httpTracing.enabled=false \
+  --wait --timeout 5m
+----
+
+After the upgrade, confirm both settings are `false` and that the new node-agent pods report `2/2` Ready with zero restarts.
+Keep these settings in the private agent values file as shown in xref:pr-observability-install-agent[].
+This reduces node-agent protocol and HTTP tracing coverage; it does not disable {productname}'s application-level OTLP traces or the separate {harbor} metrics scraper.
+Initial readiness does not establish long-term stability or prove that every shared-kernel kprobe failure is resolved.
+
+The mount fix alone may not be sufficient for stable process-agent operation on both nodes: after initially becoming ready, the worker process agent can restart with `failed to cleanup tracefs` and `kprobe_events: device or resource busy`.
+
+The failing cleanup targets probe names ending in the live server process agent's PID.
+
+When cleanup checks for a PID:
+* *Server node's `/proc`* — PID exists (process still running)
+* *Worker node's `/proc`* — PID does not exist (process stopped, probe is stale)
+
+Both nodes share kernel-wide kprobe registrations but have separate PID namespaces.
+The eBPF manager checks process existence via `HOST_PROC` → `/host/proc`, which reads each node's local PID view.
+This is why another node's live probes appear stale.
+
+[WARNING]
+====
+Do not delete or clear `kprobe_events`: the probes can belong to a working collector.
+Do not treat brief `2/2` readiness as proof of recovery; monitor restart counts and successful collection for several minutes.
+====
+
+Both process agents remain enabled, but a safe multi-node k3d fix has not been verified.
+Preserving full visibility requires either:
+
+* An agent fix that handles shared-kernel + PID-namespace separation
+* Nodes with separate kernels (VM-backed nodes instead of k3d)
+
+Mounting the host's `/proc` into collectors is not an equivalent fix—it changes process scope and may expose unrelated workloads.
+
+[#pr-observability-init-error]
+==== Pods show Init:Error or Init:0/1
+
+An init container can be waiting for a dependency.
+Inspect its logs and pod events:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl logs "${OBSERVABILITY_RELEASE}-otel-collector-0" -n "$OBSERVABILITY_NAMESPACE" \
+  -c otel-collector-init --tail=30
+{prompt_user}kubectl logs "${OBSERVABILITY_RELEASE}-otel-collector-0" -n "$OBSERVABILITY_NAMESPACE" \
+  -c otel-collector-init --previous --tail=30
+{prompt_user}kubectl get events -n "$OBSERVABILITY_NAMESPACE" --sort-by=.lastTimestamp
+{prompt_user}kubectl get pvc -n "$OBSERVABILITY_NAMESPACE"
+----
+
+The collector can wait for ClickHouse on port 9000, while topic creation waits for Kafka on port 9092.
+ClickHouse's main image can take over 10 minutes to download, along with its backup sidecar.
+Check actual events rather than assuming every init failure is a configuration error.
+Investigate `ImagePullBackOff`, authentication errors, insufficient resources, failed mounts, and disk pressure separately.
+
+[WARNING]
+====
+Do not delete PVCs as a startup troubleshooting step.
+====
+
+[#pr-observability-helm-reports-failed]
+==== Pods are ready but Helm still reports failed
+
+A {helm} wait timeout does not stop the created workloads.
+Check pods, Jobs, and release history before retrying.
+A backend release can remain marked `failed` after its workloads become ready.
+Reconcile it using the same version and intended configuration:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm upgrade "$OBSERVABILITY_RELEASE" suse-observability/suse-observability \
+  --version 2.12.0 --namespace "$OBSERVABILITY_NAMESPACE" \
+  --reuse-values -f "$BACKEND_VALUES" --wait --timeout 45m
+----
+
+[#pr-observability-metrics-missing]
+==== Harbor metrics do not appear in Metrics
+
+Check the exporter endpoint and monitor discovery first, as described in xref:pr-observability-harbor-metrics[].
+In Metrics, set a recent time range and run `count({__name__=~".*harbor.*"})` to confirm that {harbor} time series are present.
+Then query a specific metric such as `harbor_project_total`.
+The general count is a discovery aid, not a {harbor} business metric.
+If the count query has data but a specific metric does not, copy an exact metric name from the exporter's `/metrics` output; the chart can omit some {harbor} metrics in some releases.
+
+[#pr-observability-traces-missing]
+==== Traces do not appear
+
+Verify gateway readiness, its HTTP Service port, {productname} tracing values, network reachability, the agent token and backend URL, the OpenTelemetry StackPack, and the UI time range.
+Check gateway logs for authentication or export errors:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}kubectl logs -n "$AGENT_NAMESPACE" \
+  -l app.kubernetes.io/component=otel-telemetry-gateway --tail=100
+----
+
+Sanitize logs and configuration before sharing them.
+Gateway acceptance alone does not prove that traces are queryable in the backend.
+
+[#pr-observability-disable-tracing]
+=== Disabling tracing or rolling back
+
+Disable tracing without uninstalling the backend or agent:
+
+[source,bash,subs="+attributes"]
+----
+{prompt_user}helm upgrade "$SPR_RELEASE" oci://registry.suse.com/private-registry/private-registry-helm \
+  --version "$SPR_CHART_VERSION" -n "$SPR_NAMESPACE" \
+  --reuse-values --set trace.enabled=false --wait --timeout 10m
+----
+
+This changes the deployed release, not the override file.
+Also set `trace.enabled: false` in your deployment configuration to keep it disabled on subsequent upgrades.
+
+Alternatively, use `helm history spr -n suse-registry` to identify the revision before tracing was enabled, then run `helm rollback spr REVISION -n suse-registry --wait --timeout 10m`, replacing `REVISION` with that number.
+
+[NOTE]
+====
+A rollback restores the entire selected release revision, not just the tracing values.
+====
+
+[#pr-observability-references]
+=== References
+
+* link:https://documentation.suse.com/cloudnative/suse-observability/latest/en/setup/otel/getting-started/getting-started-k8s.html[Getting started with OpenTelemetry on Kubernetes]
+* link:https://documentation.suse.com/cloudnative/suse-observability/latest/en/setup/otel/telemetry-gateway.html[Telemetry gateway]
+* link:https://documentation.suse.com/cloudnative/suse-observability/latest/en/setup/install-stackstate/kubernetes_openshift/kubernetes_install.html[Backend installation]
+* link:https://documentation.suse.com/cloudnative/suse-observability/latest/en/setup/install-stackstate/requirements.html[Resource requirements]
+* link:https://documentation.suse.com/cloudnative/suse-observability/latest/en/k8s-quick-start-guide.html[Kubernetes integration quick start]
