@@ -10,7 +10,7 @@ The database, cache, image storage, {ingress} endpoint, and {kube} cluster must 
 
 This topic describes the {productnameshort}-specific choices and trade-offs.
 For {kube} control-plane and worker-node design, see the https://kubernetes.io/docs/setup/production-environment/production-environment/[Kubernetes production environment documentation].
-For Rancher-managed clusters, see the https://ranchermanager.docs.rancher.com/cluster-deployment/production-checklist/production-installation-checklist[Rancher production installation checklist].
+For Rancher-managed clusters, see the https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-deployment/production-checklist/production-checklist.html[Rancher production installation checklist].
 
 [#pr-deployment-ha-architecture]
 === Understanding the {hasetup}
