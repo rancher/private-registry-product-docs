@@ -6,11 +6,11 @@ include::../common/generic-attributes.adoc[]
 You can use {helm} to deploy the highly available (HA) {productnameshort} on a {kube} cluster.
 An HA deployment reduces interruptions when a pod or worker node becomes unavailable.
 It does not protect the registry from every failure.
-The database, cache, image storage, {ingress} endpoint, and {kube} cluster must also remain available.
+The database, cache, image storage, {ingress} endpoint and {kube} cluster must also remain available.
 
 This topic describes the {productnameshort}-specific choices and trade-offs.
-For {kube} control-plane and worker-node design, see the https://kubernetes.io/docs/setup/production-environment/production-environment/[Kubernetes production environment documentation].
-For Rancher-managed clusters, see the https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-deployment/production-checklist/production-checklist.html[Rancher production installation checklist].
+For {kube} control-plane and worker-node design, see the https://kubernetes.io/docs/setup/production-environment/[Kubernetes production environment documentation].
+For Rancher-managed clusters, see the link:https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-deployment/production-checklist/production-checklist.html[{ranchera} production installation checklist].
 
 [#pr-deployment-ha-architecture]
 === Understanding the {hasetup}
@@ -21,11 +21,11 @@ This protects the application from a pod or node failure, but only when the repl
 
 The stateful parts of the deployment require separate resilience decisions:
 
-* {postgresql} stores registry metadata, projects, users, and configuration.
-* {valkey} or {redis} stores sessions, queues, and cache data.
+* {postgresql} stores registry metadata, projects, users and configuration.
+* {valkey} or {redis} stores sessions, queues and cache data.
 * Image and chart storage holds the registry content.
 * Persistent volumes hold database data, job logs, and scanner data when the corresponding chart settings use PVCs.
-* The {ingress} controller, load balancer, DNS, and TLS endpoint provide access to the registry.
+* The {ingress} controller, load balancer, DNS and TLS endpoint provide access to the registry.
 
 {productnameshort} does not deploy or manage HA for these external endpoints and services.
 
