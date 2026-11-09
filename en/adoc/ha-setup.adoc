@@ -9,8 +9,8 @@ It does not protect the registry from every failure.
 The database, cache, image storage, {ingress} endpoint and {kube} cluster must also remain available.
 
 This topic describes the {productnameshort}-specific choices and trade-offs.
-For {kube} control-plane and worker-node design, see the https://kubernetes.io/docs/setup/production-environment/production-environment/[Kubernetes production environment documentation].
-For Rancher-managed clusters, see the https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-deployment/production-checklist/production-checklist.html[Rancher production installation checklist].
+For {kube} control-plane and worker-node design, see the https://kubernetes.io/docs/setup/production-environment/[Kubernetes production environment documentation].
+For Rancher-managed clusters, see the link:https://documentation.suse.com/cloudnative/rancher-manager/latest/en/cluster-deployment/production-checklist/production-checklist.html[{ranchera} production installation checklist].
 
 [#pr-deployment-ha-architecture]
 === Understanding the {hasetup}
