@@ -43,7 +43,7 @@ Verwenden Sie diese Werte als Ausgangspunkt für die Produktion. Passen Sie basi
 |===
 
 Diese Empfehlungen stimmen mit den Richtlinien von Rancher für RKE2 Kubernetes überein.
-Für Details siehe https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/installation-requirements#rke2-kubernetes[RKE2 Kubernetes Installationsanforderungen].
+Für Details siehe https://documentation.suse.com/cloudnative/rancher-manager/latest/de/installation-and-upgrade/requirements/requirements.html#__rke2_product_name_kubernetes[RKE2 Kubernetes Installationsanforderungen].
 
 ==== Persistent Storage-Baseline
 

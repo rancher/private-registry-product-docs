@@ -23,16 +23,16 @@ System robot accounts can have system permissions and permissions across selecte
 Robot accounts authenticate OCI clients and application programming interface (API) requests, not interactive web sessions.
 A {sappco} service account belongs to one organization and inherits that organization's subscriptions.
 
-[#application-collection-catalog]
+[#application-collection-discover]
 === How do I find available components?
 
-Use the upstream catalog to discover applications, container images and {helm} charts.
-A proxy-cache project does not automatically list or download the upstream catalog.
+Use the upstream collection to discover applications, container images and {helm} charts.
+A proxy-cache project does not automatically list or download the upstream collection.
 Its repository list contains artifacts cached after clients request them.
 
 [#pro-browse-application-collection]
-.Browsing the catalog
-. Open the link:https://apps.rancher.io/applications[{sappco} application catalog].
+.Browsing the collection
+. Open the link:https://apps.rancher.io/applications[{sappco} applications page].
 . Filter by container images or {helm} charts, or search for an application.
 . Open the application and select an artifact version.
 +
@@ -44,10 +44,10 @@ image::application-collection-artifact-details.png[Application Collection {nginx
 For example, container paths start with `containers/` and chart paths start with `charts/`.
 . Check that your service account's organization has the subscription required to pull the selected artifact.
 
-Catalog visibility does not grant download access.
+Collection visibility does not grant download access.
 For an example of viewing an application and its available artifact versions, see the {sappco} documentation on link:https://docs.apps.rancher.io/get-started/first-steps#hello-world[reviewing application details].
 For programmatic discovery, see the link:https://api.apps.rancher.io/swagger-ui/index.html?urls.primaryName=metadata[Metadata Service API].
-Follow each endpoint's pagination and filtering rules rather than treating one response as the complete catalog.
+Follow each endpoint's pagination and filtering rules rather than treating one response as the complete collection.
 
 [#application-collection-service-account]
 === How do I create upstream credentials?
@@ -181,7 +181,7 @@ unset ROBOT_SECRET
 Use a trusted certificate rather than disabling TLS verification.
 Client login stores credentials locally; protect the client credential files or use a credential helper.
 For more {sappco} Docker, {helm} and {kube} authentication examples, see the link:https://docs.apps.rancher.io/get-started/authentication#use-cli-tools[authentication documentation].
-. Enter the image name and tag selected from the catalog, then pull through the proxy:
+. Enter the image name and tag selected from the collection, then pull through the proxy:
 +
 [source,bash]
 ----
@@ -189,7 +189,7 @@ read -r -p 'Container name, without containers/: ' IMAGE_NAME
 read -r -p 'Container tag: ' IMAGE_TAG
 docker pull "$REGISTRY_HOST/application-collection/containers/$IMAGE_NAME:$IMAGE_TAG"
 ----
-. Enter the chart name and version selected from the catalog, then pull the chart:
+. Enter the chart name and version selected from the collection, then pull the chart:
 +
 [source,bash]
 ----
@@ -499,7 +499,7 @@ Set `registry_host` to the host name and optional port, without a scheme or proj
 The Secret uses that host as its authentication key.
 The provider encodes the `data` values for {kube}; do not base64-encode the complete JSON value again.
 The release references the Secret, ensuring that Terraform creates the Secret before installing the chart.
-. In Bash, enter your pull-only robot credentials and the chart version selected from the catalog:
+. In Bash, enter your pull-only robot credentials and the chart version selected from the collection:
 +
 [source,bash]
 ----
@@ -555,8 +555,8 @@ Rotate upstream service-account credentials separately and update the registry e
 
 * For a downstream `401` or `403` response, check the full robot username, secret, expiration, enabled status and project permissions.
 * For upstream authentication failures, check the endpoint credentials and the service account's organization subscriptions.
-* For missing repositories in a new project, pull an artifact first; the project is not an upstream catalog browser.
-* For a missing tag, confirm the selected version in the upstream catalog.
+* For missing repositories in a new project, pull an artifact first; the project is not an upstream collection browser.
+* For a missing tag, confirm the selected version in the upstream collection.
 * For TLS or connection failures, check certificate trust, DNS resolution and network access from the registry.
 * For upstream `429` responses, review link:https://docs.apps.rancher.io/get-started/rate-limits[{sappco} rate limits] and reduce concurrent requests.
 * For Terraform API `403` responses, check the management robot's permissions for each provider API call.

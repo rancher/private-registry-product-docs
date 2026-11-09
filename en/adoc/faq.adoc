@@ -89,7 +89,7 @@ By default, {productname} scans images using {trivy}. You can also configure {su
 In the pull-through cache scenario, will the vulnerability criteria be enforced?::
 Yes, but with a known limitation. Due to upstream {harbor} link:https://github.com/goharbor/harbor/issues/16218[issues], vulnerability criteria are not enforced on the first pull of an image because the scan has not yet completed.
 +
-For complete coverage, pair {productname} with {suse} Security link:https://open-docs.neuvector.com/policy/admission#admission-control-criteria[admission controls].
+For complete coverage, pair {productname} with {suse} Security link:https://documentation.suse.com/cloudnative/security/latest/en/admission.html#_admission_control_criteria[admission controls].
 
 Are the images of {productname} hardened?::
 Yes. The container images for {productname} are hardened. They are based on {suselinux} Enterprise Base Container Images ({bcia}) and built in the same enterprise-grade {suse} Build Service used for {sls}. This ensures a secure supply chain. The images are also signed, and {suse} publishes their Supply-chain Levels for Software Artifacts (SLSA) attestations.

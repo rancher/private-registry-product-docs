@@ -89,7 +89,7 @@ Standardmäßig scannt {productname} Bilder mit Trivy. Sie können auch {suse} S
 Wird im Pull-Through-Cache-Szenario das Schwachstellenkriterien durchgesetzt?::
 Ja, aber mit einer bekannten Einschränkung. Aufgrund von Upstream {harbor} link:https://github.com/goharbor/harbor/issues/16218[Problemen] werden Schwachstellenkriterien beim ersten Abruf eines Bildes nicht durchgesetzt, da der Scan noch nicht abgeschlossen ist.
 +
-Für eine vollständige Abdeckung kombinieren Sie {productname} mit {suse} Security link:https://open-docs.neuvector.com/policy/admission#admission-control-criteria[Admission-Kontrollen].
+Für eine vollständige Abdeckung kombinieren Sie {productname} mit {suse} Security link:https://documentation.suse.com/cloudnative/security/latest/en/admission.html#_admission_control_criteria[Admission-Kontrollen].
 
 Sind die Containerbilder von {productname} gehärtet?::
 Ja. Die Containerbilder für {productname} sind gehärtet. Sie basieren auf SUSE Linux Enterprise Base Container Images (SLE BCI) und werden im gleichen unternehmensgerechten SUSE Build Service erstellt, der auch für SUSE Linux Enterprise verwendet wird. Dies gewährleistet eine sichere Lieferkette. Die Images sind ebenfalls signiert, und SUSE veröffentlicht ihre Supply-chain Levels for Software Artifacts (SLSA) Attestierungen.

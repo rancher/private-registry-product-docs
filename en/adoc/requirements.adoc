@@ -43,7 +43,7 @@ Use these values as a production starting point. Tune based on retention policy,
 |===
 
 These recommendations align with Rancher guidance for RKE2 Kubernetes.
-For details, see https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/installation-requirements#rke2-kubernetes[RKE2 Kubernetes installation requirements].
+For details, see https://documentation.suse.com/cloudnative/rancher-manager/latest/en/installation-and-upgrade/requirements/requirements.html#__rke2_product_name_kubernetes[RKE2 Kubernetes installation requirements].
 For guidance about distributing replicas, selecting reliable worker nodes, and planning external dependencies, see xref:pr-deployment-ha[].
 
 ==== Persistent Storage Baseline

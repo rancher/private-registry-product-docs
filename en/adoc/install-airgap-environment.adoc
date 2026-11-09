@@ -54,7 +54,8 @@ Before using the following example, replace the placeholders:
 
 * `<APP_VERSION>` with the desired application version (for example, `1.2`), as in <<pr-deployment-installing-and-running>>.
 * `<CHART_VERSION>` with the exact chart version you want to pull (for example, `1.2.19`).
-* `<RKE2_VERSION_URLENCODED>` with the {rke2a} release you want to install, found on the https://github.com/rancher/rke2/releases[{rke2a} releases page] (for example, `v1.34.5+rke2r1` written as `v1.34.5%2Brke2r1`, the percent-encoded form used in the download URL).
+* `<PRIME_ARTIFACTS_URL>` with the https://scc.suse.com/rancher-docs/rancherprime/latest/en/reference-guide.html#prime-artifacts-url[Prime Artifacts URL].
+* `<RKE2_VERSION_URLENCODED>` with the {rke2a} release you want to install, found in the https://documentation.suse.com/cloudnative/rke2/latest/en/release-notes/v1.34.X.html[{rke2a} release notes] (for example, `v1.34.5+rke2r1` written as `v1.34.5%2Brke2r1`, the percent-encoded form used in the download URL).
 * `<HELM_VERSION>` with the {helm} release you want to install, found on the https://github.com/helm/helm/releases[{helm} releases page] (for example, `v3.18.0`).
 
 [IMPORTANT]
@@ -111,11 +112,11 @@ spec:
       name: install-rke2.sh
     - path: https://get.helm.sh/helm-<HELM_VERSION>-linux-amd64.tar.gz
       name: helm-<HELM_VERSION>-linux-amd64.tar.gz
-    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/rke2.linux-amd64.tar.gz
+    - path: <PRIME_ARTIFACTS_URL>/rke2/<RKE2_VERSION_URLENCODED>/rke2.linux-amd64.tar.gz
       name: rke2.linux-amd64.tar.gz
-    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/rke2-images.linux-amd64.tar.zst
+    - path: <PRIME_ARTIFACTS_URL>/rke2/<RKE2_VERSION_URLENCODED>/rke2-images.linux-amd64.tar.zst
       name: rke2-images.linux-amd64.tar.zst
-    - path: https://github.com/rancher/rke2/releases/download/<RKE2_VERSION_URLENCODED>/sha256sum-amd64.txt
+    - path: <PRIME_ARTIFACTS_URL>/rke2/<RKE2_VERSION_URLENCODED>/sha256sum-amd64.txt
       name: sha256sum-amd64.txt
 ---
 apiVersion: content.hauler.cattle.io/v1
@@ -138,7 +139,8 @@ spec:
     - name: registry.suse.com/suse/nginx:<IMAGE_TAG>
 ----
 
-NOTE: The manifest's `Images` kind only needs to list {productname}'s own images. {rke2a}'s own required images are already covered by the `rke2-images.linux-amd64.tar.zst` file downloaded above and are loaded separately (see the https://docs.rke2.io/install/airgap[{rke2a} air-gap installation documentation] for the load methods and for the correct tarball to use with a non-default CNI plugin).
+NOTE: The manifest's `Images` kind only needs to list {productname}'s own images. {rke2a}'s own required images are already covered by the `rke2-images.linux-amd64.tar.zst` file downloaded above and are loaded separately (see the https://documentation.suse.com/cloudnative/rke2/latest/en/install/airgap.html[{rke2a} air-gap installation documentation] for the load methods and for the correct tarball to use with a non-default CNI plugin).
+The images in the {rke2a} tarball from the Prime Artifacts URL are tagged with `registry.rancher.com`, so set `system-default-registry: registry.rancher.com` in the {rke2a} `config.yaml` file before you start {rke2a}.
 
 ==== Synergy: Orchestrating Hauler with {productname}
 

@@ -43,7 +43,7 @@ Utiliza estos valores como punto de partida para la producción. Ajusta según l
 |===
 
 Estas recomendaciones se alinean con la guía de Rancher para RKE2 Kubernetes.
-Para más detalles, consulta https://ranchermanager.docs.rancher.com/getting-started/installation-and-upgrade/installation-requirements#rke2-kubernetes[Requisitos de instalación de RKE2 Kubernetes].
+Para más detalles, consulta https://documentation.suse.com/cloudnative/rancher-manager/latest/es/installation-and-upgrade/requirements/requirements.html#__rke2_product_name_kubernetes[Requisitos de instalación de RKE2 Kubernetes].
 
 ==== Línea base de almacenamiento persistente
 
