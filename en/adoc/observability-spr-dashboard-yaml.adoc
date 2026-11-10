@@ -1,0 +1,315 @@
+include::../common/generic-attributes.adoc[]
+
+[#pr-observability-spr-dashboard-yaml]
+== SPR Dashboard YAML definition
+
+The following YAML definition creates a dashboard in {sobservability} for monitoring {harbor} metrics.
+This dashboard displays eight key metrics for the registry health and operations.
+
+[source,yaml]
+----
+metadata:
+  project: '{"saveVariables":false}'
+spec:
+  panels:
+    QdMW0bIQL2P6RaQMSVcFG:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: false
+            thresholds:
+              defaultColor: "#E31A1C"
+              mode: absolute
+              steps:
+                - color: "#33A02C"
+                  value: 1
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: min(harbor_health{k8s_cluster_name="${cluster}", k8s_namespace_name="${namespace}"}) or vector(0)
+                  alias: " "
+        display:
+          name: Registry Health
+          description: "1 = healthy; 0 = unhealthy or no data."
+    qJzTSNXd5mgiFP59Wz0-r:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: false
+            thresholds:
+              defaultColor: "#1F78B4"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum(max by (public) (harbor_project_total{k8s_cluster_name="${cluster}", k8s_namespace_name="${namespace}"}))
+                  alias: " "
+        display:
+          name: Projects
+          description: Public and private projects combined.
+    aGLousSs_ht50XkThRDah:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: false
+            thresholds:
+              defaultColor: "#1F78B4"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum(max by (project_name) (harbor_project_repo_total{k8s_cluster_name="${cluster}", k8s_namespace_name="${namespace}"}))
+                  alias: " "
+        display:
+          name: Repositories
+          description: Repositories across all projects.
+    HeR5b_9T7snHElL21o02m:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: false
+            thresholds:
+              defaultColor: "#1F78B4"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum(max by (project_name, artifact_type) (harbor_project_artifact_total{k8s_cluster_name="${cluster}", k8s_namespace_name="${namespace}"}))
+                  alias: " "
+        display:
+          name: Stored Artifacts
+          description: Artifacts across all projects and artifact types.
+    897liByk9Rou6dVfLTGrn:
+      spec:
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            yAxis:
+              show: true
+              format:
+                unit: bytes(IEC)
+            legend:
+              show: true
+              position: bottom
+              mode: list
+              values: []
+            thresholds:
+              mode: absolute
+              steps: []
+            visual:
+              connectNulls: false
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: max by (project_name) (harbor_project_quota_usage_byte{k8s_cluster_name="${cluster}", k8s_namespace_name="${namespace}"})
+                  alias: ${project_name}
+        display:
+          name: Storage Usage by Project
+          description: Project quota usage, not free space on the registry storage backend.
+    9KumJhys1d6wR6RJPMk60:
+      spec:
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            yAxis:
+              show: true
+              label: Pulls
+              format:
+                decimalPlaces: 0
+            legend:
+              show: true
+              position: bottom
+              mode: list
+              values: []
+            thresholds:
+              mode: absolute
+              steps: []
+            visual:
+              connectNulls: false
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: max by (project_name) (delta(harbor_artifact_pulled{k8s_cluster_name="${cluster}", k8s_namespace_name="${namespace}"}[${__interval}]))
+                  alias: ${project_name}
+        display:
+          name: Artifact Pulls by Project
+          description: Pulls per chart interval, derived from the exporter's cumulative pull count.
+    eJlNjoiGN9YK6WrQQ3P5D:
+      spec:
+        plugin:
+          kind: TimeSeriesChart
+          spec:
+            yAxis:
+              show: true
+              label: Projects
+              format:
+                decimalPlaces: 0
+            legend:
+              show: true
+              position: bottom
+              mode: list
+              values: []
+            thresholds:
+              mode: absolute
+              steps: []
+            visual:
+              connectNulls: false
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: label_replace(label_replace(max by (public) (harbor_project_total{k8s_cluster_name="${cluster}", k8s_namespace_name="${namespace}"}), "visibility", "Public", "public", "true"), "visibility", "Private", "public", "false")
+                  alias: ${visibility}
+        display:
+          name: Projects by Visibility
+          description: Public and private project counts.
+    oUzIMUMfQNw1giOsd2cLE:
+      spec:
+        plugin:
+          kind: StatChart
+          spec:
+            calculation: last
+            format: {}
+            sparkline: true
+            thresholds:
+              defaultColor: "#1F78B4"
+              steps: []
+        links: []
+        queries:
+          - kind: TimeSeriesQuery
+            spec:
+              plugin:
+                kind: PrometheusTimeSeriesQuery
+                spec:
+                  query: sum(max by (type) (harbor_task_queue_size{k8s_cluster_name="${cluster}", k8s_namespace_name="${namespace}"}))
+                  alias: " "
+        display:
+          name: Pending Jobs
+          description: Queued jobs across all job types; zero is a valid result.
+  layouts:
+    - kind: Grid
+      spec:
+        items:
+          - x: 0
+            y: 0
+            width: 6
+            height: 1
+            content:
+              $ref: "#/spec/panels/QdMW0bIQL2P6RaQMSVcFG"
+          - x: 6
+            y: 0
+            width: 6
+            height: 1
+            content:
+              $ref: "#/spec/panels/qJzTSNXd5mgiFP59Wz0-r"
+          - x: 12
+            y: 0
+            width: 6
+            height: 1
+            content:
+              $ref: "#/spec/panels/aGLousSs_ht50XkThRDah"
+          - x: 18
+            y: 0
+            width: 6
+            height: 1
+            content:
+              $ref: "#/spec/panels/HeR5b_9T7snHElL21o02m"
+          - x: 0
+            y: 1
+            width: 12
+            height: 2
+            content:
+              $ref: "#/spec/panels/897liByk9Rou6dVfLTGrn"
+          - x: 12
+            y: 1
+            width: 12
+            height: 2
+            content:
+              $ref: "#/spec/panels/9KumJhys1d6wR6RJPMk60"
+          - x: 0
+            y: 3
+            width: 18
+            height: 2
+            content:
+              $ref: "#/spec/panels/eJlNjoiGN9YK6WrQQ3P5D"
+          - x: 18
+            y: 3
+            width: 6
+            height: 2
+            content:
+              $ref: "#/spec/panels/oUzIMUMfQNw1giOsd2cLE"
+  variables:
+    - perseslistvariable:
+        kind: ListVariable
+        spec:
+          name: cluster
+          display:
+            name: Cluster
+            description: ""
+          allowAllValue: false
+          allowMultiple: false
+          sort: alphabetical-asc
+          plugin:
+            kind: MetricLabelValues
+            spec:
+              labelName: k8s_cluster_name
+              matchers:
+                - harbor_health
+      persestextvariable: null
+    - perseslistvariable:
+        kind: ListVariable
+        spec:
+          name: namespace
+          display:
+            name: Namespace
+            description: ""
+          allowAllValue: false
+          allowMultiple: false
+          sort: alphabetical-asc
+          plugin:
+            kind: MetricLabelValues
+            spec:
+              labelName: k8s_namespace_name
+              matchers:
+                - harbor_health{k8s_cluster_name="${cluster}"}
+      persestextvariable: null
+----
