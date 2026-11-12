@@ -3,7 +3,7 @@ include::../common/generic-attributes.adoc[]
 [#backup-restore-velero]
 == Backing up and restoring with Velero
 
-https://velero.io/docs/main/[Velero] provides a framework for backing up and restoring {productname} deployments on supported {kube} clusters.
+https://docs.apps.rancher.io/reference-guides/velero[Velero] provides a framework for backing up and restoring {productname} deployments on supported {kube} clusters.
 It captures the {kube} API objects of the registry and the data in the persistent volumes that the registry uses.
 This approach protects the registry configuration and the container images stored in the cluster against accidental deletion or cluster failure.
 
@@ -35,9 +35,9 @@ Before starting the backup process, make sure you have the following:
 
 * A supported {kube} cluster and a {productnameshort} release that is compatible with both the cluster and the Velero version you use.
 * {helm}, `kubectl` and the https://velero.io/docs/main/basic-install/[Velero CLI] installed.
-* A Velero server with the storage-provider plugin that your object store requires. See the https://velero.io/docs/main/supported-providers/[supported providers].
+* A Velero server with the storage-provider plugin that your object store requires. To install Velero and its plugins from {sappco}, see the {sappco} documentation on link:https://docs.apps.rancher.io/get-started/deploy-helm-chart[deploying a {helm} chart] and the link:https://docs.apps.rancher.io/reference-guides/velero[Velero reference guide].
 * An off-cluster `BackupStorageLocation` for production use.
-* For File System Backup, the Velero node agent running in the cluster. Install it with `velero install --use-node-agent`, or enable it in the Velero {helm} chart.
+* For File System Backup, the Velero node agent running in the cluster. Enable it with `deployNodeAgent: true` in the Velero {helm} chart.
 * For CSI volume snapshots, a CSI driver that supports snapshots and a `VolumeSnapshotClass` that is labeled `velero.io/csi-volumesnapshot-class: "true"`.
 * A recovery cluster that provides the same `StorageClass` names as the source cluster, so that the restored PVCs can bind.
 
@@ -153,6 +153,19 @@ Replace `<BACKUP_NAME>` with a name for the backup and `<RETENTION_DURATION>` wi
 File System Backup copies the volume content through the Velero node agent.
 It does not depend on volume snapshot support in the storage provider, so it also works with storage backends such as `local-path`.
 
+[NOTE]
+====
+If you use the Velero image from {sappco}, set `HOME` to `/scratch` in the Velero {helm} chart values file.
+Without a writable `HOME`, File System Backup can fail with `mkdir /udmrepo: permission denied`.
+
+[source,yaml]
+----
+configuration:
+  extraEnvVars:
+    - name: HOME
+      value: /scratch
+----
+====
 [source,bash,subs="+attributes"]
 ----
 {prompt_user}velero backup create <BACKUP_NAME> \
@@ -239,6 +252,26 @@ If you back up with CSI snapshots, replace `--default-volumes-to-fs-backup` with
 
 [#pr-velero-restore]
 === Restoring {productnameshort}
+
+[IMPORTANT]
+====
+During a File System Backup restore, Velero adds an init container to restored pods in the registry namespace.
+This container uses the Velero image from {sappco}.
+That namespace does not contain the {sappco} pull secret, so the nodes of the recovery cluster must be able to pull the image themselves.
+Otherwise, the restored pods remain in the `ImagePullBackOff` state and the volume data is not restored.
+Before you restore, configure the {sappco} credentials in the container runtime of every node.
+For example, on {rke2a}, add the following to `/etc/rancher/rke2/registries.yaml` on every node and restart the `rke2-server` or `rke2-agent` service.
+Replace `<APPCO_USERNAME>` and `<APPCO_PASSWORD>` with your {sappco} credentials:
+
+[source,yaml]
+----
+configs:
+  dp.apps.rancher.io:
+    auth:
+      username: <APPCO_USERNAME>
+      password: <APPCO_PASSWORD>
+----
+====
 
 [#pr-velero-restore-internal-db]
 ==== Restoring a deployment with an internal {postgresql} database
