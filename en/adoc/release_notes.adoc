@@ -1,8 +1,4 @@
-:description: Find important updates, changes, and known issues for individual product releases
 include::../common/generic-attributes.adoc[]
-
-:revdate: 2026-11-04
-:page-revdate: {revdate}
 
 [#pr-relnotes]
 == Release notes
@@ -113,14 +109,14 @@ This document provides a high-level overview of the features, capabilities and l
 *Security updates:*
 
 * Updates {harbor} 2.14.4 to 2.14.6 (link:https://github.com/goharbor/harbor/releases/tag/v2.14.5[Release Notes v2.14.5], link:https://github.com/goharbor/harbor/releases/tag/v2.14.6[Release Notes v2.14.6]).
-* Fixes 13 security advisories in Harbor 2.14.5: four high, eight medium and one low severity.
-* Updates Go dependencies in Harbor 2.14.6 to fix high- and critical-severity vulnerabilities.
+* Fixes 13 security advisories in {harbor} 2.14.5: four high, eight medium and one low severity.
+* Updates Go dependencies in {harbor} 2.14.6 to fix high- and critical-severity vulnerabilities.
 
 *Component updates:*
 
 * Disables transparency-log checks when signing and verifying Cosign signatures.
 * Rebuilds Photon base images and removes `net-tools` from the database image build.
-* Pins the Redis base image to version 7.2.11.
+* Pins the {redis} base image to version 7.2.11.
 * Updates Go to version 1.26.10.
 
 *Other changes:*
@@ -130,10 +126,10 @@ This document provides a high-level overview of the features, capabilities and l
 
 *Upgrade notes:*
 
-* Harbor 2.14.6 allows webhook and Slack delivery to private, loopback and link-local addresses by default.
+* {harbor} 2.14.6 allows webhook and Slack delivery to private, loopback and link-local addresses by default.
 * To block these deliveries, set `HARBOR_ALLOW_PRIVATE_NETWORK_ACCESS=false` in `core.extraEnvVars` and `jobservice.extraEnvVars`.
-* For Harbor installations configured with `harbor.yml`, set `network.allow_private_network_access: false`, run `./prepare` and restart Harbor. Block `169.254.169.254` at the network level.
-* Harbor 2.14.6 enables legacy signer pulls by default. This restores Cosign and Notation signing of new unsigned images in projects that allow only signed images.
+* For {harbor} installations configured with `harbor.yml`, set `network.allow_private_network_access: false`, run `./prepare` and restart {harbor}. Block `169.254.169.254` at the network level.
+* {harbor} 2.14.6 enables legacy signer pulls by default. This restores Cosign and Notation signing of new unsigned images in projects that allow only signed images.
 * The legacy signer exception applies only to users or robots with push permission. Signing clients cannot pull images blocked by vulnerability policies.
 
 *Container image updates:*
