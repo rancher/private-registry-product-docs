@@ -1,7 +1,6 @@
 ---
-applyTo: "**/*.adoc"
+applyTo: "**/*.{adoc,xml}"
 ---
-
 # Headings and Titles
 Enforce SUSE heading conventions.
 Keep headings concise and structurally consistent.
@@ -20,3 +19,4 @@ Prefer:
 # Example
 Use: "How to manage storage" or "Installing software"
 Avoid: "Usage" or "Software Installation"
+

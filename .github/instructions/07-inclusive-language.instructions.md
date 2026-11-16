@@ -1,7 +1,6 @@
 ---
-applyTo: "**/*.adoc"
+applyTo: "**/*.{adoc,xml}"
 ---
-
 # Inclusive Language
 Replace biased or ambiguous wording with precise alternatives.
 
@@ -22,3 +21,4 @@ Use: "primary/secondary"
 Avoid: "master/slave"
 Use: "they"
 Avoid: "he", "she"
+
