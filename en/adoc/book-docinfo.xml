@@ -1,5 +1,21 @@
 <!-- History -->
 <revhistory xml:id="rh-article-private-registry">
+  <revision><date>2026-11-24</date>
+    <revdescription>
+      <itemizedlist>
+        <listitem>
+          <para>
+            Updated the Rancher installation instructions to use a versioned OCI repository URL
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Added recovery guidance for Fleet-managed deployments
+          </para>
+        </listitem>
+      </itemizedlist>
+    </revdescription>
+  </revision>
   <revision><date>2026-11-16</date>
     <revdescription>
       <para>
@@ -107,7 +123,7 @@
   </revision>
 </revhistory>
 <meta name="maintainer" content="tbazant@suse.com" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
-<meta name="updated" content="2026-11-16" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
+<meta name="updated" content="2026-11-24" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"/>
 <meta name="architecture"><phrase>{x86-64}</phrase><phrase>{power}</phrase></meta>
 <meta name="productname" its:translate="no" xmlns:its="http://www.w3.org/2005/11/its"><productname>{productname}</productname>
 </meta>

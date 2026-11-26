@@ -9,40 +9,6 @@ It is designed for {suse} customers who need a container registry that works wel
 
 This document provides a high-level overview of the features, capabilities and limitations of {productname}, and highlights important product updates.
 
-[#pr-relnotes-123]
-=== Release 1.2.3
-
-*Security updates:*
-
-* Updates {harbor} 2.15.4 to 2.15.5 (link:https://github.com/goharbor/harbor/releases/tag/v2.15.5[Release Notes v2.15.5]).
-* Updates Go modules and the Photon base image to address high-severity CVEs.
-
-*Component updates:*
-
-* Updates Go to version 1.27.3.
-* Updates {trivy} to version 0.76.2 and the {trivy} adapter to version 0.40.1-rc1.
-* Updates distribution to version 2.8.3-harbor.4-rc1.
-
-*Key fixes:*
-
-* Enforces byte limits in the cloud-native application bundle parser to prevent decompression attacks.
-* Redacts pagination `Link` and upload `Location` headers from rejection errors.
-* Normalizes webhook target addresses and restores image resource filtering for replication.
-* Preserves artifact types for multi-tier accessories and ignores HTTP 401 responses when listing registry labels.
-* Compares IPv6 zone identifiers exactly in same-origin checks.
-* Adds missing translations for the operate action and configuration resource.
-
-*Container image updates:*
-
-* private-registry/1.2/harbor-core:1.2.2 ➡ private-registry/1.2/harbor-core:1.2.3
-* private-registry/1.2/harbor-exporter:1.2.2 ➡ private-registry/1.2/harbor-exporter:1.2.3
-* private-registry/1.2/harbor-jobservice:1.2.2 ➡ private-registry/1.2/harbor-jobservice:1.2.3
-* private-registry/1.2/harbor-portal:1.2.2 ➡ private-registry/1.2/harbor-portal:1.2.3
-* private-registry/1.2/harbor-registry:1.2.2 ➡ private-registry/1.2/harbor-registry:1.2.3
-* private-registry/1.2/harbor-registryctl:1.2.2 ➡ private-registry/1.2/harbor-registryctl:1.2.3
-* private-registry/1.2/harbor-trivy-adapter:1.2.2 ➡ private-registry/1.2/harbor-trivy-adapter:1.2.3
-
-
 [#pr-relnotes-130]
 === Release 1.3.0
 
@@ -97,6 +63,40 @@ This document provides a high-level overview of the features, capabilities and l
 * private-registry/1.2/harbor-registry:1.2.2 ➡ private-registry/1.3/harbor-registry:1.3.0
 * private-registry/1.2/harbor-registryctl:1.2.2 ➡ private-registry/1.3/harbor-registryctl:1.3.0
 * private-registry/1.2/harbor-trivy-adapter:1.2.2 ➡ private-registry/1.3/harbor-trivy-adapter:1.3.0
+
+[#pr-relnotes-123]
+=== Release 1.2.3
+
+*Security updates:*
+
+* Updates {harbor} from 2.15.4 to 2.15.5 (link:https://github.com/goharbor/harbor/releases/tag/v2.15.5[Release Notes v2.15.5]).
+* Updates Go modules and Photon packages to address high-severity CVEs.
+* Limits audit and manifest request bodies and enforces the actual byte limit during decompression.
+* Redacts pagination links and upload locations from rejection errors.
+
+*Component updates:*
+
+* Updates {trivy} to version 0.76.2 and the {trivy} adapter to version 0.40.1-rc1.
+* Updates distribution to version 2.8.3-harbor.4-rc1.
+* Updates Go to version 1.27.3.
+
+*Key fixes:*
+
+* Restores image resource filter behavior for replication.
+* Stores normalized webhook target addresses.
+* Preserves artifact types for multi-tier accessories.
+* Ignores HTTP 401 responses when listing registry labels.
+* Compares IPv6 zone identifiers exactly in same-origin checks.
+
+*Container image updates:*
+
+* private-registry/1.2/harbor-core:1.2.2 ➡ private-registry/1.2/harbor-core:1.2.3
+* private-registry/1.2/harbor-exporter:1.2.2 ➡ private-registry/1.2/harbor-exporter:1.2.3
+* private-registry/1.2/harbor-jobservice:1.2.2 ➡ private-registry/1.2/harbor-jobservice:1.2.3
+* private-registry/1.2/harbor-portal:1.2.2 ➡ private-registry/1.2/harbor-portal:1.2.3
+* private-registry/1.2/harbor-registry:1.2.2 ➡ private-registry/1.2/harbor-registry:1.2.3
+* private-registry/1.2/harbor-registryctl:1.2.2 ➡ private-registry/1.2/harbor-registryctl:1.2.3
+* private-registry/1.2/harbor-trivy-adapter:1.2.2 ➡ private-registry/1.2/harbor-trivy-adapter:1.2.3
 
 [#pr-relnotes-122]
 === Release 1.2.2

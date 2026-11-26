@@ -57,7 +57,7 @@ The following procedure describes how to install {productnameshort} using {helm}
 Before you begin, replace the following placeholders:
 
 * `<RELEASE_NAME>` with your custom release name for the {helm} chart deployment.
-* `<APP_VERSION>` with the desired application version (for example, `1.2`).
+* `<APP_VERSION>` with the desired application version (for example, `1.3`). For version `1.3`, use `oci://registry.suse.com/private-registry/1.3/private-registry-helm` as the chart URL.
 
 . Log in to {sregistry} using the obtained {scca} mirroring credentials.
 +

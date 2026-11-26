@@ -91,6 +91,10 @@ Replace `<PRIVATE_REGISTRY_NAMESPACE>` with the namespace of your deployment and
 The `-o yaml` option is required.
 Without it, `helm get values` prints a `USER-SUPPLIED VALUES:` header, and the resulting file is not a valid values file.
 ====
++
+If Fleet manages the release, also record the Git repository, revision, path, target cluster and Fleet workspace.
+Preserve the `fleet.yaml` configuration, chart version, release name, namespace and references to external values and secrets.
+Protect the Fleet management configuration separately from the {productnameshort} namespace backup.
 . Record your namespace, release name, persistent volume claim (PVC) names, and storage classes. The following command only lists the PVCs in the namespace; it does not back up the PVC data or the storage configuration:
 +
 [source,bash,subs="+attributes"]
@@ -253,6 +257,9 @@ If you back up with CSI snapshots, replace `--default-volumes-to-fs-backup` with
 [#pr-velero-restore]
 === Restoring {productnameshort}
 
+If Fleet manages the deployment, read xref:pr-velero-restore-fleet[] before restoring.
+The {productnameshort} namespace backup does not restore the Fleet management configuration.
+
 [IMPORTANT]
 ====
 During a File System Backup restore, Velero adds an init container to restored pods in the registry namespace.
@@ -322,8 +329,9 @@ Warnings about PVCs, secrets, or workloads that already exist indicate that the 
 . Verify that the TLS, OIDC, image-pull, and database secrets were restored.
 Recreate only the secrets that are managed outside the namespace, such as certificates issued by an external certificate manager.
 Do not recreate the secrets that the chart generates, because this invalidates the robot accounts of the registry.
-. If the recovery cluster is reached at a different address than the source cluster, update `externalURL` and the {ingress} host in the saved values file.
-Then upgrade the release with that file:
+. If the recovery cluster is reached at a different address than the source cluster, update `externalURL` and the {ingress} host.
+For a Fleet-managed release, make these changes in the Fleet configuration instead of running a manual {helm} upgrade.
+Otherwise, update the saved values file and upgrade the release with that file:
 +
 [source,bash,subs="+attributes"]
 ----
@@ -333,7 +341,9 @@ Then upgrade the release with that file:
   --version <CHART_VERSION> \
   -f <VALUES_FILE>.yaml
 ----
-. Disable *Repository Read Only*.
+If {ranchera} provides OIDC, update the `redirectURIs` entry in the `OIDCClient` resource.
+See xref:pr-configure-rancher-oidc-create-client[].
+. Perform the checks in xref:pr-velero-verification[].
 
 [NOTE]
 ====
@@ -365,7 +375,88 @@ Use this procedure when your database and object storage are managed outside of 
 ----
 . Verify that the connection secret of the external database and the TLS CA or OIDC credentials were restored, and recreate only the ones that are managed outside the namespace.
 . Start the registry and verify that it connects to the restored database.
-. Disable *Repository Read Only*.
+. Perform the checks in xref:pr-velero-verification[].
+
+[#pr-velero-restore-fleet]
+==== Restoring a Fleet-managed deployment
+
+Fleet manages the desired deployment, while Velero restores the registry resources and volume data.
+Coordinate both tools during recovery to prevent Fleet from creating empty claims before Velero restores the data.
+Restoring the {helm} release alone does not establish that Fleet manages the deployment again.
+
+The following procedure restores into a new cluster or an empty namespace.
+Test it in a recovery environment with the Fleet and Velero versions used in production.
+
+. Recover the Fleet management configuration.
+Before connecting or targeting the recovery cluster, set `paused: true` in the bundle's `fleet.yaml` configuration.
+Confirm that Fleet has applied the pause and that no deployment is in progress.
+Pausing the bundle also affects its other target clusters.
+Then connect the recovery cluster to Fleet.
+See the link:https://documentation.suse.com/cloudnative/continuous-delivery/latest/en/reference/ref-fleet-yaml.html[Fleet configuration reference].
+. Confirm that the target namespace contains no {productnameshort} release, PVCs or chart-generated secrets.
+Do not install the chart through Fleet or {helm} before the restore.
+Velero normally skips resources that already exist, including PVCs.
+. Provision the required {ingress}, storage classes and Velero components on the target cluster.
+Configure Velero with the backup storage location and verify that the backup is available:
++
+[source,console,subs="+attributes"]
+----
+{prompt_user}velero backup get <BACKUP_NAME>
+----
++
+If you use an external {postgresql} database or external object storage, restore them with their provider procedures before starting the registry.
+. Restore the namespace backup:
++
+[source,console,subs="+attributes"]
+----
+{prompt_user}velero restore create <RESTORE_NAME> \
+  --from-backup <BACKUP_NAME> \
+  --wait
+----
+. Review `velero restore describe <RESTORE_NAME> --details`.
+Verify that the expected PVCs and original secrets are restored and that the PVCs are bound.
+For File System Backup, verify that the expected pod volume restores are complete.
+Investigate warnings about existing resources and resolve restore errors before continuing.
+. Configure the Fleet bundle to use the recovered release name, namespace, chart version and values.
+Restore external values and secrets that Fleet requires.
+If the address changes, update `externalURL` and the {ingress} host in the Fleet configuration.
+If {ranchera} provides OIDC, update the `redirectURIs` entry in the `OIDCClient` resource.
+See xref:pr-configure-rancher-oidc-create-client[].
+Do not replace the chart-generated secrets with newly generated secrets.
++
+[NOTE]
+====
+If the chart is hosted on an authenticated OCI registry, such as `registry.suse.com`, also restore the `helmSecretName` credential that the `GitRepo` uses to pull the chart.
+This credential is separate from the {productnameshort} image-pull secret.
+Create or restore the credential in the namespace of the `GitRepo`, not only in the {productnameshort} namespace.
+See xref:pr-install-rancher-repository[] for the equivalent credential used when installing through the {ranchera} UI.
+====
+. Remove `paused: true` or set `paused: false` in the `fleet.yaml` configuration.
+Commit and push the change to the Fleet Git source.
+Wait for Fleet to reconcile the bundle and verify that its target deployment reaches the `Ready` state.
+Check the GitRepo and bundle status in the Fleet workspace:
++
+[source,console,subs="+attributes"]
+----
+{prompt_user}kubectl -n <FLEET_WORKSPACE_NAMESPACE> describe gitrepo <GITREPO_NAME>
+{prompt_user}kubectl -n <FLEET_WORKSPACE_NAMESPACE> describe bundle <BUNDLE_NAME>
+----
++
+Confirm that the bundle targets the recovery cluster and reports the deployment as `Ready`.
+If Fleet reports an ownership conflict or does not manage the restored release, investigate the Fleet status before making further changes.
+Do not force ownership or reinstall the chart as a recovery shortcut.
+. Perform the checks in xref:pr-velero-verification[].
+In a test environment, also confirm that a subsequent Fleet configuration change reaches the recovered deployment.
+
+[NOTE]
+====
+For existing PVCs, an in-place restore is available only with supported Velero versions and backup methods.
+The documented CSI snapshot method without data movement does not support this option.
+Pause Fleet, stop access to the target volumes and back them up before an in-place restore.
+File System Backup requires additional workload preparation and restored pods; restoring PVC objects alone does not restore their data.
+See the link:https://velero.io/docs/latest/volume-data-inplace-restore/[Velero in-place restore documentation] for the latest stable version.
+Select the documentation for your Velero version before using this method.
+====
 
 [#pr-velero-verification]
 === Verification and troubleshooting
@@ -379,13 +470,15 @@ After the restore, validate that the registry is fully operational.
 {prompt_user}kubectl get pvc -n <PRIVATE_REGISTRY_NAMESPACE>
 {prompt_user}kubectl get pods -n <PRIVATE_REGISTRY_NAMESPACE>
 ----
-. Validate the API health, the administrator login, and the image pull and image push operations.
-. Confirm that the projects, users, and artifacts that existed at backup time are present again, and that a robot account can still authenticate.
+. Validate the API health, the administrator login and image pulls.
+. Confirm that the projects, users and artifacts that existed at backup time are present again, and that a robot account can still authenticate.
+. Disable *Repository Read Only*, then validate image pushes.
 
 If the restore does not complete as expected, check the following:
 
 * `velero restore describe <RESTORE_NAME> --details` reports resources that already exist.
-The target namespace was not empty. Restore into a clean cluster or a clean namespace.
+Investigate the affected resources.
+Existing PVCs, secrets or workloads can prevent a complete restore.
 * PVCs remain `Pending`.
 The `StorageClass` of the source cluster does not exist in the recovery cluster, or it cannot provision the requested volume.
 * No volume data is restored.
